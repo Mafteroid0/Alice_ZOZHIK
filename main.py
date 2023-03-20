@@ -3,7 +3,7 @@ import random as rn
 
 from flask import Flask, request
 
-from temp import StatesGroup, State, FSM
+from fsm import StatesGroup, State, FSM
 
 app = Flask(__name__)
 
