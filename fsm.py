@@ -2,6 +2,8 @@ from __future__ import annotations
 import inspect
 import typing
 
+# from aiogram.dispatcher.filters.state import StatesGroup
+
 
 class State:
     def __init__(self, machine: FSM | None = None, state: str | None = None, group_name: str | None = None):
@@ -67,21 +69,21 @@ class StatesGroupMeta(type):
 
         states = []
         childs = []
-
+        cls._parent = None
         cls._group_name = name
 
         for name, prop in namespace.items():
-
             if isinstance(prop, State):
-                prop.machine = namespace['_fsm']
+                prop.machine = namespace.get('_fsm', None)
                 prop.name = name
                 prop.group_name = name
                 states.append(prop)
-            elif inspect.isclass(prop) and issubclass(prop, StatesGroup):
+                continue
+            if inspect.isclass(prop) and issubclass(prop, StatesGroup):
+                prop._fsm = namespace['_fsm']
                 childs.append(prop)
                 prop._parent = cls
 
-        cls._parent = None
         cls._childs = tuple(childs)
         cls._states = tuple(states)
         cls._state_names = tuple(state.name for state in states)
@@ -128,19 +130,12 @@ class StatesGroupMeta(type):
     def states_names(cls) -> tuple:
         return tuple(state.name for state in cls.states)
 
-    def __contains__(cls, item):
-        if isinstance(item, str):
-            return item in cls.all_states_names
-        if isinstance(item, State):
-            return item in cls.all_states
-        if isinstance(item, StatesGroup):
-            return item in cls.all_childs
-        return False
-
-
-class StatesGroup(metaclass=StatesGroupMeta):
     def __contains__(self, state: State):
         if state in self._states:
             return True
 
         return any((state in child) for child in self._childs)
+
+
+class StatesGroup(metaclass=StatesGroupMeta):
+    pass
