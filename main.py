@@ -10,10 +10,22 @@ app = Flask(__name__)
 fsm = FSM()
 
 
-class MyStates(StatesGroup):  # Состояние по умолчанию это None, его не нужно явно определять
+class MainGroup(StatesGroup):  # Состояние по умолчанию это None, его не нужно явно определять
     _fsm = fsm
-
     state_1 = State()
+    class SportBranch():
+        state_home = State()
+
+        class Water():
+            state_1 = State()
+        class Dream():
+            state_1 = State()
+        class Power():
+            state_1 = State()
+        class Cardio():
+            state_1 = State()
+        class Zaradka():
+            state_1 = State()
 
 
 # Шаблон для условий:  if fsm.get_state(user_id) == MyStates.state_1
@@ -22,8 +34,10 @@ class MyStates(StatesGroup):  # Состояние по умолчанию эт�
 @app.route('/alice', methods=['POST'])
 def main():
     end = False
+
     req = json.loads(request.data)
     user_id = req['session']['user']['user_id']  # TODO: тут впиши путь до айди юзера
+    print(fsm.get_state(user_id))
     if req['session']['new']:
         # Действия при новой сессии
         res = {
@@ -84,6 +98,7 @@ def main():
             }
             return json.dumps(res, ensure_ascii=False, indent=2)
 
+
         if req['request']['command'] == 'поехали': # TODO: Добавить в условия номера стейтов, из которых можно сюда попасть (см. диаграмму)
             answer_options = ['Вау, Вы уже в нескольких шагах от ЗОЖа 😍, '
                               'очень рада за Вас. Для начала выберите, чем хотите заняться'
@@ -122,7 +137,8 @@ def main():
                     ]
                 }
             }
-            fsm.set_state(user_id, MyStates.state_1)
+            fsm.set_state(user_id, MainGroup.SportBranch.state_home)
+            print(fsm.get_state(user_id))
         else:
             res = {
                 'version': req['version'],
@@ -154,7 +170,7 @@ def main():
                     ]
                 }
             }
-            fsm.set_state(user_id, MyStates.state_1)
+            fsm.set_state(user_id, MainGroup.state_1)
         return json.dumps(res, ensure_ascii=False, indent=2)
 
 
