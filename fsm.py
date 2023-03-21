@@ -20,6 +20,11 @@ class State:
     def __str__(self):
         return f'{self.name}'
 
+    def __eq__(self, other: State):
+        return self.name == other.name and \
+            self.group_name == other.group_name and \
+            self.machine == other.machine
+
 
 class FSM:
     def __init__(self):
