@@ -80,15 +80,17 @@ class StatesGroupMeta(type):
         cls._parent = None
         cls._group_name = name
 
+        fsm = namespace.get('_fsm', None)
+
         for name, prop in namespace.items():
             if isinstance(prop, State):
-                prop.machine = namespace.get('_fsm', None)
+                prop.machine = fsm
                 prop.name = name
                 prop.group_name = name
                 states.append(prop)
                 continue
             if inspect.isclass(prop) and issubclass(prop, StatesGroup):
-                prop._fsm = namespace['_fsm']
+                prop._fsm = fsm
                 childs.append(prop)
                 prop._parent = cls
 
