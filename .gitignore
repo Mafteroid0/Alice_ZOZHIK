@@ -130,3 +130,6 @@ dmypy.json
 
 # Pycharm settings directory
 .idea/
+
+#temporary files
+*.temp.*
