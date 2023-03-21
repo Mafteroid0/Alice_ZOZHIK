@@ -13,18 +13,23 @@ fsm = FSM()
 class MainGroup(StatesGroup):  # Состояние по умолчанию это None, его не нужно явно определять
     _fsm = fsm
     state_1 = State()
-    class SportBranch():
+
+    class SportBranch(StatesGroup):
         state_home = State()
 
-        class Water():
+        class Water(StatesGroup):
             state_1 = State()
-        class Dream():
+
+        class Dream(StatesGroup):
             state_1 = State()
-        class Power():
+
+        class Power(StatesGroup):
             state_1 = State()
-        class Cardio():
+
+        class Cardio(StatesGroup):
             state_1 = State()
-        class Zaradka():
+
+        class Zaradka(StatesGroup):
             state_1 = State()
 
 
@@ -63,9 +68,8 @@ def main():
         fsm.reset_state(user_id)
         return json.dumps(res, ensure_ascii=False, indent=2)
     else:
-        res = [] # TODO: Потом заменим на сообщение об ошибке
+        res = []  # TODO: Потом заменим на сообщение об ошибке
         if fsm.get_state(user_id) == None and (req['request']['command'] == 'что ты умеешь'):
-
             answer_options = ['Очень здорово, что вы спросили меня про это. В мой функционал входит:\n'
                               '🧘‍♂️ Утренняя зарядка\n'
                               '🏃‍♂️ Кардиотренировка\n'
@@ -96,10 +100,11 @@ def main():
 
                 }
             }
+            fsm.set_state(user_id, MainGroup.state_1)
             return json.dumps(res, ensure_ascii=False, indent=2)
 
-
-        if req['request']['command'] == 'поехали': # TODO: Добавить в условия номера стейтов, из которых можно сюда попасть (см. диаграмму)
+        if fsm.get_state(user_id) == MainGroup.state_1 and req['request'][
+            'command'] == 'поехали':  # TODO: Добавить в условия номера стейтов, из которых можно сюда попасть (см. диаграмму)
             answer_options = ['Вау, Вы уже в нескольких шагах от ЗОЖа 😍, '
                               'очень рада за Вас. Для начала выберите, чем хотите заняться'
                               ' или что Вам нужно узнать:\n'
@@ -139,6 +144,11 @@ def main():
             }
             fsm.set_state(user_id, MainGroup.SportBranch.state_home)
             print(fsm.get_state(user_id))
+
+        if fsm.get_state(user_id) in MainGroup.SportBranch:
+            print('HELLO', fsm.get_state(user_id))
+
+
         else:
             res = {
                 'version': req['version'],
