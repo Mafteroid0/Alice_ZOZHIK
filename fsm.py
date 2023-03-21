@@ -19,6 +19,48 @@ class State:
         return f'{self.name}'
 
 
+class FSM:
+    def __init__(self):
+        self._data = {}
+
+    def _check_and_create_user(self, user: str):
+        if self._data.get(user, None) is None:
+            self._data[user] = {'state': None, 'data': {}}
+
+    def set_state(self, user: str, state: State | None) -> State | None:
+        self._check_and_create_user(user)
+        self._data[user]['state'] = state
+        return self._data[user]
+
+    def set_data(self, user: str, data: dict) -> dict:
+        self._check_and_create_user(user)
+        self._data[user]['data'] = data
+        return self._data[user]
+
+    def reset_state(self, user: str, with_data: bool = False):
+        self.set_state(user, None)
+        if with_data:
+            self.reset_data(user)
+
+    def reset_data(self, user: str):
+        self.set_data(user, {})
+
+    def get_state(self, user: str) -> State | None:
+        return self._data.get(user, {'state': None})['state']
+
+    def get_data(self, user: str) -> dict:
+        return self._data.get(user, {'data': {}})['data']
+
+    def filter(self, state: State):
+        def sub_wrapper(f: typing.Callable):
+            def wrapper(*args, **kwargs):
+                req = args[0]
+                # Тут надо проверять стейт
+                f(*args, **kwargs)
+
+        return sub_wrapper
+
+
 class StatesGroupMeta(type):
     def __new__(mcs, name, bases, namespace, **kwargs):
         cls = super(StatesGroupMeta, mcs).__new__(mcs, name, bases, namespace)
@@ -96,29 +138,9 @@ class StatesGroupMeta(type):
         return False
 
 
-class FSM:
-    def __init__(self):
-        self.states = {}
-
-    def set_state(self, user: str, state: State | None) -> State | None:
-        self.states[user] = state
-        return self.states[user]
-
-    def reset_state(self, user: str):
-        self.set_state(user, None)
-
-    def get_state(self, user: str) -> State | None:
-        return self.states.get(user, None)
-
-    def filter(self, state: State):
-        def sub_wrapper(f: typing.Callable):
-            def wrapper(*args, **kwargs):
-                req = args[0]
-                #Тут надо проверять стейт
-                f(*args, **kwargs)
-        return sub_wrapper
-
-
 class StatesGroup(metaclass=StatesGroupMeta):
-    pass
+    def __contains__(self, state: State):
+        if state in self._states:
+            return True
 
+        return any((state in child) for child in self._childs)
