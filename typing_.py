@@ -6,42 +6,51 @@ import inspect
 
 
 class FriendlyDict(UserDict):
-    def _make_dict_available(self, d: dict[str, typing.Any],
+    @staticmethod
+    def _make_dict_available(d: dict[str, typing.Any],
                              annotations: dict[str, type],
-                             aggressive: bool = True) -> UserDict[str, typing.Any]:
+                             aggressive: bool = True) -> dict[str, typing.Any]:
         for key, value in d.items():
             value_excepted_type = annotations[key]
-            if type(value).__name__ != value_excepted_type:  # Потому что пайчарм ругается на isinstance
-                print([value_excepted_type])
-                if i and issubclass(value_excepted_type, FriendlyDict):
+            if type(value) != value_excepted_type:  # Потому что пайчарм ругается на isinstance
+                if issubclass(value_excepted_type, FriendlyDict) and value_excepted_type != FriendlyDict:
                     d[key] = value_excepted_type(value)
                     continue
                 if aggressive:
                     raise ValueError()
-        return FriendlyDict(d) if not type(d) == type(self) else d
+        return d
 
     def __init__(self, *args, aggressive: bool = True, **kwargs):
         if len(args) > 0:
-            if isinstance(first_arg := args[0], str):
+            first_arg = args[0]
+            if isinstance(first_arg, str):
                 first_arg = json.loads(first_arg)
             kwargs.update(first_arg)
 
-        print(kwargs := self._make_dict_available(kwargs,
-                                                  self.__class__.__annotations__,
-                                                  aggressive=aggressive))
+        kwargs = self._make_dict_available(kwargs,
+                                           typing.get_type_hints(self.__class__),
+                                           aggressive=aggressive)
 
         self.data = {}
         self.data.update(kwargs)
 
     def __getattribute__(self, item):
         try:
-            # print(super())
             return super().__getattribute__(item)
         except AttributeError as e:
             try:
                 return self.get(item)
             except KeyError:
                 raise e
+
+    # def __setattr__(self, key, value): # Maybe in future
+    #     try:
+    #         super().__setattr__(key, value)
+    #     except AttributeError as e:
+    #         try:
+    #             self[key] = value
+    #         except KeyError:
+    #             raise e
 
 
 class ExampleDict(FriendlyDict):
@@ -74,4 +83,4 @@ req_meta = RequestMeta({
 })
 
 print(req_meta)
-print(req_meta.interfaces.audio_player)
+print(req_meta.interfaces)
