@@ -82,7 +82,7 @@ def main():
             }
         })
         fsm.reset_state(user_id)
-        return json.dumps(res, ensure_ascii=False, indent=2)
+        return dict_to_json(res, ensure_ascii=False, indent=2)
 
     # res = []  # TODO: Заменить на сообщение об ошибке
     if fsm.get_state(user_id) is None and (command == 'что ты умеешь'):
@@ -116,7 +116,7 @@ def main():
             }
         })
         fsm.set_state(user_id, MainGroup.state_1)
-        return json.dumps(res, ensure_ascii=False, indent=2)
+        return dict_to_json(res, ensure_ascii=False, indent=2)
 
     elif (fsm.get_state(user_id) == MainGroup.state_1 or fsm.get_state(
             user_id) is None) and command == 'поехали':  # TODO: Добавить в условия номера стейтов, из которых можно сюда попасть (см. диаграмму)
