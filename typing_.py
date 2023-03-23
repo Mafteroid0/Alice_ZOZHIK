@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import dis
 import typing
 from collections import UserDict
 import json
@@ -64,23 +66,57 @@ class RequestMetaInterfaces(FriendlyDict):
     audio_player: dict
 
 
-class RequestMeta(FriendlyDict):
+class Meta(FriendlyDict):
     locale: str
     timezone: str
     client_id: str
     interfaces: RequestMetaInterfaces
 
 
-req_meta = RequestMeta({
-    "locale": "ru-RU",
-    "timezone": "Europe/Moscow",
-    "client_id": "ru.yandex.searchplugin/7.16 (none none; android 4.4.2)",
-    "interfaces": {
-        "screen": {},
-        "account_linking": {},
-        "audio_player": {}
-    }
-})
+class RequestField(FriendlyDict):
+    type: str
 
-print(req_meta)
-print(req_meta.interfaces)
+
+class User(FriendlyDict):
+    user_id: str
+    access_token: str
+
+
+class Application(FriendlyDict):
+    application_id: str
+
+
+class Session(FriendlyDict):
+    message_id: int
+    session_id: str
+    skill_id: str
+    user_id: str
+    user: User
+    application: Application
+    new: bool
+
+
+class YaSessionState(FriendlyDict):
+    value: int
+
+
+class YaUserState(FriendlyDict):
+    value: int
+
+
+class YaApplicationState(FriendlyDict):
+    value: int
+
+
+class YaState(FriendlyDict):
+    session: YaSessionState
+    user: YaUserState
+    application: YaApplicationState
+
+
+class AliceRequest(FriendlyDict):
+    meta: Meta
+    request: RequestField
+    session: Session
+    state: YaState
+    version: str
