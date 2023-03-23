@@ -75,6 +75,7 @@ class Meta(FriendlyDict):
 
 class RequestField(FriendlyDict):
     type: str
+    command: str
 
 
 class User(FriendlyDict):
@@ -114,7 +115,7 @@ class YaState(FriendlyDict):
     application: YaApplicationState
 
 
-class AliceRequest(FriendlyDict):
+class AliceUserRequest(FriendlyDict):
     meta: Meta
     request: RequestField
     session: Session
