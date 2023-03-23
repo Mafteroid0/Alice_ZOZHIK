@@ -29,8 +29,9 @@ class FriendlyDict(UserDict):
                 first_arg = json.loads(first_arg)
             try:
                 kwargs.update(first_arg)
-            except TypeError:
+            except TypeError as e:
                 print(first_arg)
+                raise e
 
         kwargs = self._make_dict_available(kwargs,
                                            typing.get_type_hints(self.__class__),
