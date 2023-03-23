@@ -1,14 +1,22 @@
 import json
 import random as rn
 
+import typing
 from flask import Flask, request
 
-from typing_ import AliceUserRequest
+from typing_ import FriendlyDict, AliceUserRequest
 from fsm import StatesGroup, State, FSM
 
 app = Flask(__name__)
 
 fsm = FSM()
+
+
+def dict_to_json(dict_: dict, *args, **kwargs):
+    for key, value in dict_.items():
+        if isinstance(value, FriendlyDict):
+            dict_[key] = value.to_dict()
+    return json.dumps(dict_, *args, **kwargs)
 
 
 class MainGroup(StatesGroup):  # Состояние по умолчанию это None, его не нужно явно определять
@@ -335,7 +343,7 @@ def main():
         })
         fsm.set_state(user_id, MainGroup.state_1)
 
-    return json.dumps(res, ensure_ascii=False, indent=2)
+    return dict_to_json(res, ensure_ascii=False, indent=2)
 
 
 app.run('localhost', port=5050, debug=True)
