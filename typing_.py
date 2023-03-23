@@ -11,18 +11,23 @@ class FriendlyDict(UserDict):
     @staticmethod
     def _make_dict_available(d: dict[str, typing.Any],
                              annotations: dict[str, type],
-                             aggressive: bool = True) -> dict[str, typing.Any]:
+                             aggressive: bool = False) -> dict[str, typing.Any]:
         for key, value in d.items():
-            value_excepted_type = annotations[key]
+            try:
+                value_excepted_type = annotations[key]
+            except KeyError:
+                if aggressive:
+                    raise TypeError(f'Dict item {key} not mentioned in the annotations')
+                continue
             if type(value) != value_excepted_type:  # Потому что пайчарм ругается на isinstance
                 if issubclass(value_excepted_type, FriendlyDict) and value_excepted_type != FriendlyDict:
                     d[key] = value_excepted_type(value)
                     continue
                 if aggressive:
-                    raise ValueError()
+                    raise TypeError(f'Dict item {key} have type {type(value)}, but excepted {value_excepted_type}')
         return d
 
-    def __init__(self, *args, aggressive: bool = True, **kwargs):
+    def __init__(self, *args, aggressive: bool = False, **kwargs):
         if len(args) > 0:
             first_arg = args[0]
             if isinstance(first_arg, str):
