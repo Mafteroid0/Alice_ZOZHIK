@@ -2,8 +2,6 @@ from __future__ import annotations
 import inspect
 import typing
 
-# from aiogram.dispatcher.filters.state import StatesGroup
-
 
 class State:
     def __init__(self, machine: FSM | None = None, state: str | None = None, group_name: str | None = None):

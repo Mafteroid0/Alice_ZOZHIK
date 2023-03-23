@@ -288,6 +288,7 @@ def main():
                     if len(_time1[1]) == 1:
                         _time1[1] = f'0{_time1[1]}'
                     return [f'{_time[0]}:{_time[1]}', f'{_time1[0]}:{_time1[1]}']
+
                 print(command)
                 print(timeplus(command))
                 answer_options = [
@@ -372,8 +373,6 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.SportBranch.Water.state_1)
-
-
     else:
         res.update({
             'response': {
