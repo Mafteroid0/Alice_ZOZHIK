@@ -27,7 +27,10 @@ class FriendlyDict(UserDict):
             first_arg = args[0]
             if isinstance(first_arg, str):
                 first_arg = json.loads(first_arg)
-            kwargs.update(first_arg)
+            try:
+                kwargs.update(first_arg)
+            except TypeError:
+                print(first_arg)
 
         kwargs = self._make_dict_available(kwargs,
                                            typing.get_type_hints(self.__class__),

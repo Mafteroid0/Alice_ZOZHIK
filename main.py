@@ -41,7 +41,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 @app.route('/alice', methods=['POST'])
 def main():
     end = False
-    req = AliceUserRequest(request.data)
+    req = AliceUserRequest(request.data.decode())
     command = req.request.command
     user_id = req.session.user.user_id
     res = {'version': req.version,
