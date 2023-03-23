@@ -185,6 +185,7 @@ def main():
                     }
                 })
                 fsm.set_state(user_id, MainGroup.SportBranch.Dream.state_1)
+                print('SON?')
 
             elif 'сил' in command:
                 answer_options = [
@@ -258,6 +259,46 @@ def main():
                     }
                 })
                 fsm.set_state(user_id, MainGroup.SportBranch.state_home)
+        elif fsm.get_state(user_id) in MainGroup.SportBranch.Dream:
+            print('SON')
+            if fsm.get_state(user_id) == MainGroup.SportBranch.Dream.state_1:
+                def timeplus(hhmm: str):
+                    _time = list(map(int, hhmm.split(':')))
+                    _time1 = _time.copy()
+
+                    _time[1] -= 45
+                    if _time[1] < 0:
+                        _time[0] -= 1
+                        _time[1] += 60
+                    _time[0] -= 7
+                    if _time[0] < 0:
+                        _time[0] += 24
+                    _time = list(map(str, _time))
+                    if len(_time[1]) == 1:
+                        _time[1] = f'0{_time[1]}'
+
+                    _time1[1] -= 15
+                    if _time1[1] < 0:
+                        _time1[0] -= 1
+                        _time1[1] += 60
+                    _time1[0] -= 9
+                    if _time1[0] < 0:
+                        _time1[0] += 24
+                    _time1 = list(map(str, _time1))
+                    if len(_time1[1]) == 1:
+                        _time1[1] = f'0{_time1[1]}'
+                    return [f'{_time[0]}:{_time[1]}', f'{_time1[0]}:{_time1[1]}']
+                print(command)
+                print(timeplus(command))
+                answer_options = [
+                    f'Чтобы после сна чувствовать себя полным энергией, Вам следует лечь спать в {timeplus(command)[0]} или в {timeplus(command)[1]}😴',
+
+                    f'Ложитесь спать в {timeplus(command)[0]} или в {timeplus(command)[1]}, чтобы утром чувствовать себя полным сил.']
+                res.update({
+                    'response': {
+                        'text': f'{answer_options[rn.randint(0, 1)]}'
+                    }
+                })
         elif fsm.get_state(user_id) in MainGroup.SportBranch.Water:
             if fsm.get_state(user_id) == MainGroup.SportBranch.Water.state_1:
                 st = command.replace(',', '.')
@@ -331,9 +372,7 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.SportBranch.Water.state_1)
-        elif fsm.get_state(user_id) in MainGroup.SportBranch.Dream:
-            if fsm.get_state(user_id) == MainGroup.SportBranch.Dream.state_1:
-                pass  # TODO: Сделай тут что нужно
+
 
     else:
         res.update({
