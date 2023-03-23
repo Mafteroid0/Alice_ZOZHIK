@@ -14,7 +14,7 @@ TIME_UNITS = {
 
 def today() -> datetime.datetime:
     time = datetime.datetime.today()
-    return time - datetime.timedelta(hours=time.hour, minutes=time.minute, seconds=time.second)
+    return time - datetime.timedelta(hours=time.hour, minutes=time.minute, seconds=time.second, microseconds=time.microsecond)
 
 
 def normalize(word: str) -> str:
@@ -34,6 +34,7 @@ def parse_time(text: str) -> datetime.datetime:
 
     num_buf: str | None = None
     txt_buf: str | None = None
+    minus_one: bool = False  # Надел на парсинг "Половина четвёртого"
     for word_is_time, word in map(lambda x: (is_real_time(x), x), text_l):
         if not word_is_time:
             word = normalize(word).lower()
@@ -80,9 +81,11 @@ def parse_time(text: str) -> datetime.datetime:
             txt_buf = None
             num_buf = None
             continue
-    print(txt_buf, num_buf)
+
+    if time == today():
+        time += datetime.timedelta(hours=int(num_buf))  # TODO: Опасное место, может вызывать много ошибок. Нужно проработать
 
     return time
 
 
-print(parse_time('4 часа дня'))
+print(parse_time('4'))
