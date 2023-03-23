@@ -24,6 +24,7 @@ class State:
         if other is None:
             return False
 
+        print(self.name, self.group_name)
         return self.name == other.name and \
             self.group_name == other.group_name and \
             self.machine == other.machine
@@ -86,7 +87,7 @@ class StatesGroupMeta(type):
             if isinstance(prop, State):
                 prop.machine = fsm
                 prop.name = name
-                prop.group_name = name
+                prop.group_name = cls._group_name
                 states.append(prop)
                 continue
             if inspect.isclass(prop) and issubclass(prop, StatesGroup):
