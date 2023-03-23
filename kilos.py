@@ -9,12 +9,15 @@ TIME_UNITS = {
     'вечер': 'h',
     'ночь': 'h',
     'день': 'h',
+    'пол': 'h',
+    'четверть': 'h'
 }
 
 
 def today() -> datetime.datetime:
     time = datetime.datetime.today()
-    return time - datetime.timedelta(hours=time.hour, minutes=time.minute, seconds=time.second, microseconds=time.microsecond)
+    return time - datetime.timedelta(hours=time.hour, minutes=time.minute, seconds=time.second,
+                                     microseconds=time.microsecond)
 
 
 def normalize(word: str) -> str:
@@ -27,22 +30,53 @@ def is_real_time(text: str) -> bool:
     return text.replace(':', '').replace('.', '').isdecimal() and text.count('.') <= 1 and text.count(':') <= 1
 
 
-def parse_time(text: str) -> datetime.datetime:
-    text_l = text.split()
+def clean(text: str) -> str:
+    for i in ('-', '.', ',', ':'):
+        text = text.replace(i, '')
+    return text.lower()
 
+
+def parse_time(text: str) -> datetime.datetime:
     time = today()
+
+    if text.count(':') in (1, 2):  # Оптимизировать вызовы count
+        if text.count(':') == 1:
+            text = f'{text}:00'
+        return time + to_timedelta(text)
+    elif text.count(':') > 2:
+        raise ValueError()
+
+    text_l = clean(text).split()
+
+    parsed: list[str] = []
 
     num_buf: str | None = None
     txt_buf: str | None = None
-    minus_one: bool = False  # Надел на парсинг "Половина четвёртого"
     for word_is_time, word in map(lambda x: (is_real_time(x), x), text_l):
+        parsed.append(word)
         if not word_is_time:
-            word = normalize(word).lower()
+            word = normalize(word)
             match word:
+                case 'ночь' | 'утро':
+                    if 'пол' in parsed or 'четверть' in parsed:
+                        print('-', datetime.timedelta(hours=12))
+                        time -= datetime.timedelta(hours=12)
                 case 'вечер' | 'день':
-                    time += datetime.timedelta(hours=12)
+                    if not ('пол' in parsed or 'четверть' in parsed):
+                        print('+', datetime.timedelta(hours=12))
+                        time += datetime.timedelta(hours=12)
                 case 'час':
                     continue
+                case 'пол':
+                    print('-', datetime.timedelta(minutes=30))
+                    time -= datetime.timedelta(minutes=30)
+                    print('+', datetime.timedelta(hours=12))
+                    time += datetime.timedelta(hours=12)
+                case 'четверть':
+                    print('-', datetime.timedelta(minutes=45))
+                    time -= datetime.timedelta(minutes=45)
+                    print('+', datetime.timedelta(hours=12))
+                    time += datetime.timedelta(hours=12)
 
         if word_is_time or num_buf is not None and txt_buf is not None:
             if num_buf is not None:
@@ -52,7 +86,8 @@ def parse_time(text: str) -> datetime.datetime:
                 num_buf = word
                 continue
 
-            time += to_timedelta(word, unit=TIME_UNITS[normalize(txt_buf)])
+            print('+', to_timedelta(f'{word}{TIME_UNITS[txt_buf]}'))
+            time += to_timedelta(f'{word}{TIME_UNITS[txt_buf]}')
             txt_buf = None
             num_buf = None
             continue
@@ -77,15 +112,18 @@ def parse_time(text: str) -> datetime.datetime:
                 txt_buf = word
                 continue
 
+            print('+', to_timedelta(f'{num_buf}{TIME_UNITS[word]}'))
             time += to_timedelta(f'{num_buf}{TIME_UNITS[word]}')
             txt_buf = None
             num_buf = None
             continue
 
-    if time == today():
-        time += datetime.timedelta(hours=int(num_buf))  # TODO: Опасное место, может вызывать много ошибок. Нужно проработать
+    # Тут хендлим всё, что не попадает под модель "число указатель" или "указатель число"
+    if time == today() and num_buf is not None:
+        time += datetime.timedelta(
+            hours=int(num_buf))  # TODO: Опасное место, может правоцировать много ошибок. Нужно проработать
 
     return time
 
 
-print(parse_time('4'))
+print(parse_time('3:00:00'))
