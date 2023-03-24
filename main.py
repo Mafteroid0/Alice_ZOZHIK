@@ -39,6 +39,57 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         class Cardio(StatesGroup):
             state_1 = State()
 
+            class Solo(StatesGroup):
+                state_1 = State()
+                start = State()
+                task1 = State()
+                task1_help = State()
+                task1_do = State()
+                task2 = State()
+                task2_help = State()
+                task2_do = State()
+                task3 = State()
+                task3_help = State()
+                task3_do = State()
+                task4 = State()
+                task4_help = State()
+                task4_do = State()
+                task5 = State()
+                task5_help = State()
+                task5_do = State()
+                task6 = State()
+                task6_help = State()
+                task6_do = State()
+                task7 = State()
+                task7_help = State()
+                task7_do = State()
+                task8 = State()
+                task8_help = State()
+                task8_do = State()
+                task9 = State()
+                task9_help = State()
+                task9_do = State()
+                end = State()
+
+            class Rope(StatesGroup):
+                start = State()
+                task1 = State()
+                task1_help = State()
+                task1_do = State()
+                task2 = State()
+                task2_help = State()
+                task2_do = State()
+                task3 = State()
+                task3_help = State()
+                task3_do = State()
+                task4 = State()
+                task4_help = State()
+                task4_do = State()
+                task5 = State()
+                task5_help = State()
+                task5_do = State()
+                end = State()
+
         class Zaradka(StatesGroup):
             state_1 = State()
 
@@ -75,7 +126,7 @@ def main():
                         'hide': True
                     },
                     {
-                        "title": "Поехали",
+                        "title": "Поехали!",
                         "hide": True
                     }
                 ]
@@ -132,23 +183,23 @@ def main():
                 'text': f'{answer_options[rn.randint(0, 1)]}',
                 'buttons': [
                     {
-                        'title': 'Зарядка',
+                        'title': 'Зарядка☀️',
                         'hide': True
                     },
                     {
-                        "title": "Кардиотренировка",
+                        "title": "Кардио🤸‍♂️ ",
                         "hide": True
                     },
                     {
-                        "title": "Силовая фуллбади тренировка",
+                        "title": "Силовая💪",
                         "hide": True
                     },
                     {
-                        'title': 'Фазы сна',
+                        'title': 'Фазы сна🛌',
                         'hide': True
                     },
                     {
-                        'title': 'Водный баланс',
+                        'title': 'Водный баланс🥤',
                         'hide': True
                     }
                 ]
@@ -202,14 +253,24 @@ def main():
 
             elif 'кард' in command:
                 answer_options = [
-                    'Замечательно! Кардиотренировки несут огромную пользу, а также поднимают настроение🥳. Выберите тип кардио:  классическая или со скакалкой.',
+                    'Замечательно! Кардиотренировки несут огромную пользу, а также поднимают настроениеее🥳. Выберите тип кардио:  классическая или со скакалкой.',
 
                     'Прекрасный выбор😍! Нагружая сердечно-сосудистую систему, мы укрепляем здоровье. Выберите тип кардио: классическая или со скакалкой.']
                 res.update({
                     'version': req['version'],
                     'session': req['session'],
                     'response': {
-                        'text': f'{answer_options[rn.randint(0, 1)]}'
+                        'text': f'{answer_options[rn.randint(0, 1)]}',
+                        'buttons': [
+                            {
+                                'title': 'Классическая',
+                                'hide': True
+                            },
+                            {
+                                'title': 'Со скакалкой',
+                                'hide': True
+                            }
+                        ]
                     }
                 })
                 fsm.set_state(user_id, MainGroup.SportBranch.Cardio.state_1)
@@ -236,23 +297,23 @@ def main():
                                 f'"Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс" ',
                         'buttons': [
                             {
-                                'title': 'Зарядка',
+                                'title': 'Зарядка☀️',
                                 'hide': True
                             },
                             {
-                                "title": "Кардиотренировка",
+                                "title": "Кардио🤸‍♂️ ",
                                 "hide": True
                             },
                             {
-                                "title": "Силовая фуллбади тренировка",
+                                "title": "Силовая💪",
                                 "hide": True
                             },
                             {
-                                'title': 'Фазы сна',
+                                'title': 'Фазы сна🛌',
                                 'hide': True
                             },
                             {
-                                'title': 'Водный баланс',
+                                'title': 'Водный баланс🥤',
                                 'hide': True
                             }
                         ]
@@ -260,7 +321,6 @@ def main():
                 })
                 fsm.set_state(user_id, MainGroup.SportBranch.state_home)
         elif fsm.get_state(user_id) in MainGroup.SportBranch.Dream:
-            print('SON')
             if fsm.get_state(user_id) == MainGroup.SportBranch.Dream.state_1:
                 def timeplus(hhmm: str):
                     _time = list(map(int, hhmm.split(':')))
@@ -341,23 +401,23 @@ def main():
                             'text': 'Чем займёмся на этот раз? Выбирайте: "Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".',
                             'buttons': [
                                 {
-                                    'title': 'Зарядка',
+                                    'title': 'Зарядка☀️',
                                     'hide': True
                                 },
                                 {
-                                    "title": "Кардиотренировка",
+                                    "title": "Кардио🤸‍♂️ ",
                                     "hide": True
                                 },
                                 {
-                                    "title": "Силовая фуллбади тренировка",
+                                    "title": "Силовая💪",
                                     "hide": True
                                 },
                                 {
-                                    'title': 'Фазы сна',
+                                    'title': 'Фазы сна🛌',
                                     'hide': True
                                 },
                                 {
-                                    'title': 'Водный баланс',
+                                    'title': 'Водный баланс🥤',
                                     'hide': True
                                 }
                             ]
@@ -373,6 +433,44 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.SportBranch.Water.state_1)
+        elif fsm.get_state(user_id) in MainGroup.SportBranch.Cardio:
+            if fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.state_1:
+                if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Хотите выполнить разминку перед тренировкой?',
+                            'buttons': [
+                                {
+                                    'title': 'Да✅',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Нет❌',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.state_1)
+                elif 'скак' in command or 'со' in command or 'втор' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Хотите выполнить разминку перед тренировкой?',
+                            'buttons': [
+                                {
+                                    'title': 'Да✅',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Нет❌',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Rope.state_1)
     else:
         res.update({
             'response': {
