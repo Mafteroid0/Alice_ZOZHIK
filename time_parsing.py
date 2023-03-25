@@ -130,4 +130,10 @@ def parse_time(text: str) -> datetime.datetime:
     return time
 
 
-# print(parse_time('пол 3'))
+@functools.cache
+def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6):
+    first_go_sleep_time = wake_up_time - datetime.timedelta(minutes=(limit + 1) * 90 + 15)
+    yield from (first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90 + 15) for i in range(limit))
+
+
+# print(*iter_go_sleep_time(today() + datetime.timedelta(hours=10), 10), sep='\n')
