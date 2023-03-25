@@ -102,6 +102,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 @app.route('/alice', methods=['POST'])
 def main():
     req = AliceUserRequest(request.data.decode())
+    motivation = ['Удачи!', 'Так держать!', 'Вы справитесь!']
     command = req.request.command
     user_id = req.session.user.user_id
     res = {'version': req.version,
@@ -208,6 +209,32 @@ def main():
         fsm.set_state(user_id, MainGroup.SportBranch.state_home)
 
     elif fsm.get_state(user_id) in MainGroup.SportBranch:
+        if 'вернуться' in command or 'назад' in command or 'основ' in command:
+            res.update({
+                'response': {
+                    'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
+                    'card': {
+                        'type': 'ItemsList',
+                        'header': {
+                            'text': 'Чем займёмся на этот раз?'
+                        },
+                        'items': [
+                            {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'},
+                             "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
+                            {"title": 'силовая треннировка', "button": {"text": 'силовая треннировка'},
+                             "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
+                            {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
+                             "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
+                            {"title": 'водный баланс', "button": {"text": 'водный баланс'},
+                             "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
+                            {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...',
+                             "image_id": '213044/e81c096eeedd03ef9a2e'}
+
+                        ]
+                    }
+                }
+            })
+            fsm.set_state(user_id, MainGroup.SportBranch.state_home)
         if fsm.get_state(user_id) == MainGroup.SportBranch.state_home:
             if 'вод' in command or 'баланс' in command:
                 answer_options = [
@@ -258,6 +285,19 @@ def main():
                     'session': req['session'],
                     'response': {
                         'text': f'{random.choice(answer_options)}',
+                        'card': {
+                            'type': 'ItemsList',
+                            'header': {
+                                'text': 'Выберите тип кардио'
+                            },
+                            'items': [
+                                {"title": 'Классическая', "button": {"text": 'Классическая'},
+                                 "image_id": '1533899/13a130643a2fcdac537a'},
+                                {"title": 'Со скакалкой', "button": {"text": 'Со скакалкой'},
+                                 "image_id": '1540737/fa873a0d82d3696c73ff'}
+
+                            ]
+                        },
                         'buttons': [
                             {
                                 'title': 'Классическая',
@@ -365,42 +405,14 @@ def main():
                                 'text': f'Не совсем поняла вас, повторите снова'
                             }
                         })
-            elif fsm.get_state(user_id) == MainGroup.SportBranch.Water.end:
-                if 'вернуться' in command or 'назад' in command or 'основ' in command:
-                    res.update({
-                        'response': {
-                            'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
-                            'card': {
-                                'type': 'ItemsList',
-                                'header': {
-                                    'text': 'Чем займёмся на этот раз?'
-                                },
-                                'items': [
-                                    {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'},
-                                     "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
-                                    {"title": 'силовая треннировка', "button": {"text": 'силовая треннировка'},
-                                     "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
-                                    {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
-                                     "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
-                                    {"title": 'водный баланс', "button": {"text": 'водный баланс'},
-                                     "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
-                                    {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...',
-                                     "image_id": '213044/e81c096eeedd03ef9a2e'}
-
-                                ]
-                            }
-                        }
-                    })
-                    fsm.set_state(user_id, MainGroup.SportBranch.state_home)
-
-                elif (fsm.get_state(user_id) == MainGroup.SportBranch.Water.end and (
-                        'ещё' in command or 'счит' in command)):
-                    res.update({
-                        'response': {
-                            'text': 'Скажите свой вес в килограммах'
-                        }
-                    })
-                    fsm.set_state(user_id, MainGroup.SportBranch.Water.state_1)
+            elif fsm.get_state(user_id) == MainGroup.SportBranch.Water.end and \
+                    ('ещё' in command or 'счит' in command):
+                res.update({
+                    'response': {
+                        'text': 'Скажите свой вес в килограммах'
+                    }
+                })
+                fsm.set_state(user_id, MainGroup.SportBranch.Water.state_1)
         elif fsm.get_state(user_id) in MainGroup.SportBranch.Cardio:
             if fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.state_1:
                 if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
@@ -428,16 +440,19 @@ def main():
                     res.update({
                         'response': {
                             'text': 'Хотите выполнить разминку перед тренировкой?',
-                            'buttons': [
-                                {
-                                    'title': 'Да✅',
-                                    'hide': True
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Хотите выполнить разминку?'
                                 },
-                                {
-                                    'title': 'Нет❌',
-                                    'hide': True
-                                }
-                            ]
+                                'items': [
+                                    {"title": 'Выполнить разминку', "button": {"text": 'Да'},
+                                     "image_id": '213044/9c13b9b997d78cde2579'},
+                                    {"title": 'Продолжить без разминки', "button": {"text": 'Нет'},
+                                     "image_id": '1540737/cc47e154fc7c83b6ba0d'}
+
+                                ]
+                            }
 
                         }
                     })
@@ -451,16 +466,19 @@ def main():
                                         ' не забудьте взять только хорошее настроение и правильный настрой. На каждое упражнение у вас уйдёт по 40 секунд. '
                                         'Во время тренировки вы можете изучить упражнение подробнее, выполнить его, или пропустить выполнение и перейти к следующему. '
                                         'Вы готовы начать, или рассмотрим другую тренировку?',
-                                'buttons': [
-                                    {
-                                        'title': 'Я готов💯',
-                                        'hide': True
+                                'card': {
+                                    'type': 'ItemsList',
+                                    'header': {
+                                        'text': 'Приступаем к выполнению кардиотренировки'
                                     },
-                                    {
-                                        'title': 'Выбрать другую тренировку🔧',
-                                        'hide': True
-                                    }
-                                ]
+                                    'items': [
+                                        {"title": 'Я готов', "button": {"text": 'Я готов'},
+                                         "image_id": '997614/72ab6692a3db3f4e3056'},
+                                        {"title": 'Выберем другую тренировку', "button": {"text": 'Выберем другую тренировку'},
+                                         "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                    ]
+                                }
 
                             }
                         })
@@ -471,30 +489,27 @@ def main():
                     if 'друг' in command or 'не' in command:
                         res.update({
                             'response': {
-                                'text': 'Чем займёмся на этот раз? Выбирайте: "Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".',
-                                'buttons': [
-                                    {
-                                        'title': 'Зарядка☀️',
-                                        'hide': True
-                                    },
-                                    {
-                                        "title": "Кардио🤸‍♂️ ",
-                                        "hide": True
-                                    },
-                                    {
-                                        "title": "Силовая💪",
-                                        "hide": True
-                                    },
-                                    {
-                                        'title': 'Фазы сна🛌',
-                                        'hide': True
-                                    },
-                                    {
-                                        'title': 'Водный баланс🥤',
-                                        'hide': True
-                                    }
+                            'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Чем займёмся на этот раз?'
+                                },
+                                'items': [
+                                    {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'},
+                                     "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
+                                    {"title": 'силовая треннировка', "button": {"text": 'силовая треннировка'},
+                                     "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
+                                    {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
+                                     "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
+                                    {"title": 'водный баланс', "button": {"text": 'водный баланс'},
+                                     "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
+                                    {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...',
+                                     "image_id": '213044/e81c096eeedd03ef9a2e'}
+
                                 ]
                             }
+                        }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.state_home)
                     elif 'да' in command or 'готов' in command:
@@ -502,6 +517,13 @@ def main():
                             'response': {
                                 'text': 'Начинаем первое упражнение!'
                                         'Поочерёдное сгибание ног с последующим подниманием коленей к груди',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение',
+                                    "description": 'текст текст текст текст текст текст текст текст текст текст текст '
+                                }
+                                ,
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -520,7 +542,7 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1)
-                elif fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.Solo.task1:
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task1, MainGroup.SportBranch.Cardio.Solo.task1_help):
                     if 'подробн' in command or 'объяс' in command:
                         res.update({
                             'response': {
@@ -540,6 +562,20 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+
+
     else:
         res.update({
             'response': {
