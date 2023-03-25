@@ -100,6 +100,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
 @app.route('/alice', methods=['POST'])
 def main():
+
     end = False
     req = AliceUserRequest(request.data.decode())
     command = req.request.command
@@ -189,11 +190,11 @@ def main():
                         'text': 'Чем сегодня займёмся? Выбирайте:'
                     },
                     'items': [
-                        {"title": 'Кардиотренировка', "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a', "text": 'кардио'},
-                        {"title": 'Силовая тренировка', "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3', "text": 'силовая'},
-                        {"title": 'Утренняя зарядка', "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624', "text": 'зарядка'},
-                        {"title": 'Водный баланс', "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7', "text": 'водный баланс'},
-                        {"title": 'Фазы сна', "description": 'описание...', "image_id": '213044/e81c096eeedd03ef9a2e', "text": 'фазы сна'}
+                        {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'}, "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
+                        {"title": 'силовая треннировка', "button": {"text": 'силовая треннировка'}, "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
+                        {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'}, "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
+                        {"title": 'водный баланс', "button": {"text": 'водный баланс'}, "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
+                        {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...', "image_id": '213044/e81c096eeedd03ef9a2e'}
 
                     ]
                 }
@@ -295,11 +296,11 @@ def main():
                         'text': 'Чем займёмся на этот раз?'
                     },
                     'items': [
-                        {"title": 'кардиотреннировка', "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a', "text": 'кардио'},
-                        {"title": 'силовая треннировка', "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3', "text": 'силовая'},
-                        {"title": 'утренняя зарядка', "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624', "text": 'зарядка'},
-                        {"title": 'водный баланс', "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7', "text": 'водный баланс'},
-                        {"title": 'фазы сна', "description": 'описание...', "image_id": '213044/e81c096eeedd03ef9a2e', "text": 'фазы сна'}
+                        {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'}, "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
+                        {"title": 'силовая треннировка', "button": {"text": 'силовая треннировка'}, "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
+                        {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'}, "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
+                        {"title": 'водный баланс', "button": {"text": 'водный баланс'}, "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
+                        {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...', "image_id": '213044/e81c096eeedd03ef9a2e'}
 
                     ]
                 }
@@ -391,11 +392,11 @@ def main():
                         'text': 'Чем займёмся на этот раз?'
                     },
                     'items': [
-                        {"title": 'кардиотреннировка', "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a', "text": 'кардио'},
-                        {"title": 'силовая треннировка', "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3', "text": 'силовая'},
-                        {"title": 'утренняя зарядка', "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624', "text": 'зарядка'},
-                        {"title": 'водный баланс', "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7', "text": 'водный баланс'},
-                        {"title": 'фазы сна', "description": 'описание...', "image_id": '213044/e81c096eeedd03ef9a2e', "text": 'фазы сна'}
+                        {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'}, "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
+                        {"title": 'силовая треннировка', "button": {"text": 'силовая треннировка'}, "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
+                        {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'}, "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
+                        {"title": 'водный баланс', "button": {"text": 'водный баланс'}, "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
+                        {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...', "image_id": '213044/e81c096eeedd03ef9a2e'}
 
                     ]
                 }
