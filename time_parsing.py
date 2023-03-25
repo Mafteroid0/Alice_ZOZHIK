@@ -4,6 +4,7 @@ import functools
 import pymorphy2
 from pandas import to_timedelta
 
+
 morph = pymorphy2.MorphAnalyzer(lang='ru')
 TIME_UNITS = {
     'утро': 'h',
@@ -41,9 +42,24 @@ def clean(text: str) -> str:
     return text.lower()
 
 
+class MyTime(datetime.datetime):
+    @classmethod
+    def fromdatetime(cls, dt: datetime.datetime):
+        return cls.fromtimestamp(dt.timestamp())
+
+    def __add__(self, other):
+        print('+', other)
+        return super().__add__(other)
+
+    def __sub__(self, other):
+        print('-', other)
+        return super().__sub__(other)
+
+
 def parse_time(text: str) -> datetime.datetime:
     try:
-        time = today() + datetime.timedelta(hours=12)
+        time = MyTime.fromdatetime(today())
+        print('t', time)
 
         text = text.replace('-', ':')
         if text.count(':') in (1, 2):  # Оптимизировать вызовы count
@@ -52,6 +68,8 @@ def parse_time(text: str) -> datetime.datetime:
             return time + to_timedelta(text)
         elif text.count(':') > 2:
             raise ValueError()
+
+        time += datetime.timedelta(hours=12)
 
         temp = [[]]
         index = 0
@@ -124,6 +142,9 @@ def parse_time(text: str) -> datetime.datetime:
                 num_buf: int = int(num_buf)  # TODO: Опасное место, может правоцировать много ошибок. Нужно проработать
                 time += datetime.timedelta(
                     hours=num_buf)
+
+            if time.hour in (12, 0) and time.day == today().day + 1:
+                time -= datetime.timedelta(hours=12)
     except BaseException as e:
         raise RuntimeError(f'Some error occurred while parsing time from text: {e}')
 
@@ -136,4 +157,22 @@ def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6):
     yield from (first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90 + 15) for i in range(limit))
 
 
-# print(*iter_go_sleep_time(today() + datetime.timedelta(hours=10), 10), sep='\n')
+time_parsing_testcases = {
+    'Полдень': today() + datetime.timedelta(hours=12),
+    'Полночь': today(),
+    '7 утра': today() + datetime.timedelta(hours=7),
+    '7 часов утра': today() + datetime.timedelta(hours=7),
+    '3 ночи': today() + datetime.timedelta(hours=3),
+    '3 дня': today() + datetime.timedelta(hours=15),
+    'пол 3': today() + datetime.timedelta(hours=14, minutes=30),
+    'четверть 3': today() + datetime.timedelta(hours=14, minutes=15),
+    '3': today() + datetime.timedelta(hours=15),
+    '12:32': today() + datetime.timedelta(hours=12, minutes=32),
+    '12-32': today() + datetime.timedelta(hours=12, minutes=32),
+    '3 часа 10 минут': today() + datetime.timedelta(hours=15, minutes=10),
+    '3 часа и 10 минут': today() + datetime.timedelta(hours=15, minutes=10),
+    '3 часа ночи и 10 минут': today() + datetime.timedelta(hours=3, minutes=10)
+}
+
+for inp, excepting in time_parsing_testcases.items():
+    assert (out := parse_time(inp)) == excepting, f'With input {inp} excepted output {excepting}, but getted {out}'

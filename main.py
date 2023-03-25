@@ -540,8 +540,6 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1_help)
-
-
     else:
         res.update({
             'response': {
