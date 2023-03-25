@@ -494,7 +494,82 @@ def main():
 
                             }
                         })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.start)
+                    elif 'да' in command or 'конечн' in command:
+                        pass # TODO: Прописать ветку разминки
+                elif  fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.Solo.start:
+                    if 'друг' in command or 'не' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Чем займёмся на этот раз? Выбирайте: "Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".',
+                                'buttons': [
+                                    {
+                                        'title': 'Зарядка☀️',
+                                        'hide': True
+                                    },
+                                    {
+                                        "title": "Кардио🤸‍♂️ ",
+                                        "hide": True
+                                    },
+                                    {
+                                        "title": "Силовая💪",
+                                        "hide": True
+                                    },
+                                    {
+                                        'title': 'Фазы сна🛌',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Водный баланс🥤',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.state_home)
+                    elif 'да' in command or 'готов' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Начинаем первое упражнение!'
+                                        'Поочерёдное сгибание ног с последующим подниманием коленей к груди',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
 
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1)
+                elif fsm.get_state(user_id)  == MainGroup.SportBranch.Cardio.Solo.task1:
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Для первого упражнения встаньте прямо, соберите ноги вместе, согните руки. '
+                                        'Поднимите одно колено к груди. Опустите ногу и повторите на другую сторону. Выполняйте руками движения бегуна.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1_help)
 
 
     else:
