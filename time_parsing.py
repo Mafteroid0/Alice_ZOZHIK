@@ -157,7 +157,7 @@ def parse_time(text: str) -> datetime.datetime:
 
 
 @functools.cache
-def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6) -> typing.Generator[datetime.datetime]:
+def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6) -> typing.Iterator[datetime.datetime]:
     first_go_sleep_time = wake_up_time - datetime.timedelta(minutes=(limit + 1) * 90 + 15)
     yield from (first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90) for i in range(limit))
 
@@ -182,4 +182,4 @@ time_parsing_testcases = {
 for inp, excepting in time_parsing_testcases.items():
     assert (out := parse_time(inp)) == excepting, f'With input {inp} excepted output {excepting}, but getted {out}'
 
-print(*iter_go_sleep_time(today() + datetime.timedelta(hours=12)), sep='\n')
+# print([*iter_go_sleep_time(parse_time('12 часов дня'))][0])
