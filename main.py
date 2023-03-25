@@ -370,7 +370,7 @@ def main():
                     'response': {
                         'text': f'{random.choice(answer_options)}'
                     }
-                })
+                }) # TODO: Обновить стейт (см. miro)
         elif fsm.get_state(user_id) in MainGroup.SportBranch.Water:
             if fsm.get_state(user_id) == MainGroup.SportBranch.Water.state_1:
                 st = command.replace(',', '.')
@@ -384,7 +384,7 @@ def main():
                             f'Вам необходимо {float(el) * 30} миллилитров воды 🌊 в день, для хорошего метаболизма. ']
                         res.update({
                             'response': {
-                                'text': f'{random.choice(answer_options)}',
+                                'text': f'{random.choice(answer_options)}', # TODO: Заменить на секс кнопки
                                 'buttons': [
                                     {
                                         'title': 'Рассчитать ещё раз',
@@ -405,8 +405,7 @@ def main():
                                 'text': f'Не совсем поняла вас, повторите снова'
                             }
                         })
-            elif fsm.get_state(user_id) == MainGroup.SportBranch.Water.end and \
-                    ('ещё' in command or 'счит' in command):
+            elif fsm.get_state(user_id) == MainGroup.SportBranch.Water.end and ('ещё' in command or 'счит' in command): # TODO: Добавить стейт из сна
                 res.update({
                     'response': {
                         'text': 'Скажите свой вес в килограммах'
