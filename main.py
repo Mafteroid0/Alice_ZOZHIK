@@ -102,6 +102,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 @app.route('/alice', methods=['POST'])
 def main():
     req = AliceUserRequest(request.data.decode())
+    motivation = ['Удачи!', 'Так держать!', 'Вы справитесь!']
     command = req.request.command
     user_id = req.session.user.user_id
     res = {'version': req.version,
@@ -284,6 +285,19 @@ def main():
                     'session': req['session'],
                     'response': {
                         'text': f'{random.choice(answer_options)}',
+                        'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Выберите тип кардио'
+                                },
+                                'items': [
+                                    {"title": 'Классическая', "button": {"text": 'Классическая'},
+                                     "image_id": '1533899/13a130643a2fcdac537a'},
+                                    {"title": 'Со скакалкой', "button": {"text": 'Со скакалкой'},
+                                     "image_id": '1540737/fa873a0d82d3696c73ff'}
+
+                                ]
+                            },
                         'buttons': [
                             {
                                 'title': 'Классическая',
@@ -516,22 +530,22 @@ def main():
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
-                                        'hide': False
+                                        'hide': True
                                     },
                                     {
                                         'title': 'подробнее📄',
-                                        'hide': False
+                                        'hide': True
                                     },
                                     {
                                         'title': 'Пропустить⏭',
-                                        'hide': False
+                                        'hide': True
                                     }
                                 ]
 
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1)
-                elif fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.Solo.task1:
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task1, MainGroup.SportBranch.Cardio.Solo.task1_help):
                     if 'подробн' in command or 'объяс' in command:
                         res.update({
                             'response': {
@@ -551,8 +565,18 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1_help)
-                        if 'выполн' in command or 'дел' in command:
-                            res.update()
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
 
 
     else:
