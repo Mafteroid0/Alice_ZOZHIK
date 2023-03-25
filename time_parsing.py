@@ -1,9 +1,11 @@
 import datetime
 import functools
+import typing
 
 import pymorphy2
 from pandas import to_timedelta
 
+DEBUG = False
 
 morph = pymorphy2.MorphAnalyzer(lang='ru')
 TIME_UNITS = {
@@ -48,18 +50,21 @@ class MyTime(datetime.datetime):
         return cls.fromtimestamp(dt.timestamp())
 
     def __add__(self, other):
-        print('+', other)
+        if DEBUG:
+            print('+', other)
         return super().__add__(other)
 
     def __sub__(self, other):
-        print('-', other)
+        if DEBUG:
+            print('-', other)
         return super().__sub__(other)
 
 
 def parse_time(text: str) -> datetime.datetime:
     try:
         time = MyTime.fromdatetime(today())
-        print('t', time)
+        if DEBUG:
+            print('t', time)
 
         text = text.replace('-', ':')
         if text.count(':') in (1, 2):  # Оптимизировать вызовы count
@@ -152,9 +157,9 @@ def parse_time(text: str) -> datetime.datetime:
 
 
 @functools.cache
-def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6):
+def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6) -> typing.Generator[datetime.datetime]:
     first_go_sleep_time = wake_up_time - datetime.timedelta(minutes=(limit + 1) * 90 + 15)
-    yield from (first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90 + 15) for i in range(limit))
+    yield from (first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90) for i in range(limit))
 
 
 time_parsing_testcases = {
@@ -176,3 +181,5 @@ time_parsing_testcases = {
 
 for inp, excepting in time_parsing_testcases.items():
     assert (out := parse_time(inp)) == excepting, f'With input {inp} excepted output {excepting}, but getted {out}'
+
+print(*iter_go_sleep_time(today() + datetime.timedelta(hours=12)), sep='\n')
