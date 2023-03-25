@@ -60,7 +60,7 @@ class MyTime(datetime.datetime):
         return super().__sub__(other)
 
 
-def parse_time(text: str) -> datetime.datetime:
+def parse_time(text: str) -> datetime.datetime: # TODO: Сделать чтобы парсило "час дня"
     try:
         time = MyTime.fromdatetime(today())
         if DEBUG:
@@ -159,7 +159,12 @@ def parse_time(text: str) -> datetime.datetime:
 @functools.cache
 def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6) -> typing.Iterator[datetime.datetime]:
     first_go_sleep_time = wake_up_time - datetime.timedelta(minutes=(limit + 1) * 90 + 15)
-    yield from (first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90) for i in range(limit))
+    print(f'{wake_up_time=}')
+    print(f'{first_go_sleep_time=}')
+    print(f'{limit=}')
+    for i in range(limit):
+        print(f'{first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90)=}')
+        yield first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90)
 
 
 time_parsing_testcases = {
