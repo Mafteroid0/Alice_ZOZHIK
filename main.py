@@ -33,9 +33,6 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         state_1 = State()
         end = State()
 
-        class Dream(StatesGroup):
-            state_1 = State()
-            end = State()
 
     class Sport(StatesGroup):
         class Wrap(StatesGroup):
@@ -275,7 +272,7 @@ def main():
         })
         fsm.set_state(user_id, MainGroup.Sport.state_home)
 
-    elif fsm.get_state(user_id) in MainGroup.Sport:
+    elif fsm.get_state(user_id) in MainGroup:
         if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
             res.update({
                 'response': {
@@ -457,6 +454,13 @@ def main():
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Dream.end)
+            elif fsm.get_state(user_id) == MainGroup.Dream.end:
+                res.update({
+                    'response': {
+                        'text': 'Во сколько вы хотите проснуться?'
+                    }
+                })
+                fsm.set_state(user_id, MainGroup.Dream.state_1)
         elif fsm.get_state(user_id) in MainGroup.Water:
             if fsm.get_state(user_id) == MainGroup.Water.state_1:
                 st = command.replace(',', '.')
