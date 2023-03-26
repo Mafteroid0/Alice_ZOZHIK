@@ -1604,6 +1604,55 @@ def main():
                         elif 'да' in command or 'конечн' in command:
                             pass  # TODO: Прописать ветку разминки
 
+        elif fsm.get_state(user_id) in MainGroup.Sport.Zaradka:
+            if fsm.get_state(user_id) == MainGroup.Sport.Zaradka.state_1:
+                if 'пят' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Хотите выполнить разминку перед тренировкой?',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Хотите выполнить разминку?'
+                                },
+                                'items': [
+                                    {"title": 'Выполнить разминку', "button": {"text": 'Да'},
+                                     "image_id": '213044/9c13b9b997d78cde2579'},
+                                    {"title": 'Продолжить без разминки', "button": {"text": 'Нет'},
+                                     "image_id": '1540737/cc47e154fc7c83b6ba0d'}
+
+                                ]
+                            }
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.state_1)
+                elif 'дес' in command:
+                    answer_options = []
+                    res.update({
+                        'response': {
+                            'text': 'Давайте приступим к кардиотренировке. Для нее вам не понадобится дополнительный инвентарь,'
+                                    ' не забудьте взять только хорошее настроение и правильный настрой. На каждое упражнение у вас уйдёт по 40 секунд. '
+                                    'Во время тренировки вы можете изучить упражнение подробнее, выполнить его, или пропустить выполнение и перейти к следующему. '
+                                    'Вы готовы начать, или рассмотрим другую тренировку?',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Начинаем зарядку!'
+                                },
+                                'items': [
+                                    {"title": 'Я готов', "button": {"text": 'Я готов'},
+                                     "image_id": '997614/72ab6692a3db3f4e3056'},
+                                    {"title": 'Выберем другую тренировку',
+                                     "button": {"text": 'Выберем другую тренировку'},
+                                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                ]
+                            }
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.start)
 
 
     else:
