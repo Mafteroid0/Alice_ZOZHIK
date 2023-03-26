@@ -318,7 +318,7 @@ def main():
                 })
                 fsm.set_state(user_id, MainGroup.Water.state_1)
 
-            elif 'сон' in command or 'сна' in command or 'фаз' in command:
+            elif 'сон' in command or 'сна' in command or 'фаз' in command: # TODO: Пофиксить сон. Не работает
                 res.update({
                     'response': {
                         'text': 'Здорово🥰 , что Вы решили следить за своим сном, так как он играет важную роль в нашей жизни 🛌.'
