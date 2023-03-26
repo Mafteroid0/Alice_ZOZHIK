@@ -33,6 +33,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
         class Dream(StatesGroup):
             state_1 = State()
+            end = State()
 
         class Power(StatesGroup):
             state_1 = State()
@@ -71,6 +72,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task9_help = State()
                 task9_do = State()
                 end = State()
+                final = State()
 
             class Rope(StatesGroup):
                 state_1 = State()
@@ -91,6 +93,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task5_help = State()
                 task5_do = State()
                 end = State()
+                final = State()
 
         class Zaradka(StatesGroup):
             state_1 = State()
@@ -209,7 +212,7 @@ def main():
         fsm.set_state(user_id, MainGroup.SportBranch.state_home)
 
     elif fsm.get_state(user_id) in MainGroup.SportBranch:
-        if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
+        if 'верн' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command or (fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.Solo.end and 'дргу' in command):
             res.update({
                 'response': {
                     'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
@@ -235,7 +238,7 @@ def main():
                 }
             })
             fsm.set_state(user_id, MainGroup.SportBranch.state_home)
-        if fsm.get_state(user_id) == MainGroup.SportBranch.state_home:
+        elif fsm.get_state(user_id) == MainGroup.SportBranch.state_home:
             if 'вод' in command or 'баланс' in command:
                 answer_options = [
                     'Вода жизненно необходима каждому человеку, а употребление её дневной нормы улучшает метаболизм. Я подскажу, какое минимальное количество Вам необходимо выпивать в течение дня. Подскажите, пожалуйста, Ваш вес.',
@@ -335,7 +338,7 @@ def main():
                         'card': {
                             'type': 'ItemsList',
                             'header': {
-                                'text': 'Чем займёмся на этот раз?'
+                                'text': 'Давайте попробуем заново выбрать занятие!'
                             },
                             'items': [
                                 {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'},
@@ -368,9 +371,23 @@ def main():
                     f'чтобы утром чувствовать себя полным сил. Не забудьте завести будильник!']
                 res.update({
                     'response': {
-                        'text': f'{random.choice(answer_options)}'
+                        'text': f'{random.choice(answer_options)}',
+                        'card': {
+                            'type': 'ItemsList',
+                            'header': {
+                                'text': f'{random.choice(answer_options)}'
+                            },
+                            'items': [
+                                {"title": 'Рассчитать ещё раз', 'button': {"text": 'Рассчитать ещё раз'},
+                                 "description": 'описание...', "image_id": '997614/15f977696a281092bcc0'},
+                                {"title": 'Вернуться к основному списку', "button": {"text": 'Назад'},
+                                 "description": 'описание...', "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                            ]
+                        }
                     }
-                }) # TODO: Обновить стейт (см. miro)
+                })
+                fsm.set_state(user_id, MainGroup.SportBranch.Dream.end)
         elif fsm.get_state(user_id) in MainGroup.SportBranch.Water:
             if fsm.get_state(user_id) == MainGroup.SportBranch.Water.state_1:
                 st = command.replace(',', '.')
@@ -384,17 +401,20 @@ def main():
                             f'Вам необходимо {float(el) * 30} миллилитров воды 🌊 в день, для хорошего метаболизма. ']
                         res.update({
                             'response': {
-                                'text': f'{random.choice(answer_options)}', # TODO: Заменить на секс кнопки
-                                'buttons': [
-                                    {
-                                        'title': 'Рассчитать ещё раз',
-                                        'hide': True
+                                'text': f'{random.choice(answer_options)}',
+                                'card': {
+                                    'type': 'ItemsList',
+                                    'header': {
+                                        'text': f'{random.choice(answer_options)}'
                                     },
-                                    {
-                                        "title": "Вернуться к основному списку",
-                                        "hide": True
-                                    }
-                                ]
+                                    'items': [
+                                        {"title": 'Рассчитать ещё раз', 'button': {"text": 'Рассчитать ещё раз'},
+                                         "description": 'описание...', "image_id": '997614/15f977696a281092bcc0'},
+                                        {"title": 'Вернуться к основному списку', "button": {"text": 'Назад'},
+                                         "description": 'описание...', "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                    ]
+                                }
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Water.end)
@@ -405,13 +425,14 @@ def main():
                                 'text': f'Не совсем поняла вас, повторите снова'
                             }
                         })
-            elif fsm.get_state(user_id) == MainGroup.SportBranch.Water.end and ('ещё' in command or 'счит' in command): # TODO: Добавить стейт из сна
-                res.update({
-                    'response': {
-                        'text': 'Скажите свой вес в килограммах'
-                    }
-                })
-                fsm.set_state(user_id, MainGroup.SportBranch.Water.state_1)
+            elif fsm.get_state(user_id) == MainGroup.SportBranch.Water.end:
+                if 'ещё' in command or 'счит' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Скажите свой вес в килограммах'
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.SportBranch.Water.state_1)
         elif fsm.get_state(user_id) in MainGroup.SportBranch.Cardio:
             if fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.state_1:
                 if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
@@ -485,8 +506,8 @@ def main():
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.start)
                     elif 'да' in command or 'конечн' in command:
                         pass  # TODO: Прописать ветку разминки
-                elif fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.Solo.start:
-                    if 'друг' in command or 'не' in command:
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.start, MainGroup.SportBranch.Cardio.Solo.final):
+                    if 'друг' in command or 'не' in command or 'завер' in command:
                         res.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
@@ -513,7 +534,7 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.state_home)
-                    elif 'да' in command or 'готов' in command:
+                    elif 'да' in command or 'готов' in command or 'повтор' in command:
                         res.update({
                             'response': {
                                 'text': 'Начинаем первое упражнение!'
@@ -543,7 +564,7 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1)
-                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task1, MainGroup.SportBranch.Cardio.Solo.task1_help):
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task1, MainGroup.SportBranch.Cardio.Solo.task1_help, MainGroup.SportBranch.Cardio.Solo.task1_do) or (fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.Solo.final and 'повтор' in command):
                     if 'подробн' in command or 'объяс' in command:
                         res.update({
                             'response': {
@@ -576,36 +597,578 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task1_do)
-                elif fsm.get_state(user_id) in MainGroup.SportBranch.Cardio.Solo.task1_do and ('след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
-                        'response': {
-                            'text': 'Увеличиваем интенсивность тренировки. Выполняем энергичные прыжки с поднятием рук.',
-                            'card': {
-                                'type': 'BigImage',
-                                "image_id": '1540737/75d7fd59f370ba0f15f3',
-                                "title": 'Упражнение 1',
-                                "description": 'Энергичные прыжки с поднятием рук.'
-                            }
-                            ,
-                            'buttons': [
-                                {
-                                    'title': 'Выполнить🔥',
-                                    'hide': True
-                                },
-                                {
-                                    'title': 'подробнее📄',
-                                    'hide': True
-                                },
-                                {
-                                    'title': 'Пропустить⏭',
-                                    'hide': True
+                    elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task1_do, MainGroup.SportBranch.Cardio.Solo.task1_help, MainGroup.SportBranch.Cardio.Solo.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Увеличиваем интенсивность тренировки. Выполняем энергичные прыжки с поднятием рук.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 2',
+                                    "description": 'Энергичные прыжки с поднятием рук.'
                                 }
-                            ]
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
 
-                        }
-                    })
-                    fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task2)
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task2)
 
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task2, MainGroup.SportBranch.Cardio.Solo.task2_help, MainGroup.SportBranch.Cardio.Solo.task2_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': ' Стопы поставьте плотно вместе, а руки вдоль туловища. Выполните два движения вместе:'
+                                        ' в прыжке расставьте широко ноги и вытяните вверх руки, сводя их вместе над головой. Прыжком вернитесь в начальную позу.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task2_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task2_do)
+                    elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task2_do, MainGroup.SportBranch.Cardio.Solo.task2_help, MainGroup.SportBranch.Cardio.Solo.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'У вас хорошо получается! Следующее упражнения - бег в планке',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 3',
+                                    "description": 'Бег в планке'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task3)
+
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task3, MainGroup.SportBranch.Cardio.Solo.task3_help, MainGroup.SportBranch.Cardio.Solo.task3_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': ' Для следующего упражнения встаньте в планку на прямых руках. Начните имитировать бег – по очереди подтягивайте колени к груди. Ноги ставьте на носки, линию позвоночника не меняйте.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task3_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task3_do)
+                    elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task3_do, MainGroup.SportBranch.Cardio.Solo.task3_help, MainGroup.SportBranch.Cardio.Solo.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Приступаем к прыжкам в планке',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 4',
+                                    "description": 'Прыжки в планке'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task4)
+
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task4, MainGroup.SportBranch.Cardio.Solo.task4_help, MainGroup.SportBranch.Cardio.Solo.task4_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': ' Продолжайте стоять в планке. Для нового задания оттолкнитесь носками, разведите ноги в стороны, легким прыжком соберитесь обратно. Не прогибайтесь в спине, взгляд направлен вперед-вниз.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task4_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task4_do)
+                    elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task4_do, MainGroup.SportBranch.Cardio.Solo.task4_help, MainGroup.SportBranch.Cardio.Solo.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Вы хорошо справляетесь! Далее прыжки из приседа. ',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 5',
+                                    "description": 'прыжки из приседа.'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task5)
+
+                elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task5, MainGroup.SportBranch.Cardio.Solo.task5_help, MainGroup.SportBranch.Cardio.Solo.task5_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Начните из положения стоя, ноги на ширине плеч. Выполните приседание и выведите руки вперед. Выпрыгивайте, одновременно выпрямив руки.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task5_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task5_do)
+                    elif fsm.get_state(user_id) in (MainGroup.SportBranch.Cardio.Solo.task5_do, MainGroup.SportBranch.Cardio.Solo.task5_help, MainGroup.SportBranch.Cardio.Solo.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Не сбавляем темп тренировки 💪 Далее на очереди упражнение бёрпи. ',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 6',
+                                    "description": 'упражнение бёрпи.'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task6)
+
+                elif fsm.get_state(user_id) in (
+                MainGroup.SportBranch.Cardio.Solo.task6, MainGroup.SportBranch.Cardio.Solo.task6_help,
+                MainGroup.SportBranch.Cardio.Solo.task6_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Подпрыгните, отведите ноги назад и опустите таз, чтобы получилась поза планки. Соберитесь обратно прыжком, выпрямитесь, руки вытяните вверх.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task6_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task6_do)
+                    elif fsm.get_state(user_id) in (
+                    MainGroup.SportBranch.Cardio.Solo.task6_do, MainGroup.SportBranch.Cardio.Solo.task6_help,
+                    MainGroup.SportBranch.Cardio.Solo.task6) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Переведите дух и выполняйте прыжки с выпадами.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 7',
+                                    "description": 'Прыжки с выпадами'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task7)
+
+                elif fsm.get_state(user_id) in (
+                        MainGroup.SportBranch.Cardio.Solo.task7, MainGroup.SportBranch.Cardio.Solo.task7_help,
+                        MainGroup.SportBranch.Cardio.Solo.task7_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Встаньте в исходное положение, одна нога впереди, другая назад. Держите руки в готовом положении,'
+                                        ' согнув локти под углом 90 градусов, одну руку перед собой, а другую назад, чередуя руки и ноги. Например,'
+                                        ' если ваша левая нога ведущая, поставьте правую впереди.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task7_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task7_do)
+                    elif fsm.get_state(user_id) in (
+                            MainGroup.SportBranch.Cardio.Solo.task7_do, MainGroup.SportBranch.Cardio.Solo.task7_help,
+                            MainGroup.SportBranch.Cardio.Solo.task7) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'А сейчас выполняем плиометрический боковой выпад.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 8',
+                                    "description": 'Плиометрический боковой выпад.'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task8)
+
+                elif fsm.get_state(user_id) in (
+                        MainGroup.SportBranch.Cardio.Solo.task8, MainGroup.SportBranch.Cardio.Solo.task8_help,
+                        MainGroup.SportBranch.Cardio.Solo.task8_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Примите классическую стойку. Сделайте широкий шаг правой ногой в сторону, перенесите на нее вес тела, опустите таз до параллели пола. Оттолкнитесь обратно, '
+                                        'перенесите вес тела обратно на левую ногу и подпрыгните вверх. Правую ногу не опускайте до конца, а притяните к груди, согнув в колене.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task8_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task8_do)
+                    elif fsm.get_state(user_id) in (
+                            MainGroup.SportBranch.Cardio.Solo.task8_do, MainGroup.SportBranch.Cardio.Solo.task8_help,
+                            MainGroup.SportBranch.Cardio.Solo.task8) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'И завершающее упражнение! Сделаем выпрыгивания из полувыпада.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 9',
+                                    "description": 'Выпрыгивания из полувыпада.'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task9)
+
+                elif fsm.get_state(user_id) in (
+                        MainGroup.SportBranch.Cardio.Solo.task9, MainGroup.SportBranch.Cardio.Solo.task9_help,
+                        MainGroup.SportBranch.Cardio.Solo.task9_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Выполнив небольшой шаг назад, опуститесь в полувыпад. '
+                                        'Затем оттолкнитесь и в прыжке поднимите колено отведенной ноги до уровня груди. '
+                                        'Вернитесь в полувыпад и повторите. Руки двигаются вдоль тела как во время бег.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task9_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.task9_do)
+                    elif fsm.get_state(user_id) in (
+                            MainGroup.SportBranch.Cardio.Solo.task9_do, MainGroup.SportBranch.Cardio.Solo.task9_help,
+                            MainGroup.SportBranch.Cardio.Solo.task9) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        answer_options = ['Заминка нужна, чтобы снизить до нормального уровня частоту сердечных сокращений. Хотите её выпонить?',
+                                          'Будет здорово выполнить заминку! Заминка снижает склонность к закрепощению мышц после нагрузки.  Хотели бы Вы приступить к её выполнению?']
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(answer_options)}',
+                                'card': {
+                                    'type': 'ItemsList',
+                                    'header': {
+                                        'text': 'Хотите выполнить заминку?'
+                                    },
+                                    'items': [
+                                        {"title": 'Выполнить заминку', "button": {"text": 'Да'},
+                                         "image_id": '213044/9c13b9b997d78cde2579'},
+                                        {"title": 'Завершить без заминки', "button": {"text": 'Нет'},
+                                         "image_id": '1540737/cc47e154fc7c83b6ba0d'}
+
+                                    ]
+                                }
+
+                            }
+                        })
+
+                        fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.end)
+
+                elif fsm.get_state(user_id) == MainGroup.SportBranch.Cardio.Solo.end:
+                        if 'нет' in command or 'не ' in command:
+                            res.update({
+                                'response': {
+                                    'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
+                                    'card': {
+                                        'type': 'ItemsList',
+                                        'header': {
+                                            'text': 'Повторим тренировку или вернёмся в меню?'
+                                        },
+                                        'items': [
+                                            {"title": 'Повторить треннировку', "button": {"text": 'Повторить треннировку'},
+                                             "image_id": '997614/15f977696a281092bcc0'},
+                                            {"title": 'Вернуться в меню',
+                                             "button": {"text": 'Вернуться в меню'},
+                                             "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                        ]
+                                    }
+
+                                }
+                            })
+                            fsm.set_state(user_id, MainGroup.SportBranch.Cardio.Solo.final)
+                        elif 'да' in command or 'конечн' in command:
+                            pass  # TODO: Прописать ветку разминки
 
 
     else:
