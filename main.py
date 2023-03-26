@@ -105,6 +105,14 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 end = State()
                 final = State()
 
+        class Zaradka(StatesGroup):
+            state_1 = State()
+
+            class Five(StatesGroup):
+                start = State()
+
+            class Ten(StatesGroup):
+                start = State()
 
 # Шаблон для условий:  if fsm.get_state(user_id) == MyStates.state_1
 # Диаграмма: https://miro.com/app/board/uXjVMdrXZW0=/
@@ -440,6 +448,7 @@ def main():
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Water.state_1)
+
         elif fsm.get_state(user_id) in MainGroup.Sport.Cardio:
             if fsm.get_state(user_id) == MainGroup.Sport.Cardio.state_1:
                 if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
@@ -1594,8 +1603,6 @@ def main():
                             fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.final)
                         elif 'да' in command or 'конечн' in command:
                             pass  # TODO: Прописать ветку разминки
-
-
 
 
 
