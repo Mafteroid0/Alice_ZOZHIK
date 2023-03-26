@@ -107,39 +107,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
         class Zaradka(StatesGroup):
             state_1 = State()
-            start = State()
-            task1 = State()
-            task1_help = State()
-            task1_do = State()
-            task2 = State()
-            task2_help = State()
-            task2_do = State()
-            task3 = State()
-            task3_help = State()
-            task3_do = State()
-            task4 = State()
-            task4_help = State()
-            task4_do = State()
-            task5 = State()
-            task5_help = State()
-            task5_do = State()
-            task6 = State()
-            task6_help = State()
-            task6_do = State()
-            task7 = State()
-            task7_help = State()
-            task7_do = State()
-            task8 = State()
-            task8_help = State()
-            task8_do = State()
-            task9 = State()
-            task9_help = State()
-            task9_do = State()
-            task10 = State()
-            task10_help = State()
-            task10_do = State()
-            end = State()
-            final = State()
+
 
             class Five(StatesGroup):
                 start = State()
@@ -162,6 +130,38 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
             class Ten(StatesGroup):
                 start = State()
+                task1 = State()
+                task1_help = State()
+                task1_do = State()
+                task2 = State()
+                task2_help = State()
+                task2_do = State()
+                task3 = State()
+                task3_help = State()
+                task3_do = State()
+                task4 = State()
+                task4_help = State()
+                task4_do = State()
+                task5 = State()
+                task5_help = State()
+                task5_do = State()
+                task6 = State()
+                task6_help = State()
+                task6_do = State()
+                task7 = State()
+                task7_help = State()
+                task7_do = State()
+                task8 = State()
+                task8_help = State()
+                task8_do = State()
+                task9 = State()
+                task9_help = State()
+                task9_do = State()
+                task10 = State()
+                task10_help = State()
+                task10_do = State()
+                end = State()
+                final = State()
 
 # Шаблон для условий:  if fsm.get_state(user_id) == MyStates.state_1
 # Диаграмма: https://miro.com/app/board/uXjVMdrXZW0=/
@@ -388,9 +388,9 @@ def main():
                             },
                             'items': [
                                 {"title": '5-минутная', "button": {"text": '5-минутная'},
-                                 "image_id": '1533899/13a130643a2fcdac537a'},
+                                 "image_id": '213044/99d6eb5c5125693a3154'},
                                 {"title": '10-минутная', "button": {"text": '10-минутная'},
-                                 "image_id": '1540737/fa873a0d82d3696c73ff'}
+                                 "image_id": '997614/e024d33f7ffd1429b89c'}
 
                             ]
                         },
@@ -1706,8 +1706,8 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.start)
-            elif fsm.get_state(user_id) in MainGroup.Sport.Zaradka.Five:
-                if fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.start, MainGroup.Sport.Zaradka.Five.final):
+            elif fsm.get_state(user_id) in MainGroup.Sport.Zaradka.Ten:
+                if fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.start, MainGroup.Sport.Zaradka.Ten.final):
                     if 'друг' in command or 'не' in command:
                         res.update({
                             'response': {
@@ -1763,8 +1763,8 @@ def main():
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task1, MainGroup.Sport.Zaradka.Five.task1_help, MainGroup.Sport.Zaradka.Five.task1_do) or (fsm.get_state(user_id) == MainGroup.Sport.Zaradka.Five.final and 'повтор' in command):
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task1, MainGroup.Sport.Zaradka.Ten.task1_help, MainGroup.Sport.Zaradka.Ten.task1_do) or (fsm.get_state(user_id) == MainGroup.Sport.Zaradka.Ten.final and 'повтор' in command):
                     if 'подробн' in command or 'объяс' in command:
                         res.update({
                             'response': {
@@ -1782,7 +1782,7 @@ def main():
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_help)
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         res.update({
                             'response': {
@@ -1795,8 +1795,8 @@ def main():
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task1_do, MainGroup.Sport.Zaradka.Five.task1_help, MainGroup.Sport.Zaradka.Five.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task1_do, MainGroup.Sport.Zaradka.Ten.task1_help, MainGroup.Sport.Zaradka.Ten.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
                         res.update({
                             'response': {
                                 'text': 'Это было легко. Постепенно усложняемся и переходим к наклонам головы.',
@@ -1824,7 +1824,550 @@ def main():
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2)
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task2, MainGroup.Sport.Zaradka.Ten.task2_help,MainGroup.Sport.Zaradka.Ten.task2_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Плавно наклоняйте голову к правому, а затем к левому плечу. Рекомендую делать упражнение как можно медленнее.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task2_do, MainGroup.Sport.Zaradka.Ten.task2_help, MainGroup.Sport.Zaradka.Ten.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'У Вас прекрасно получается! Разминаем кисти с помощью круговых вращений.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 3',
+                                    "description": 'круговые вращения кистей'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task3, MainGroup.Sport.Zaradka.Ten.task3_help,MainGroup.Sport.Zaradka.Ten.task3_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Ладони разжаты. Удерживая плечи и предплечья неподвижными, вращение осуществляется только кистями.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task3_do, MainGroup.Sport.Zaradka.Ten.task3_help, MainGroup.Sport.Zaradka.Ten.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Поднажмите! Начинаем выполнять наклоны корпуса.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 4',
+                                    "description": 'Наклоны корпуса'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task4, MainGroup.Sport.Zaradka.Ten.task4_help,MainGroup.Sport.Zaradka.Ten.task4_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Не отрывая ног от пола, начинаем наклонять тело в правую, а затем в левую сторону, руки лучше держать на поясе.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task4_do, MainGroup.Sport.Zaradka.Ten.task4_help, MainGroup.Sport.Zaradka.Ten.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Теперь снова простое упражнение - вращение рук.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 5',
+                                    "description": 'Вращение рук'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task5, MainGroup.Sport.Zaradka.Ten.task5_help,MainGroup.Sport.Zaradka.Ten.task5_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Встаньте прямо и вытяните руки по сторонам. Тело образует букву «Т». Это исходное положение. Выполняйте круговые движения прямыми руками вперёд, затем – назад.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task5_do, MainGroup.Sport.Zaradka.Ten.task5_help, MainGroup.Sport.Zaradka.Ten.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'На очереди весёлое упражнение - круговые вращения тазом.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 6',
+                                    "description": 'круговые вращения тазом'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task6, MainGroup.Sport.Zaradka.Ten.task6_help,MainGroup.Sport.Zaradka.Ten.task6_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Положите руки на талию, ноги расставьте шире плеч. Начните вращать тазом по кругу, как будто стараетесь нарисовать круг ягодицами. Стопы не отрываются от пола, вращение происходит за счет движений таза, а не корпуса.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task6_do, MainGroup.Sport.Zaradka.Ten.task6_help, MainGroup.Sport.Zaradka.Ten.task6) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Вы молодцы, осталось совсем немного! Начинаем отжимания. ',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 7',
+                                    "description": 'Отжимания'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task7, MainGroup.Sport.Zaradka.Ten.task7_help,MainGroup.Sport.Zaradka.Ten.task7_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'В планке опускаем и поднимаем тело с помощью сгибания - разгибания рук от пола.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task7_do, MainGroup.Sport.Zaradka.Ten.task7_help, MainGroup.Sport.Zaradka.Ten.task7) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'А теперь выполняем бег на месте.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 8',
+                                    "description": 'Бег на месте'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task8, MainGroup.Sport.Zaradka.Ten.task8_help,MainGroup.Sport.Zaradka.Ten.task8_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'По сути это тот же бег, но без передвижения. Спину необходимо держать прямо и ровно; руки согнуть в локтях, не задирая и не расслабляя их слишком сильно',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task8_do, MainGroup.Sport.Zaradka.Ten.task8_help, MainGroup.Sport.Zaradka.Ten.task8) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Вы, настоящий спортсмен! Далее переходим к наклонам корпуса. ',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 9',
+                                    "description": 'Наклоны корпуса'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task9, MainGroup.Sport.Zaradka.Ten.task9_help,MainGroup.Sport.Zaradka.Ten.task9_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Ноги на ширине плеч, спина прямая, лопатки сведены, руки подняты к ушам. Напрягите пресс и наклоняйтесь вниз. Постарайтесь тянуться грудью к бедрам, а не руками к полу.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task9_do, MainGroup.Sport.Zaradka.Ten.task9_help, MainGroup.Sport.Zaradka.Ten.task9) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Поднажмём, последнее упражнение - это упражнение на пресс, а точнее поднятие корпуса лёжа на спине. ',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 10',
+                                    "description": 'Поднятие корпуса лёжа на спине'
+                                }
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task10, MainGroup.Sport.Zaradka.Ten.task10_help,MainGroup.Sport.Zaradka.Ten.task10_do):
+                    if 'подробн' in command or 'объяс' in command:
+                        res.update({
+                            'response': {
+                                'text': 'Ложимся на спину, прижимаем поясницу к полу, ноги чуть сгибаем в коленях. Руки закрепляем за головой или на груди. Локти разводим в стороны.'
+                                        'Начинаем сгибание туловища. Подбородком тянемся к груди. Тянемся дальше, чтобы вслед за головой и шеей от пола отрывалась спина.',
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_help)
+                    elif 'выполн' in command or 'дел' in command:
+                        res.update({
+                            'response': {
+                                'text': f'{random.choice(motivation)}',
+                                'buttons': [
+                                    {
+                                        'title': 'Следующее упражнение▶',
+                                        'hide': True
+                                    }
+                                ]
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_do)
+                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task10_do, MainGroup.Sport.Zaradka.Ten.task10_help, MainGroup.Sport.Zaradka.Ten.task10) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        res.update({
+                            'response': {
+                                'text': 'Вы хорошо потрудились, поздравляю вас с очередной победой! Что вы выберите дальше: повторить или завершить тренировку?',
+                                'card': {
+                                    'type': 'ItemsList',
+                                    'header': {
+                                        'text': 'Повторим тренировку или вернёмся в меню?'
+                                    },
+                                    'items': [
+                                        {"title": 'Повторить треннировку', "button": {"text": 'Повторить треннировку'},
+                                         "image_id": '997614/15f977696a281092bcc0'},
+                                        {"title": 'Вернуться в меню',
+                                         "button": {"text": 'Вернуться в меню'},
+                                         "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                    ]
+                                }
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.final)
 
 
     else:
