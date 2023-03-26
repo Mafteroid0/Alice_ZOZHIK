@@ -1,12 +1,34 @@
 from __future__ import annotations
 
 import collections
+import random
 import typing
 from collections import UserDict
 import json
+from typing import Dict, List
 
 
-class FriendlyDict(UserDict):
+class KeyToAttrMixin(UserDict):
+    def __getattribute__(self, item):
+        try:
+            return super().__getattribute__(item)
+        except AttributeError as e:
+            try:
+                return self.get(item)
+            except KeyError:
+                raise e
+
+    # def __setattr__(self, key, value): # Maybe in future
+    #     try:
+    #         super().__setattr__(key, value)
+    #     except AttributeError as e:
+    #         try:
+    #             self[key] = value
+    #         except KeyError:
+    #             raise e
+
+
+class FriendlyDict(KeyToAttrMixin):
     @staticmethod
     def _make_dict_available(d: dict[str, typing.Any],
                              annotations: dict[str, type],
@@ -44,24 +66,6 @@ class FriendlyDict(UserDict):
         self.data = {}
         self.data.update(kwargs)
 
-    def __getattribute__(self, item):
-        try:
-            return super().__getattribute__(item)
-        except AttributeError as e:
-            try:
-                return self.get(item)
-            except KeyError:
-                raise e
-
-    # def __setattr__(self, key, value): # Maybe in future
-    #     try:
-    #         super().__setattr__(key, value)
-    #     except AttributeError as e:
-    #         try:
-    #             self[key] = value
-    #         except KeyError:
-    #             raise e
-
     def to_dict(self) -> dict:
         for key, value in self.data.items():
             try:
@@ -71,25 +75,96 @@ class FriendlyDict(UserDict):
         return self.data
 
 
-class TrainingStep(UserDict):
-    def __init__(self, req: dict, step: int, prev: TrainingStep | None = None, next_: TrainingStep | None = None):
-        self.data = req
+class TrainingStep:
+    def __init__(self, text: str, image: str,
+                 title: str, description: str,
+                 audio: str, detailed_description: str,
+                 prev: TrainingStep | None = None, next_: TrainingStep | None = None):
+        self.text = text
+        self.image = image
+        self.title = title
+        self.description = description
+        self.audio = audio
+        self.detailed_description = detailed_description
+
         self.left = prev
         self.right = next_
-        self.step = step
 
-    def __repr__(self):
-        return repr(self.data)
-        # return f'{self.__class__.__name__}(req={self.data}, ' + (f', prev={self.left}' if self.left != self else '') + \
-        #     (f', next={self.right}' if self.right != self else '') + ')'
+    # def __repr__(self):
+    # return f'{self.__class__.__name__}(req={self.data}, ' + (f', prev={self.left}' if self.left != self else '') + \
+    #     (f', next={self.right}' if self.right != self else '') + ')'
 
     def __eq__(self, other: TrainingStep | None):
         return other is not None and \
-            (self.data == other.data and self.left == other.left and
-             self.right == other.right and self.step == other.step)
+            (self.text == other.text and
+             self.description == other.description and
+             self.audio == other.audio and
+             self.left == other.left and
+             self.right == other.right)
+
+    def generate_choice_resp(self) -> dict[str, dict[
+        str, dict[str, str] | str | list[dict[str, str | bool] | dict[str, str | bool] | dict[str, str | bool]]]]:
+        return {
+            'response': {
+                'text': self.text,
+                'card': {
+                    'type': 'BigImage',
+                    "image_id": self.image,
+                    "title": self.title,
+                    "description": self.description
+                },
+                'buttons': [
+                    {
+                        'title': 'Выполнить🔥',
+                        'hide': True
+                    },
+                    {
+                        'title': 'подробнее📄',
+                        'hide': True
+                    },
+                    {
+                        'title': 'Пропустить⏭',
+                        'hide': True
+                    }
+                ]
+
+            }
+        }
+
+    def generate_detailed_description_resp(self) -> dict[
+        str, dict[str, str | list[dict[str, str | bool] | dict[str, str | bool]]]]:
+        return {
+            'response': {
+                'text': self.detailed_description,
+                'buttons': [
+                    {
+                        'title': 'Выполнить🔥',
+                        'hide': True
+                    },
+                    {
+                        'title': 'Пропустить⏭',
+                        'hide': True
+                    }
+                ]
+
+            }
+        }
+
+    def generate_do_training_resp(self, motivation: str) -> dict:
+        return {
+            'response': {
+                'text': f'{motivation}',  # TODO: Добавить сюда музыку через tts
+                'buttons': [
+                    {
+                        'title': 'Следующее упражнение▶',
+                        'hide': True
+                    }
+                ]
+            }
+        }
 
 
-class LinkedList:
+class TrainingAlgorithm:
     def __init__(self, left: TrainingStep | None = None, right: TrainingStep | None = None):
         self.left = left
 
@@ -98,12 +173,7 @@ class LinkedList:
             while self.right.right is not None:
                 self.right = self.right.right
 
-    @staticmethod
-    def _make_node(source: TrainingStep | typing.Any, step: int | None = None):
-        return source if isinstance(source, TrainingStep) else TrainingStep(source, step)
-
-    def append_left(self, node: TrainingStep | typing.Any, step: int | None = None):
-        node = self._make_node(node, step)
+    def append_left(self, node: TrainingStep):
         node.right = self.left
         try:
             self.left.left = node
@@ -117,8 +187,7 @@ class LinkedList:
                 pass
             self.right = item
 
-    def append_right(self, node: TrainingStep | typing.Any, step: int | None = None):
-        node = self._make_node(node, step)
+    def append_right(self, node: TrainingStep):
         node.left = self.right
         try:
             self.right.right = node
@@ -131,6 +200,8 @@ class LinkedList:
             for item in self:
                 pass
             self.left = item
+
+    append = append_right
 
     def __getitem__(self, item: int):
         a = 0

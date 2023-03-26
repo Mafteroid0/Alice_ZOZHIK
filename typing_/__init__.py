@@ -1,2 +1,2 @@
 from .requests_ import *
-from .types_ import FriendlyDict
+from .types_ import FriendlyDict, TrainingAlgorithm, TrainingStep

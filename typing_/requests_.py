@@ -64,6 +64,27 @@ class AliceUserRequest(FriendlyDict):
     version: str
 
 
+class RespCard(FriendlyDict):
+    type: str
+    image_id: str
+    title: str
+    description: str
+
+
+class RespButton(FriendlyDict):
+    title: str
+    hide: bool
+
+
+RespButtons: list[RespButton]
+
+
+class Response(FriendlyDict):
+    text: str
+    card: RespCard
+    buttons: RespButtons
+
+
 # req = AliceUserRequest('''{
 #   "meta": {
 #     "locale": "ru-RU",
