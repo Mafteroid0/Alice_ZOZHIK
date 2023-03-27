@@ -52,7 +52,7 @@ class FSM:
         self._data[user]['data'].update({**udata, **kwargs})
         return self._data[user]['data']
 
-    def reset_state(self, user: str, with_data: bool = False):
+    def reset_state(self, user: str, with_data: bool = True):
         self.set_state(user, None)
         if with_data:
             self.reset_data(user)
