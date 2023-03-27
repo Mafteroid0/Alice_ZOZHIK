@@ -3658,6 +3658,10 @@ def main():
         })
         fsm.set_state(user_id, MainGroup.state_1)
 
+    if not (response := resp.get('response', {})).get('buttons', None):
+        resp['response'] = response
+        resp['response']['buttons'] = {}  # Сюда впиши что тебе нужно
+
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 
 
