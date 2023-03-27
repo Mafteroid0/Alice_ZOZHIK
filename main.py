@@ -393,7 +393,7 @@ def main():  # event, context
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/cce10ad9-c6be-46ec-a0e0-1897db4841e3.opus">',
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/471315ec-dbf4-4821-ac6d-9171af52f3f9.opus">']
     req = AliceUserRequest(request.data.decode())
-    motivations = ['Удачи!', 'Так держать!', 'Вы справитесь!']
+    motivations = ['Удачи! #в данный момент проигрывается трек#', 'Так держать! #в данный момент проигрывается трек#', 'Вы справитесь! #в данный момент проигрывается трек#']
     command = req.request.command
     user_id = req.session.user.user_id
     state = fsm.get_state(user_id)
