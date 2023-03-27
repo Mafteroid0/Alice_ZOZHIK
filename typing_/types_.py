@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import collections
+import dataclasses
 import random
 import typing
 from collections import UserDict
@@ -75,32 +76,16 @@ class FriendlyDict(KeyToAttrMixin):
         return self.data
 
 
+@dataclasses.dataclass
 class TrainingStep:
-    def __init__(self, text: str, image: str,
-                 title: str, description: str,
-                 audio: str, detailed_description: str,
-                 prev: TrainingStep | None = None, next_: TrainingStep | None = None):
-        self.text = text
-        self.image = image
-        self.title = title
-        self.description = description
-        self.audio = audio
-        self.detailed_description = detailed_description
+    text: str
+    image: str
+    title: str
+    description: str
+    detailed_description: str
 
-        self.left = prev
-        self.right = next_
-
-    # def __repr__(self):
-    # return f'{self.__class__.__name__}(req={self.data}, ' + (f', prev={self.left}' if self.left != self else '') + \
-    #     (f', next={self.right}' if self.right != self else '') + ')'
-
-    def __eq__(self, other: TrainingStep | None):
-        return other is not None and \
-            (self.text == other.text and
-             self.description == other.description and
-             self.audio == other.audio and
-             self.left == other.left and
-             self.right == other.right)
+    left: TrainingStep | None = None
+    right: TrainingStep | None = None
 
     def generate_choice_resp(self) -> dict[str, dict[
         str, dict[str, str] | str | list[dict[str, str | bool] | dict[str, str | bool] | dict[str, str | bool]]]]:
@@ -150,11 +135,11 @@ class TrainingStep:
             }
         }
 
-    def generate_do_training_resp(self, motivation: str) -> dict:
+    def generate_do_training_resp(self, motivation: str, track: str) -> dict:
         return {
             'response': {
                 'text': f'{motivation}',
-                # TODO: 'tts': self.audio,
+                'tts': f'{track}',
                 'buttons': [
                     {
                         'title': 'Следующее упражнение▶',
@@ -219,7 +204,7 @@ class TrainingAlgorithm:
         node = self.left
         nodes = ['None']
         while node is not None:
-            nodes.append(f'{node.data}')
+            nodes.append(f'{node}')
             node = node.right
         if len(nodes) > 1:
             nodes.append('None')
