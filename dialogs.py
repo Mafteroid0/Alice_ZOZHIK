@@ -7,7 +7,7 @@ warm_up_algorithm.append(TrainingStep(
     audio='',
     description='Наклоны головы',
     detailed_description='Принимаем исходное положение: руки на поясе, ноги на ширине плеч, грудная клетка расправлена, живот втянут. Рекомендую делать упражнение как можно медленнее. Мышцы плечевого пояса и шеи в расслабленном положении.',
-    image='997614/72ab6692a3db3f4e3056',
+    image='1533899/996b68e76d023e7413f2',
     title='Упражнение 1'
 ))
 warm_up_algorithm.append(TrainingStep(
@@ -15,7 +15,7 @@ warm_up_algorithm.append(TrainingStep(
     audio='',
     description='Повороты головы',
     detailed_description='Выполняйте плавные повороты головы вправо и влево. Прочувствуйте, как тянутся мышцы шеи.',
-    image='997614/72ab6692a3db3f4e3056',
+    image='997614/f5546def4685b3e76d2e',
     title='Упражнение 2'
 ))
 warm_up_algorithm.append(TrainingStep(
@@ -23,7 +23,7 @@ warm_up_algorithm.append(TrainingStep(
     audio='',
     description='Вытяжение рук за спиной',
     detailed_description='Для выполнения это упражнения расслабьтесь, встаньте ровно. Отведите обе руки за спину, сцепите ладони в замок. Сожмите лопатки, расправьте плечи с грудью. Натяните хорошо руки, поднимите слегка повыше и плавно выгнитесь еще сильнее.',
-    image='997614/72ab6692a3db3f4e3056',
+    image='997614/7c65fad6909d255d781f',
     title='Упражнение 3'
 ))
 warm_up_algorithm.append(TrainingStep(
@@ -31,7 +31,7 @@ warm_up_algorithm.append(TrainingStep(
     audio='',
     description='Наклоны корпуса',
     detailed_description=' Делать наклоны следует в строго вертикальной плоскости до комфортного положения. Необходимо выполнять упражнение плавно, чтобы эффективнее воздействовать на мыщцы.',
-    image='997614/72ab6692a3db3f4e3056',
+    image='937455/53aa82c28badde31192f',
     title='Упражнение 4'
 ))
 warm_up_algorithm.append(TrainingStep(
@@ -39,7 +39,7 @@ warm_up_algorithm.append(TrainingStep(
     audio='',
     description='Растяжка квадрицепса',
     detailed_description='Ложитесь на пол на правый бок, положите голову на руку. Левую ногу согните в колене и постарайтесь коснуться пяткой ягодиц. Пружинистыми движениями растягивайте квадрицепс. Через 30 секунд повторите упражнение с другой ногой.',
-    image='997614/72ab6692a3db3f4e3056',
+    image='1540737/7ec70a1c2c680e928b21',
     title='Упражнение 5'
 ))
 warm_up_algorithm.append(TrainingStep(
@@ -47,7 +47,7 @@ warm_up_algorithm.append(TrainingStep(
     audio='',
     description='Наклон в присяде к прямой ноге',
     detailed_description='Наклонитесь к прямой ноге, возьмитесь руками за стопу и натяните носочек на себя. Старайтесь не округлять спину',
-    image='997614/72ab6692a3db3f4e3056',
+    image='1030494/d46fbaa8ef22210fe9bb',
     title='Упражение 6'
 ))
 warm_up_algorithm.append(TrainingStep(
@@ -55,7 +55,7 @@ warm_up_algorithm.append(TrainingStep(
     audio='',
     description='Растяжка бицепса бедра',
     detailed_description='Поднимите колено перед собой максимально высоко, удерживая вес на другой ноге. Обхватите руками колено, удерживая вес на сзади стоящей ноге, осторожно поднимите колено и удержите его в верхней позиции. Держите тело в вертикальном положении, не сгибаясь.',
-    image='997614/72ab6692a3db3f4e3056',
+    image='1030494/0e4fba524a27516fad72',
     title='Упражение 7'
 ))
 
