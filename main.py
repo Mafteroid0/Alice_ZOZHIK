@@ -324,8 +324,8 @@ def end_warmup(user_id: str, resp: dict) -> dict:  # Возврат к упра�
                 'items': [
                     {"title": 'Повторить разминку', "button": {"text": 'Повторить разминку'},
                      "image_id": '997614/15f977696a281092bcc0'},
-                    {"title": 'К основной тренировке',
-                     "button": {"text": 'К основной тренировке'},
+                    {"title": 'К тренировке',
+                     "button": {"text": 'К тренировке'},
                      "image_id": '1030494/cc3631c8499cdc8daf8b'}
                 ]
             }
@@ -496,6 +496,7 @@ def main():  # event, context
 
     elif state in MainGroup:
         if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
+            print(1)
             resp.update({
                 'response': {
                     'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
@@ -785,6 +786,7 @@ def main():  # event, context
                     #     fsm.set_state
                 elif state in (MainGroup.Sport.Cardio.Solo.start, MainGroup.Sport.Cardio.Solo.final):
                     if 'друг' in command or 'не' in command:
+                        print(2)
                         resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
@@ -1486,6 +1488,7 @@ def main():  # event, context
                     fsm.update_data(user_id, callback=start_rope_cardio)
                 elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
                     if 'друг' in command or 'не' in command:
+                        print(3)
                         resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
@@ -1950,6 +1953,7 @@ def main():  # event, context
             elif state in MainGroup.Sport.Zaradka.Ten:
                 if state in (MainGroup.Sport.Zaradka.Ten.start, MainGroup.Sport.Zaradka.Ten.final):
                     if 'друг' in command or 'не' in command:
+                        print(4)
                         resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
@@ -2674,6 +2678,7 @@ def main():  # event, context
             elif state in MainGroup.Sport.Zaradka.Five:
                 if state in (MainGroup.Sport.Zaradka.Five.start, MainGroup.Sport.Zaradka.Five.final):
                     if 'друг' in command or 'не' in command:
+                        print(5)
                         resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
@@ -3061,6 +3066,7 @@ def main():  # event, context
         elif state in MainGroup.Sport.Power:
             if state in (MainGroup.Sport.Power.start, MainGroup.Sport.Power.final):
                 if 'друг' in command or 'не' in command:
+                    print(6)
                     resp.update({
                         'response': {
                             'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Идеальный вес", "Фазы сна".',
