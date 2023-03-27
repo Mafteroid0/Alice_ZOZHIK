@@ -13,7 +13,7 @@ class State:
         return self.machine.set_state(user, self)
 
     def __repr__(self):
-        return f'State("{self.name}")'
+        return f'{self.group_name}.{self.name}'
 
     def __str__(self):
         return f'{self.name}'
