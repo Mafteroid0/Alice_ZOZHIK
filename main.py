@@ -47,6 +47,14 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
                 end = State()
 
+            class WarmDown(StatesGroup):
+                qw = State()
+                start = State()
+
+                task = State()
+
+                end = State()
+
         state_home = State()
 
         class Power(StatesGroup):
@@ -382,6 +390,65 @@ def start_session(user_id: str, resp: dict) -> dict:
     return resp
 
 
+def start_warmdown(user_id: str, resp: dict) -> dict:
+    resp.update({
+        'response': {
+            'text': 'Во время тренировки Вы можете изучить упражнение подробнее, начать выполнять его или '
+                    'пропустить текущее упражнение и перейти к следующему.\n'
+                    'Вы готовы начать или выберем другую тренировку?',
+            'card': {
+                'type': 'ItemsList',
+                'header': {
+                    'text': 'Приступаем к выполнению разминки'
+                },
+                'items': [
+                    {"title": 'Я готов', "button": {"text": 'Я готов'},
+                     "image_id": '997614/72ab6692a3db3f4e3056'},
+                    {"title": 'Пропустить',
+                     "button": {"text": 'Пропустить'},
+                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+                ]
+            }
+        }
+    })
+    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.start)
+    return resp
+
+
+def end_warmdown(user_id: str, resp: dict) -> dict:  # Возврат к упражнению которое было до начала разминки
+    resp.update({
+        'response': {
+            'text': 'Вы хорошо потрудились, поздравляю вас с победой! Что выберите дальше: скажите "повторить разминку", чтобы потренироваться ещё раз или "приступить к выполнению тренировки", чтобы начать основную тренировку?',
+            'card': {
+                'type': 'ItemsList',
+                'header': {
+                    'text': 'Повторим разминку или перейдём к основной тренировке?'
+                },
+                'items': [
+                    {"title": 'Повторить разминку', "button": {"text": 'Повторить разминку'},
+                     "image_id": '997614/15f977696a281092bcc0'},
+                    {"title": 'К тренировке',
+                     "button": {"text": 'К тренировке'},
+                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+                ]
+            }
+
+        }
+    })
+
+    fsm.update_data(user_id, step=0)
+    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.end)
+
+    return resp
+
+
+def cancel_warmdown(user_id: str, resp: dict, data: dict | None = None) -> dict:
+    if data is None:
+        data = fsm.get_data(user_id)
+
+    return data['callback'](user_id, resp)
+
+
 @app.route('/alice', methods=['POST'])
 def main():  # event, context
     tracks_fourteen = [
@@ -393,7 +460,8 @@ def main():  # event, context
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/cce10ad9-c6be-46ec-a0e0-1897db4841e3.opus">',
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/471315ec-dbf4-4821-ac6d-9171af52f3f9.opus">']
     req = AliceUserRequest(request.data.decode())
-    motivations = ['Удачи! #в данный момент проигрывается трек#', 'Так держать! #в данный момент проигрывается трек#', 'Вы справитесь! #в данный момент проигрывается трек#']
+    motivations = ['Удачи! #в данный момент проигрывается трек#', 'Так держать! #в данный момент проигрывается трек#',
+                   'Вы справитесь! #в данный момент проигрывается трек#']
     command = req.request.command
     user_id = req.session.user.user_id
     state = fsm.get_state(user_id)
@@ -3747,49 +3815,56 @@ def main():  # event, context
             else:
                 end_warmup(user_id, resp)
 
+        elif state in MainGroup.Sport.Wrap.WarmDown:
+            step: TrainingStep = warm_up_algorithm[fsm.get_data(user_id).get('step', 0)]
 
+            if state == MainGroup.Sport.Wrap.WarmDown.qw:
+                if 'нет' in command or 'не ' in command:
+                    resp = cancel_warmdown(user_id, resp)
+                elif 'да' in command or 'конечн' in command:
+                    resp = start_warmdown(user_id, resp)
 
-        # elif state in MainGroup.Sport.Wrap.WarmDown:
-        #     step: TrainingStep = warmp_down_algorithm[fsm.get_data(user_id).get('step', 0)]
-        #
-        #     if state == MainGroup.Sport.Wrap.WarmDown.qw:
-        #         if 'нет' in command or 'не ' in command:
-        #             resp = end_warmdown(user_id, resp)
-        #         elif 'да' in command or 'конечн' in command:
-        #             resp = start_warmdown(user_id, resp)
-        #
-        #     elif state == MainGroup.Sport.Wrap.WarmDown.start and is_positive(command):
-        #         fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.task)
-        #         step: int = 0
-        #         fsm.update_data(user_id, step=step)
-        #
-        #         step: TrainingStep = warmp_down_algorithm[step]
-        #
-        #         resp.update(step.generate_choice_resp())
-        #
-        #     elif 'подробн' in command or 'расскажи' in command:
-        #         resp.update(step.generate_detailed_description_resp())
-        #
-        #     elif is_positive(command):
-        #         resp.update(step.generate_do_training_resp(random.choice(motivations), random.choice(tracks_fourteen)))
-        #
-        #     elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
-        #         if state == MainGroup.Sport.Wrap.WarmDown.task:
-        #             step = fsm.get_data(user_id).get('step', 0) + 1
-        #             fsm.update_data(user_id, step=step)
-        #
-        #             try:
-        #                 step: TrainingStep = warmp_down_algorithm[step]
-        #             except IndexError:
-        #                 end_warmdown(user_id, resp)
-        #             else:
-        #                 resp.update(step.generate_choice_resp())
-        #
-        #         elif state == MainGroup.Sport.Wrap.WarmDown.start:
-        #             end_warmdown(user_id, resp)
-        #
-        #     else:
-        #         end_warmdown(user_id, resp)
+            elif state == MainGroup.Sport.Wrap.WarmDown.start and is_positive(command):
+                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.task)
+                step: int = 0
+                fsm.update_data(user_id, step=step)
+
+                step: TrainingStep = warm_up_algorithm[step]
+
+                resp.update(step.generate_choice_resp())
+
+            elif 'подробн' in command or 'расскажи' in command:
+                resp.update(step.generate_detailed_description_resp())
+
+            elif is_positive(command):
+                resp.update(step.generate_do_training_resp(random.choice(motivations), random.choice(tracks_fourteen)))
+
+            elif state == MainGroup.Sport.Wrap.WarmDown.end:
+                if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
+                    resp = start_warmdown(user_id, resp)
+                else:
+                    print('cancel')
+                    cancel_warmdown(user_id, resp)
+
+            elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
+                if state == MainGroup.Sport.Wrap.WarmDown.task:
+                    step = fsm.get_data(user_id).get('step', 0) + 1
+                    fsm.update_data(user_id, step=step)
+                    print(f'{step=}')
+
+                    try:
+                        step: TrainingStep = warm_up_algorithm[step]
+                    except IndexError:
+                        end_warmdown(user_id, resp)
+                    else:
+                        resp.update(step.generate_choice_resp())
+
+                elif state == MainGroup.Sport.Wrap.WarmDown.start:
+                    cancel_warmdown(user_id, resp)
+
+            else:
+                end_warmdown(user_id, resp)
+
 
     else:
         resp.update({
