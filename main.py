@@ -3713,12 +3713,20 @@ def main():  # event, context
                 resp.update(step.generate_detailed_description_resp())
 
             elif is_positive(command):
-                resp.update(step.generate_do_training_resp(random.choice(motivations))) # TODO: 'tts': f'{random.choice(tracks_fourteen)}',
+                resp.update(step.generate_do_training_resp(random.choice(motivations), random.choice(tracks_fourteen)))
+
+            elif state == MainGroup.Sport.Wrap.WarmUp.end:
+                if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
+                    resp = start_warmup(user_id, resp)
+                else:
+                    print('cancel')
+                    cancel_warmup(user_id, resp)
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmUp.task:
                     step = fsm.get_data(user_id).get('step', 0) + 1
                     fsm.update_data(user_id, step=step)
+                    print(f'{step=}')
 
                     try:
                         step: TrainingStep = warm_up_algorithm[step]
@@ -3728,12 +3736,6 @@ def main():  # event, context
                         resp.update(step.generate_choice_resp())
 
                 elif state == MainGroup.Sport.Wrap.WarmUp.start:
-                    cancel_warmup(user_id, resp)
-
-            elif state == MainGroup.Sport.Wrap.WarmUp.end:
-                if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
-                    resp = start_warmup(user_id, resp)
-                else:
                     cancel_warmup(user_id, resp)
 
             else:
@@ -3763,7 +3765,7 @@ def main():  # event, context
         #         resp.update(step.generate_detailed_description_resp())
         #
         #     elif is_positive(command):
-        #         resp.update(step.generate_do_training_resp(random.choice(motivations)))
+        #         resp.update(step.generate_do_training_resp(random.choice(motivations), random.choice(tracks_fourteen)))
         #
         #     elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
         #         if state == MainGroup.Sport.Wrap.WarmDown.task:
