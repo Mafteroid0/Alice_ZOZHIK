@@ -76,13 +76,10 @@ class RespButton(FriendlyDict):
     hide: bool
 
 
-RespButtons: list[RespButton]
-
-
 class Response(FriendlyDict):
     text: str
     card: RespCard
-    buttons: RespButtons
+    buttons: list[RespButton]
 
 
 # req = AliceUserRequest('''{

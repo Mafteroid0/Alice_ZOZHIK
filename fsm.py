@@ -22,7 +22,6 @@ class State:
         if other is None:
             return False
 
-        print(self.name, self.group_name)
         return self.name == other.name and \
             self.group_name == other.group_name and \
             self.machine == other.machine
@@ -39,12 +38,19 @@ class FSM:
     def set_state(self, user: str, state: State | None) -> State | None:
         self._check_and_create_user(user)
         self._data[user]['state'] = state
-        return self._data[user]
+        return self._data[user]['state']
 
-    def set_data(self, user: str, data: dict) -> dict:
+    def set_data(self, user: str, data: dict | None = None, **kwargs) -> dict:
+        data = data or {}
         self._check_and_create_user(user)
-        self._data[user]['data'] = data
-        return self._data[user]
+        self._data[user]['data'] = {**data, **kwargs}
+        return self._data[user]['data']
+
+    def update_data(self, user, udata: dict | None = None, **kwargs) -> dict:
+        udata = udata or {}
+        self._check_and_create_user(user)
+        self._data[user]['data'].update({**udata, **kwargs})
+        return self._data[user]['data']
 
     def reset_state(self, user: str, with_data: bool = False):
         self.set_state(user, None)

@@ -6,6 +6,8 @@ from flask import Flask, request
 from typing_ import FriendlyDict, AliceUserRequest
 from fsm import StatesGroup, State, FSM
 from time_parsing import parse_time, iter_go_sleep_time
+from dialogs import warm_up_algorithm
+from typing_ import TrainingStep
 
 app = Flask(__name__)
 
@@ -33,12 +35,13 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         state_1 = State()
         end = State()
 
-
     class Sport(StatesGroup):
         class Wrap(StatesGroup):
             class WarmUp(StatesGroup):
-                inp_state = State()
-                do_task = State()
+                qw = State()
+                start = State()
+
+                task = State()
 
         state_home = State()
 
@@ -132,7 +135,6 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         class Zaradka(StatesGroup):
             state_1 = State()
 
-
             class Five(StatesGroup):
                 start = State()
                 task1 = State()
@@ -188,30 +190,94 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 end = State()
                 final = State()
 
-# Шаблон для условий:  if fsm.get_state(user_id) == MyStates.state_1
+
+# Шаблон для условий:  if state == MyStates.state_1
 # Диаграмма: https://miro.com/app/board/uXjVMdrXZW0=/
+
+
+def is_positive(command: str) -> bool:
+    return 'готов' in command or 'погн' in command or 'поехали' in command or 'давай' in command or 'да' in command or 'выполн' in command
+
+
+def start_power_training(user_id: str, resp: dict) -> dict:
+    resp.update({
+        'response': {
+            'text': 'Давайте приступим к силовой тренировке. Для нее Вам нужен только боевой настрой. Одно упражнение длится 40 секунд. '
+                    'Перед  его выполнением Вы можете изучить упражнение подробнее, начать делать его или пропустить выполнение и перейти к следующему.'
+                    'Вы готовы к силовой тренировке или подберём Вам что-нибудь другое?'
+                    'Вы готовы начать, или рассмотрим другую тренировку?',
+            'card': {
+                'type': 'ItemsList',
+                'header': {
+                    'text': 'Приступаем к выполнению силовой тренировки'
+                },
+                'items': [
+                    {"title": 'Я готов', "button": {"text": 'Я готов'},
+                     "image_id": '997614/72ab6692a3db3f4e3056'},
+                    {"title": 'Выберем другую тренировку',
+                     "button": {"text": 'Выберем другую тренировку'},
+                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                ]
+            }
+
+        }
+    })
+    fsm.set_state(user_id, MainGroup.Sport.Power.start)
+    return resp
+
+
+def start_warmup(user_id: str, resp: dict) -> dict:
+    resp.update({
+        'response': {
+            'text': 'Во время тренировки Вы можете изучить упражнение подробнее, начать выполнять его или '
+                    'пропустить текущее упражнение и перейти к следующему.\n'
+                    'Вы готовы начать или выберем другую тренировку?',
+            'card': {
+                'type': 'ItemsList',
+                'header': {
+                    'text': 'Приступаем к выполнению разминки'
+                },
+                'items': [
+                    {"title": 'Я готов', "button": {"text": 'Я готов'},
+                     "image_id": '997614/72ab6692a3db3f4e3056'},
+                    {"title": 'Пропустить',
+                     "button": {"text": 'Пропустить'},
+                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+                ]
+            }
+        }
+    })
+    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.start)
+    return resp
+
 
 @app.route('/alice', methods=['POST'])
 def main():
     req = AliceUserRequest(request.data.decode())
-    motivation = ['Удачи!', 'Так держать!', 'Вы справитесь!']
+    motivations = ['Удачи!', 'Так держать!', 'Вы справитесь!']
     command = req.request.command
     user_id = req.session.user.user_id
-    res = {'version': req.version,
-           'session': req.session}
+    state = fsm.get_state(user_id)
 
-    print(fsm.get_state(user_id))
+    resp = {'version': req.version,
+            'session': req.session}
+
+    print(f'{state=}')
     if req.session.new:
         # Действия при новой сессии
         answer_options = ['Привет🖐!  Всегда хотели окунуться в мир здорового образа жизни? '
                           'Поздравляю, Вы сделали правильный выбор.'
                           'Я навык ... помогу освоить основы ЗОЖ на практике с лёгкостью и удовольствием.'
-                          'Если хотите ознакомиться с моим функционалом, то скажите "Что ты умеешь?". Если же готовы приступить, то скажите "Поехали".',
+                          'Если хотите ознакомиться с моим функционалом, то скажите "Что ты умеешь?". '
+                          'Если же готовы приступить, то скажите "Поехали".',
 
                           'Очень приятно осознавать, что Вы решили заботится о себе и своём здоровье💖!'
-                          ' Я позабочусь о Вас и облегчу ваше знакомство с ЗОЖ. Вы сможете начать следить за Вашим здоровьем с удовольствием.'
-                          ' Если нужно ознакомиться с функционалом навыка, то скажите "Что ты умеешь?". Если уже хотите приступить, то скажите "Поехали".']
-        res.update({
+                          ' Я позабочусь о Вас и облегчу ваше знакомство с ЗОЖ. Вы сможете начать следить '
+                          'за Вашим здоровьем с удовольствием.'
+                          ' Если нужно ознакомиться с функционалом навыка, то скажите "Что ты умеешь?". '
+                          'Если уже хотите приступить, то скажите "Поехали".']
+        resp.update({
             'response': {
                 'text': f'{random.choice(answer_options)}',
                 'buttons': [
@@ -226,11 +292,11 @@ def main():
                 ]
             }
         })
-        fsm.reset_state(user_id)
-        return dict_to_json(res, ensure_ascii=False, indent=2)
+        fsm.reset_state(user_id, with_data=True)
+        return dict_to_json(resp, ensure_ascii=False, indent=2)
 
-    # res = []  # TODO: Заменить на сообщение об ошибке
-    if fsm.get_state(user_id) is None and (command == 'что ты умеешь'):
+    # resp = []  # TODO: Заменить на сообщение об ошибке
+    if state is None and (command == 'что ты умеешь'):
         answer_options = ['Очень здорово, что вы спросили меня про это. В мой функционал входит:\n'
                           '🧘‍♂️ Утренняя зарядка\n'
                           '🏃‍♂️ Кардиотренировка\n'
@@ -247,7 +313,7 @@ def main():
                           '🥛 Водный баланс\n'
                           'К каждому из упражнений будет предоставлено описание и GIF, наглядно демонстрирующий , как выполнять упражнение. Чтобы перейти к списку, скажите "Поехали".']
 
-        res.update({
+        resp.update({
             'response': {
                 'text': f'{random.choice(answer_options)} \n',
                 "tts": "<speaker audio=\"dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/6c3fc433-846b-4971-91f0-77b3a9f405bb.opus\">",
@@ -261,9 +327,9 @@ def main():
             }
         })
         fsm.set_state(user_id, MainGroup.state_1)
-        return dict_to_json(res, ensure_ascii=False, indent=2)
+        return dict_to_json(resp, ensure_ascii=False, indent=2)
 
-    elif (fsm.get_state(user_id) in (MainGroup.state_1, None)) and (
+    elif (state in (MainGroup.state_1, None)) and (
             'поехали' in command or 'нач' in command):  # TODO: Добавить в условия номера стейтов, из которых можно сюда попасть (см. диаграмму)
         # answer_options = ['Вау, Вы уже в нескольких шагах от здорового образа жизни очень рада за Вас 😍. '
         #                   'Для начала выберите, чем хотите заняться или что Вам нужно узнать:'
@@ -273,7 +339,7 @@ def main():
         #                   'Время выбирать, чем хотите заняться или что Вам нужно узнать:\n'
         #                   '"Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".']
 
-        res.update({
+        resp.update({
             'response': {
                 'text': 'XXXTentation is alive',
                 'tts': f'Вы уже в нескольких шагах от здорового образа жизни! Чем сегодня займёмся? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
@@ -300,9 +366,9 @@ def main():
         })
         fsm.set_state(user_id, MainGroup.Sport.state_home)
 
-    elif fsm.get_state(user_id) in MainGroup:
+    elif state in MainGroup:
         if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
-            res.update({
+            resp.update({
                 'response': {
                     'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
                     'card': {
@@ -327,7 +393,7 @@ def main():
                 }
             })
             fsm.set_state(user_id, MainGroup.Sport.state_home)
-        elif fsm.get_state(user_id) == MainGroup.Sport.state_home:
+        elif state == MainGroup.Sport.state_home:
             if 'вод' in command or 'баланс' in command:
                 answer_options = [
                     'Вода жизненно необходима каждому человеку, а употребление её дневной нормы улучшает метаболизм. Я подскажу, какое минимальное количество Вам необходимо выпивать в течение дня. Подскажите, пожалуйста, Ваш вес.',
@@ -336,15 +402,15 @@ def main():
                     'Не переживайте 😉 , я подскажу, какое минимальное количество Вам необходимо выпивать в течение дня. '
                     'Для того, чтобы точно рассчитать минимальное объём воды, мне нужен вес человека. Подскажите, пожалуйста, вес Вашего тела в килограммах.']
 
-                res.update({
+                resp.update({
                     'response': {
                         'text': f'{random.choice(answer_options)}'
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Water.state_1)
 
-            elif 'сон' in command or 'сна' in command or 'фаз' in command: # TODO: Пофиксить сон. Не работает
-                res.update({
+            elif 'сон' in command or 'сна' in command or 'фаз' in command:
+                resp.update({
                     'response': {
                         'text': 'Здорово🥰 , что Вы решили следить за своим сном, так как он играет важную роль в нашей жизни 🛌.'
                                 'Напишите, во сколько вы хотите проснуться,'
@@ -359,7 +425,7 @@ def main():
                     'Замечательно! Кардиотренировки несут огромную пользу, а также поднимают настроение. Выберите тип кардио:  классическая или со скакалкой.',
 
                     'Прекрасный выбор😍! Нагружая сердечно-сосудистую систему, мы укрепляем здоровье. Выберите тип кардио: классическая или со скакалкой.']
-                res.update({
+                resp.update({
                     'response': {
                         'text': 'Хотите выполнить разминку перед тренировкой?',
                         'card': {
@@ -378,14 +444,15 @@ def main():
 
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Sport.Power.state_1)
+                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                fsm.update_data(user_id, callback=start_power_training)
 
             elif 'кард' in command:
                 answer_options = [
                     'Замечательно! Кардиотренировки несут огромную пользу, а также поднимают настроение. Выберите тип кардио:  классическая или со скакалкой.',
 
                     'Прекрасный выбор😍! Нагружая сердечно-сосудистую систему, мы укрепляем здоровье. Выберите тип кардио: классическая или со скакалкой.']
-                res.update({
+                resp.update({
                     'version': req['version'],
                     'session': req['session'],
                     'response': {
@@ -413,7 +480,7 @@ def main():
                     'Прекрасно🔥\nДержать тело в форме необходимо всем, очень приятно, что Вы это понимаете. Однако зарядки тоже бывают разными. Какой тип зарядки выберите: 5-минутная или 10-минутная?',
                     'Отличный выбор🤩\nЗарядка нужна всем, но немногие это понимают, к счастью к Вам это не относится. Выберите тип зарядки: 5-минутная или 10-минутная.',
                     'Давайте вместе приведём Ваше тело в тонус. Выберите тип зарядки:  5-минутная или 10-минутная.']
-                res.update({
+                resp.update({
                     'response': {
                         'text': f'{random.choice(answer_options)}',
                         'card': {
@@ -435,7 +502,7 @@ def main():
                 fsm.set_state(user_id, MainGroup.Sport.Zaradka.state_1)
 
             else:
-                res.update({
+                resp.update({
                     'response': {
                         'text': 'Извините, не поняла вас😣\nДавайте попробуем заново выбрать занятие!\n'
                                 '"Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
@@ -461,8 +528,8 @@ def main():
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Sport.state_home)
-        elif fsm.get_state(user_id) in MainGroup.Dream:
-            if fsm.get_state(user_id) == MainGroup.Dream.state_1:
+        elif state in MainGroup.Dream:
+            if state == MainGroup.Dream.state_1:
                 time = parse_time(command)
                 go_sleep_times = list(iter_go_sleep_time(time))
                 print(time)
@@ -473,7 +540,7 @@ def main():
 
                     f'Ложитесь спать в {go_sleep_times[0].strftime("%H:%M")} или в {go_sleep_times[1].strftime("%H:%M")}, '
                     f'чтобы утром чувствовать себя полным сил. Не забудьте завести будильник!']
-                res.update({
+                resp.update({
                     'response': {
                         'text': f'{random.choice(answer_options)}',
                         'card': {
@@ -492,15 +559,15 @@ def main():
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Dream.end)
-            elif fsm.get_state(user_id) == MainGroup.Dream.end:
-                res.update({
+            elif state == MainGroup.Dream.end:
+                resp.update({
                     'response': {
                         'text': 'Во сколько вы хотите проснуться?'
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Dream.state_1)
-        elif fsm.get_state(user_id) in MainGroup.Water:
-            if fsm.get_state(user_id) == MainGroup.Water.state_1:
+        elif state in MainGroup.Water:
+            if state == MainGroup.Water.state_1:
                 st = command.replace(',', '.')
                 li = st.split(' ')
                 for el in li:
@@ -510,7 +577,7 @@ def main():
                             f'Ваше минимальное потребление воды {float(el) * 30} миллилитров в день 💦',
 
                             f'Вам необходимо {float(el) * 30} миллилитров воды 🌊 в день, для хорошего метаболизма. ']
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': f'{random.choice(answer_options)}',
                                 'card': {
@@ -531,24 +598,24 @@ def main():
                         fsm.set_state(user_id, MainGroup.Water.end)
                         break
                     else:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': f'Не совсем поняла вас, повторите снова'
                             }
                         })
-            elif fsm.get_state(user_id) == MainGroup.Water.end and \
+            elif state == MainGroup.Water.end and \
                     ('ещё' in command or 'счит' in command):
-                res.update({
+                resp.update({
                     'response': {
                         'text': 'Скажите свой вес в килограммах'
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Water.state_1)
 
-        elif fsm.get_state(user_id) in MainGroup.Sport.Cardio:
-            if fsm.get_state(user_id) == MainGroup.Sport.Cardio.state_1:
+        elif state in MainGroup.Sport.Cardio:
+            if state == MainGroup.Sport.Cardio.state_1:
                 if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Хотите выполнить разминку перед тренировкой?',
                             'card': {
@@ -569,7 +636,7 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.state_1)
                 elif 'скак' in command or 'со' in command or 'втор' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Хотите выполнить разминку перед тренировкой?',
                             'card': {
@@ -589,10 +656,10 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.state_1)
-            elif fsm.get_state(user_id) in MainGroup.Sport.Cardio.Solo:
-                if fsm.get_state(user_id) == MainGroup.Sport.Cardio.Solo.state_1:
+            elif state in MainGroup.Sport.Cardio.Solo:
+                if state == MainGroup.Sport.Cardio.Solo.state_1:
                     if 'нет' in command or 'не ' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Давайте приступим к кардиотренировке. Для нее вам не понадобится дополнительный инвентарь,'
                                         ' не забудьте взять только хорошее настроение и правильный настрой. На каждое упражнение у вас уйдёт по 40 секунд. '
@@ -618,9 +685,9 @@ def main():
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.start)
                     elif 'да' in command or 'конечн' in command:
                         pass  # TODO: Прописать ветку разминки
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.start, MainGroup.Sport.Cardio.Solo.final):
+                elif state in (MainGroup.Sport.Cardio.Solo.start, MainGroup.Sport.Cardio.Solo.final):
                     if 'друг' in command or 'не' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
                                 'card': {
@@ -647,7 +714,7 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Начинаем первое упражнение!'
                                         'Поочерёдное сгибание ног с последующим подниманием коленей к груди',
@@ -676,12 +743,12 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1)
-                elif fsm.get_state(user_id) in (
+                elif state in (
                         MainGroup.Sport.Cardio.Solo.task1, MainGroup.Sport.Cardio.Solo.task1_help,
                         MainGroup.Sport.Cardio.Solo.task1_do) or (
-                        fsm.get_state(user_id) == MainGroup.Sport.Cardio.Solo.final and 'повтор' in command):
+                        state == MainGroup.Sport.Cardio.Solo.final and 'повтор' in command):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Для первого упражнения встаньте прямо, соберите ноги вместе, согните руки. '
                                         'Поднимите одно колено к груди. Опустите ногу и повторите на другую сторону. Выполняйте руками движения бегуна.',
@@ -700,9 +767,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -712,11 +779,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_do)
-                    elif fsm.get_state(user_id) in (
+                    elif state in (
                             MainGroup.Sport.Cardio.Solo.task1_do, MainGroup.Sport.Cardio.Solo.task1_help,
                             MainGroup.Sport.Cardio.Solo.task1) and (
                             'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Увеличиваем интенсивность тренировки. Выполняем энергичные прыжки с поднятием рук.',
                                 'card': {
@@ -745,9 +812,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2)
 
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task2, MainGroup.Sport.Cardio.Solo.task2_help, MainGroup.Sport.Cardio.Solo.task2_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Solo.task2, MainGroup.Sport.Cardio.Solo.task2_help,
+                        MainGroup.Sport.Cardio.Solo.task2_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': ' Стопы поставьте плотно вместе, а руки вдоль туловища. Выполните два движения вместе:'
                                         ' в прыжке расставьте широко ноги и вытяните вверх руки, сводя их вместе над головой. Прыжком вернитесь в начальную позу.',
@@ -766,9 +835,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -778,8 +847,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task2_do, MainGroup.Sport.Cardio.Solo.task2_help, MainGroup.Sport.Cardio.Solo.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Solo.task2_do, MainGroup.Sport.Cardio.Solo.task2_help,
+                            MainGroup.Sport.Cardio.Solo.task2) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'У вас хорошо получается! Следующее упражнения - бег в планке',
                                 'card': {
@@ -808,9 +880,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3)
 
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task3, MainGroup.Sport.Cardio.Solo.task3_help, MainGroup.Sport.Cardio.Solo.task3_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Solo.task3, MainGroup.Sport.Cardio.Solo.task3_help,
+                        MainGroup.Sport.Cardio.Solo.task3_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': ' Для следующего упражнения встаньте в планку на прямых руках. Начните имитировать бег – по очереди подтягивайте колени к груди. Ноги ставьте на носки, линию позвоночника не меняйте.',
                                 'buttons': [
@@ -828,9 +902,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -840,8 +914,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task3_do, MainGroup.Sport.Cardio.Solo.task3_help, MainGroup.Sport.Cardio.Solo.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Solo.task3_do, MainGroup.Sport.Cardio.Solo.task3_help,
+                            MainGroup.Sport.Cardio.Solo.task3) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Приступаем к прыжкам в планке',
                                 'card': {
@@ -870,9 +947,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4)
 
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task4, MainGroup.Sport.Cardio.Solo.task4_help, MainGroup.Sport.Cardio.Solo.task4_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Solo.task4, MainGroup.Sport.Cardio.Solo.task4_help,
+                        MainGroup.Sport.Cardio.Solo.task4_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': ' Продолжайте стоять в планке. Для нового задания оттолкнитесь носками, разведите ноги в стороны, легким прыжком соберитесь обратно. Не прогибайтесь в спине, взгляд направлен вперед-вниз.',
                                 'buttons': [
@@ -890,9 +969,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -902,8 +981,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task4_do, MainGroup.Sport.Cardio.Solo.task4_help, MainGroup.Sport.Cardio.Solo.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Solo.task4_do, MainGroup.Sport.Cardio.Solo.task4_help,
+                            MainGroup.Sport.Cardio.Solo.task4) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Вы хорошо справляетесь! Далее прыжки из приседа. ',
                                 'card': {
@@ -932,9 +1014,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5)
 
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task5, MainGroup.Sport.Cardio.Solo.task5_help, MainGroup.Sport.Cardio.Solo.task5_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Solo.task5, MainGroup.Sport.Cardio.Solo.task5_help,
+                        MainGroup.Sport.Cardio.Solo.task5_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Начните из положения стоя, ноги на ширине плеч. Выполните приседание и выведите руки вперед. Выпрыгивайте, одновременно выпрямив руки.',
                                 'buttons': [
@@ -952,9 +1036,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -964,8 +1048,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Solo.task5_do, MainGroup.Sport.Cardio.Solo.task5_help, MainGroup.Sport.Cardio.Solo.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Solo.task5_do, MainGroup.Sport.Cardio.Solo.task5_help,
+                            MainGroup.Sport.Cardio.Solo.task5) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Не сбавляем темп тренировки 💪 Далее на очереди упражнение бёрпи. ',
                                 'card': {
@@ -994,11 +1081,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6)
 
-                elif fsm.get_state(user_id) in (
-                MainGroup.Sport.Cardio.Solo.task6, MainGroup.Sport.Cardio.Solo.task6_help,
-                MainGroup.Sport.Cardio.Solo.task6_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Solo.task6, MainGroup.Sport.Cardio.Solo.task6_help,
+                        MainGroup.Sport.Cardio.Solo.task6_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Подпрыгните, отведите ноги назад и опустите таз, чтобы получилась поза планки. Соберитесь обратно прыжком, выпрямитесь, руки вытяните вверх.',
                                 'buttons': [
@@ -1016,9 +1103,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1028,11 +1115,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_do)
-                    elif fsm.get_state(user_id) in (
-                    MainGroup.Sport.Cardio.Solo.task6_do, MainGroup.Sport.Cardio.Solo.task6_help,
-                    MainGroup.Sport.Cardio.Solo.task6) and (
+                    elif state in (
+                            MainGroup.Sport.Cardio.Solo.task6_do, MainGroup.Sport.Cardio.Solo.task6_help,
+                            MainGroup.Sport.Cardio.Solo.task6) and (
                             'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Следующее энергичное упражнение - велосипед.',
                                 'card': {
@@ -1061,11 +1148,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7)
 
-                elif fsm.get_state(user_id) in (
+                elif state in (
                         MainGroup.Sport.Cardio.Solo.task7, MainGroup.Sport.Cardio.Solo.task7_help,
                         MainGroup.Sport.Cardio.Solo.task7_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Лягте на спину, уберите руки за голову и разведите локти в стороны. Поочерёдно сгибайте и выпрямляйте ноги, как будто крутите педали велосипеда, в это время локтями касайтесь колена противоположной ноги.',
                                 'buttons': [
@@ -1083,9 +1170,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1095,11 +1182,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_do)
-                    elif fsm.get_state(user_id) in (
+                    elif state in (
                             MainGroup.Sport.Cardio.Solo.task7_do, MainGroup.Sport.Cardio.Solo.task7_help,
                             MainGroup.Sport.Cardio.Solo.task7) and (
                             'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Вы молодцы, осталось совсем немного! Начинаем отжимания.',
                                 'card': {
@@ -1128,11 +1215,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8)
 
-                elif fsm.get_state(user_id) in (
+                elif state in (
                         MainGroup.Sport.Cardio.Solo.task8, MainGroup.Sport.Cardio.Solo.task8_help,
                         MainGroup.Sport.Cardio.Solo.task8_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'В планке опускаем и поднимаем тело с помощью сгибания - разгибания рук от пола.',
                                 'buttons': [
@@ -1150,9 +1237,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1162,11 +1249,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_do)
-                    elif fsm.get_state(user_id) in (
+                    elif state in (
                             MainGroup.Sport.Cardio.Solo.task8_do, MainGroup.Sport.Cardio.Solo.task8_help,
                             MainGroup.Sport.Cardio.Solo.task8) and (
                             'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'И завершающее упражнение! Сделаем выпрыгивания из полувыпада.',
                                 'card': {
@@ -1195,11 +1282,11 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9)
 
-                elif fsm.get_state(user_id) in (
+                elif state in (
                         MainGroup.Sport.Cardio.Solo.task9, MainGroup.Sport.Cardio.Solo.task9_help,
                         MainGroup.Sport.Cardio.Solo.task9_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Выполнив небольшой шаг назад, опуститесь в полувыпад. '
                                         'Затем оттолкнитесь и в прыжке поднимите колено отведенной ноги до уровня груди. '
@@ -1219,9 +1306,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1231,13 +1318,14 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_do)
-                    elif fsm.get_state(user_id) in (
+                    elif state in (
                             MainGroup.Sport.Cardio.Solo.task9_do, MainGroup.Sport.Cardio.Solo.task9_help,
                             MainGroup.Sport.Cardio.Solo.task9) and (
                             'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        answer_options = ['Заминка нужна, чтобы снизить до нормального уровня частоту сердечных сокращений. Хотите её выпонить?',
-                                          'Будет здорово выполнить заминку! Заминка снижает склонность к закрепощению мышц после нагрузки.  Хотели бы Вы приступить к её выполнению?']
-                        res.update({
+                        answer_options = [
+                            'Заминка нужна, чтобы снизить до нормального уровня частоту сердечных сокращений. Хотите её выпонить?',
+                            'Будет здорово выполнить заминку! Заминка снижает склонность к закрепощению мышц после нагрузки.  Хотели бы Вы приступить к её выполнению?']
+                        resp.update({
                             'response': {
                                 'text': f'{random.choice(answer_options)}',
                                 'card': {
@@ -1259,36 +1347,36 @@ def main():
 
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.end)
 
-                elif fsm.get_state(user_id) == MainGroup.Sport.Cardio.Solo.end:
-                        if 'нет' in command or 'не ' in command:
-                            res.update({
-                                'response': {
-                                    'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
-                                    'card': {
-                                        'type': 'ItemsList',
-                                        'header': {
-                                            'text': 'Повторим тренировку или вернёмся в меню?'
-                                        },
-                                        'items': [
-                                            {"title": 'Повторить тренировку', "button": {"text": 'Повторить тренировку'},
-                                             "image_id": '997614/15f977696a281092bcc0'},
-                                            {"title": 'Вернуться в меню',
-                                             "button": {"text": 'Вернуться в меню'},
-                                             "image_id": '1030494/cc3631c8499cdc8daf8b'}
-
-                                        ]
-                                    }
-
-                                }
-                            })
-                            fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.final)
-                        elif 'да' in command or 'конечн' in command:
-                            pass  # TODO: Прописать ветку зазминки
-
-            elif fsm.get_state(user_id) in MainGroup.Sport.Cardio.Rope:
-                if fsm.get_state(user_id) == MainGroup.Sport.Cardio.Rope.state_1:
+                elif state == MainGroup.Sport.Cardio.Solo.end:
                     if 'нет' in command or 'не ' in command:
-                        res.update({
+                        resp.update({
+                            'response': {
+                                'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
+                                'card': {
+                                    'type': 'ItemsList',
+                                    'header': {
+                                        'text': 'Повторим тренировку или вернёмся в меню?'
+                                    },
+                                    'items': [
+                                        {"title": 'Повторить тренировку', "button": {"text": 'Повторить тренировку'},
+                                         "image_id": '997614/15f977696a281092bcc0'},
+                                        {"title": 'Вернуться в меню',
+                                         "button": {"text": 'Вернуться в меню'},
+                                         "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                    ]
+                                }
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.final)
+                    elif 'да' in command or 'конечн' in command:
+                        pass  # TODO: Прописать ветку зазминки
+
+            elif state in MainGroup.Sport.Cardio.Rope:
+                if state == MainGroup.Sport.Cardio.Rope.state_1:
+                    if 'нет' in command or 'не ' in command:
+                        resp.update({
                             'response': {
                                 'text': 'Давайте приступим к кардиотренировке. Для нее Вам понадобится только скакалка и хорошее настроение.'
                                         ' Одно упражнение занимает 40 секунд. Перед тем, как его проделать, Вы можете изучить технику подробнее,'
@@ -1313,9 +1401,9 @@ def main():
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.start)
                     elif 'да' in command or 'конечн' in command:
                         pass  # TODO: Прописать ветку разминки
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
+                elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
                     if 'друг' in command or 'не' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
                                 'card': {
@@ -1342,7 +1430,7 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Начинаем нашу энергичную тренировку с прыжков на скакалке.',
                                 'card': {
@@ -1370,9 +1458,12 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task1, MainGroup.Sport.Cardio.Rope.task1_help, MainGroup.Sport.Cardio.Rope.task1_do) or (fsm.get_state(user_id) == MainGroup.Sport.Cardio.Rope.final and 'повтор' in command):
+                elif state in (
+                        MainGroup.Sport.Cardio.Rope.task1, MainGroup.Sport.Cardio.Rope.task1_help,
+                        MainGroup.Sport.Cardio.Rope.task1_do) or (
+                        state == MainGroup.Sport.Cardio.Rope.final and 'повтор' in command):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Для выполнения этого упражнение возьмите скакалку в обе руки и начинайте вращать, одновременно перепрыгивая её.',
                                 'buttons': [
@@ -1390,9 +1481,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1402,8 +1493,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task1_do, MainGroup.Sport.Cardio.Rope.task1_help, MainGroup.Sport.Cardio.Rope.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Rope.task1_do, MainGroup.Sport.Cardio.Rope.task1_help,
+                            MainGroup.Sport.Cardio.Rope.task1) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Продолжаем тренировку! Начинаем отжимания.',
                                 'card': {
@@ -1431,9 +1525,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task2, MainGroup.Sport.Cardio.Rope.task2_help, MainGroup.Sport.Cardio.Rope.task2_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Rope.task2, MainGroup.Sport.Cardio.Rope.task2_help,
+                        MainGroup.Sport.Cardio.Rope.task2_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'В планке опускаем и поднимаем тело с помощью сгибания - разгибания рук от пола.',
                                 'buttons': [
@@ -1451,9 +1547,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1463,8 +1559,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task2_do, MainGroup.Sport.Cardio.Rope.task2_help,MainGroup.Sport.Cardio.Rope.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Rope.task2_do, MainGroup.Sport.Cardio.Rope.task2_help,
+                            MainGroup.Sport.Cardio.Rope.task2) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'У Вас прекрасно получается! Продолжаем укреплять своё тело: делаем приседания с выпрыгиванием.',
                                 'card': {
@@ -1492,9 +1591,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task3, MainGroup.Sport.Cardio.Rope.task3_help, MainGroup.Sport.Cardio.Rope.task3_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Rope.task3, MainGroup.Sport.Cardio.Rope.task3_help,
+                        MainGroup.Sport.Cardio.Rope.task3_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Поставьте ноги на ширину плеч, выпрямите спину. Можно скрестить руки перед собой на уровне груди. Присед делается на вдохе. На выдохе совершается выпрыгивание.',
                                 'buttons': [
@@ -1512,9 +1613,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1524,8 +1625,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task3_do, MainGroup.Sport.Cardio.Rope.task3_help,MainGroup.Sport.Cardio.Rope.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Rope.task3_do, MainGroup.Sport.Cardio.Rope.task3_help,
+                            MainGroup.Sport.Cardio.Rope.task3) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Это было круто! А теперь знакомые прыжки на скакалке.',
                                 'card': {
@@ -1553,9 +1657,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task4, MainGroup.Sport.Cardio.Rope.task4_help, MainGroup.Sport.Cardio.Rope.task4_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Rope.task4, MainGroup.Sport.Cardio.Rope.task4_help,
+                        MainGroup.Sport.Cardio.Rope.task4_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Возьмите скакалку в обе руки и начните вращать, одновременно стараясь её перепрыгнуть.',
                                 'buttons': [
@@ -1573,9 +1679,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1585,8 +1691,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task4_do, MainGroup.Sport.Cardio.Rope.task4_help,MainGroup.Sport.Cardio.Rope.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Cardio.Rope.task4_do, MainGroup.Sport.Cardio.Rope.task4_help,
+                            MainGroup.Sport.Cardio.Rope.task4) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Ура, завершающее упражнение! Не сбавляем темп  Далее на очереди упражнение бёрпи.',
                                 'card': {
@@ -1614,9 +1723,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task5, MainGroup.Sport.Cardio.Rope.task5_help, MainGroup.Sport.Cardio.Rope.task5_do):
+                elif state in (
+                        MainGroup.Sport.Cardio.Rope.task5, MainGroup.Sport.Cardio.Rope.task5_help,
+                        MainGroup.Sport.Cardio.Rope.task5_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Подпрыгните, отведите ноги назад и опустите таз, чтобы получилась поза планки. Соберитесь обратно прыжком, выпрямитесь, руки вытяните вверх.',
                                 'buttons': [
@@ -1634,9 +1745,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1646,11 +1757,14 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Cardio.Rope.task5_do, MainGroup.Sport.Cardio.Rope.task5_help,MainGroup.Sport.Cardio.Rope.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    elif state in (
+                            MainGroup.Sport.Cardio.Rope.task5_do, MainGroup.Sport.Cardio.Rope.task5_help,
+                            MainGroup.Sport.Cardio.Rope.task5) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
                         answer_options = [
                             'Заминка нужна, чтобы снизить до нормального уровня частоту сердечных сокращений. Хотите её выпонить?',
                             'Будет здорово выполнить заминку! Заминка снижает склонность к закрепощению мышц после нагрузки.  Хотели бы Вы приступить к её выполнению?']
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': f'{random.choice(answer_options)}',
                                 'card': {
@@ -1671,59 +1785,59 @@ def main():
                         })
 
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.end)
-                elif fsm.get_state(user_id) == MainGroup.Sport.Cardio.Rope.end:
-                        if 'нет' in command or 'не ' in command:
-                            res.update({
-                                'response': {
-                                    'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
-                                    'card': {
-                                        'type': 'ItemsList',
-                                        'header': {
-                                            'text': 'Повторим тренировку или вернёмся в меню?'
-                                        },
-                                        'items': [
-                                            {"title": 'Повторить тренировку', "button": {"text": 'Повторить тренировку'},
-                                             "image_id": '997614/15f977696a281092bcc0'},
-                                            {"title": 'Вернуться в меню',
-                                             "button": {"text": 'Вернуться в меню'},
-                                             "image_id": '1030494/cc3631c8499cdc8daf8b'}
-
-                                        ]
-                                    }
-
-                                }
-                            })
-                            fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.final)
-                        elif 'да' in command or 'конечн' in command:
-                            pass  # TODO: Прописать ветку зазминки
-
-        elif fsm.get_state(user_id) in MainGroup.Sport.Zaradka:
-            if fsm.get_state(user_id) == MainGroup.Sport.Zaradka.state_1:
-                if 'пят' in command or '5' in command:
-                    res.update({
-                        'response': {
-                            'text': 'Приготовьтесь получить заряд бодрости! Каждое упражнение длится минуту.Перед выполнением каждого упражнения Вы можете изучить его подробнее, начать выполнение или пропустить его и перейти к следующему.'
-                                    'Вы готовы начать или подберём другую тренировку?',
-                            'card': {
+                elif state == MainGroup.Sport.Cardio.Rope.end:
+                    if 'нет' in command or 'не ' in command:
+                        resp.update({
+                            'response': {
+                                'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
+                                'card': {
                                     'type': 'ItemsList',
                                     'header': {
-                                        'text': 'Приступаем к выполнению зарядки'
+                                        'text': 'Повторим тренировку или вернёмся в меню?'
                                     },
                                     'items': [
-                                        {"title": 'Я готов', "button": {"text": 'Я готов'},
-                                         "image_id": '997614/72ab6692a3db3f4e3056'},
-                                        {"title": 'Выберем другую тренировку',
-                                         "button": {"text": 'Выберем другую тренировку'},
+                                        {"title": 'Повторить тренировку', "button": {"text": 'Повторить тренировку'},
+                                         "image_id": '997614/15f977696a281092bcc0'},
+                                        {"title": 'Вернуться в меню',
+                                         "button": {"text": 'Вернуться в меню'},
                                          "image_id": '1030494/cc3631c8499cdc8daf8b'}
 
                                     ]
                                 }
 
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.final)
+                    elif 'да' in command or 'конечн' in command:
+                        pass  # TODO: Прописать ветку зазминки
+
+        elif state in MainGroup.Sport.Zaradka:
+            if state == MainGroup.Sport.Zaradka.state_1:
+                if 'пят' in command or '5' in command:
+                    resp.update({
+                        'response': {
+                            'text': 'Приготовьтесь получить заряд бодрости! Каждое упражнение длится минуту.Перед выполнением каждого упражнения Вы можете изучить его подробнее, начать выполнение или пропустить его и перейти к следующему.'
+                                    'Вы готовы начать или подберём другую тренировку?',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Приступаем к выполнению зарядки'
+                                },
+                                'items': [
+                                    {"title": 'Я готов', "button": {"text": 'Я готов'},
+                                     "image_id": '997614/72ab6692a3db3f4e3056'},
+                                    {"title": 'Выберем другую тренировку',
+                                     "button": {"text": 'Выберем другую тренировку'},
+                                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                ]
+                            }
+
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.start)
                 elif 'дес' in command or '10' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Итак, начинаем нашу активную 10-минутную зарядку. Надеюсь Вы полны энтузиазма. Каждое упражнение длится 60 секунд.'
                                     ' Перед выполнением каждого упражнения Вы можете изучить его подробнее, начать выполнение или пропустить его и перейти к следующему. Вы готовы начать или подберём другую тренировку?',
@@ -1745,10 +1859,10 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.start)
-            elif fsm.get_state(user_id) in MainGroup.Sport.Zaradka.Ten:
-                if fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.start, MainGroup.Sport.Zaradka.Ten.final):
+            elif state in MainGroup.Sport.Zaradka.Ten:
+                if state in (MainGroup.Sport.Zaradka.Ten.start, MainGroup.Sport.Zaradka.Ten.final):
                     if 'друг' in command or 'не' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
                                 'card': {
@@ -1775,7 +1889,7 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Приступаем  к растиранию шеи!',
                                 'card': {
@@ -1803,9 +1917,12 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task1, MainGroup.Sport.Zaradka.Ten.task1_help, MainGroup.Sport.Zaradka.Ten.task1_do) or (fsm.get_state(user_id) == MainGroup.Sport.Zaradka.Ten.final and 'повтор' in command):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task1, MainGroup.Sport.Zaradka.Ten.task1_help,
+                        MainGroup.Sport.Zaradka.Ten.task1_do) or (
+                        state == MainGroup.Sport.Zaradka.Ten.final and 'повтор' in command):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Начинаем поглаживания тыльной стороны шеи обеими руками. Их необходимо прижимать ладонями к массируемой части. Перемещаемся от границы волосяного покрова до плечевого сустава.',
                                 'buttons': [
@@ -1823,9 +1940,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1835,8 +1952,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task1_do, MainGroup.Sport.Zaradka.Ten.task1_help, MainGroup.Sport.Zaradka.Ten.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task1_do, MainGroup.Sport.Zaradka.Ten.task1_help,
+                            MainGroup.Sport.Zaradka.Ten.task1) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Это было легко. Постепенно усложняемся и переходим к наклонам головы.',
                                 'card': {
@@ -1864,9 +1984,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task2, MainGroup.Sport.Zaradka.Ten.task2_help,MainGroup.Sport.Zaradka.Ten.task2_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task2, MainGroup.Sport.Zaradka.Ten.task2_help,
+                        MainGroup.Sport.Zaradka.Ten.task2_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Плавно наклоняйте голову к правому, а затем к левому плечу. Рекомендую делать упражнение как можно медленнее.',
                                 'buttons': [
@@ -1884,9 +2006,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1896,8 +2018,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task2_do, MainGroup.Sport.Zaradka.Ten.task2_help, MainGroup.Sport.Zaradka.Ten.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task2_do, MainGroup.Sport.Zaradka.Ten.task2_help,
+                            MainGroup.Sport.Zaradka.Ten.task2) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'У Вас прекрасно получается! Разминаем кисти с помощью круговых вращений.',
                                 'card': {
@@ -1925,9 +2050,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task3, MainGroup.Sport.Zaradka.Ten.task3_help,MainGroup.Sport.Zaradka.Ten.task3_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task3, MainGroup.Sport.Zaradka.Ten.task3_help,
+                        MainGroup.Sport.Zaradka.Ten.task3_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Ладони разжаты. Удерживая плечи и предплечья неподвижными, вращение осуществляется только кистями.',
                                 'buttons': [
@@ -1945,9 +2072,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -1957,8 +2084,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task3_do, MainGroup.Sport.Zaradka.Ten.task3_help, MainGroup.Sport.Zaradka.Ten.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task3_do, MainGroup.Sport.Zaradka.Ten.task3_help,
+                            MainGroup.Sport.Zaradka.Ten.task3) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Поднажмите! Начинаем выполнять наклоны корпуса.',
                                 'card': {
@@ -1986,9 +2116,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task4, MainGroup.Sport.Zaradka.Ten.task4_help,MainGroup.Sport.Zaradka.Ten.task4_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task4, MainGroup.Sport.Zaradka.Ten.task4_help,
+                        MainGroup.Sport.Zaradka.Ten.task4_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Не отрывая ног от пола, начинаем наклонять тело в правую, а затем в левую сторону, руки лучше держать на поясе.',
                                 'buttons': [
@@ -2006,9 +2138,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2018,8 +2150,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task4_do, MainGroup.Sport.Zaradka.Ten.task4_help, MainGroup.Sport.Zaradka.Ten.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task4_do, MainGroup.Sport.Zaradka.Ten.task4_help,
+                            MainGroup.Sport.Zaradka.Ten.task4) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Теперь снова простое упражнение - вращение рук.',
                                 'card': {
@@ -2047,9 +2182,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task5, MainGroup.Sport.Zaradka.Ten.task5_help,MainGroup.Sport.Zaradka.Ten.task5_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task5, MainGroup.Sport.Zaradka.Ten.task5_help,
+                        MainGroup.Sport.Zaradka.Ten.task5_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Встаньте прямо и вытяните руки по сторонам. Тело образует букву «Т». Это исходное положение. Выполняйте круговые движения прямыми руками вперёд, затем – назад.',
                                 'buttons': [
@@ -2067,9 +2204,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2079,8 +2216,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task5_do, MainGroup.Sport.Zaradka.Ten.task5_help, MainGroup.Sport.Zaradka.Ten.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task5_do, MainGroup.Sport.Zaradka.Ten.task5_help,
+                            MainGroup.Sport.Zaradka.Ten.task5) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'На очереди весёлое упражнение - круговые вращения тазом.',
                                 'card': {
@@ -2108,9 +2248,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task6, MainGroup.Sport.Zaradka.Ten.task6_help,MainGroup.Sport.Zaradka.Ten.task6_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task6, MainGroup.Sport.Zaradka.Ten.task6_help,
+                        MainGroup.Sport.Zaradka.Ten.task6_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Положите руки на талию, ноги расставьте шире плеч. Начните вращать тазом по кругу, как будто стараетесь нарисовать круг ягодицами. Стопы не отрываются от пола, вращение происходит за счет движений таза, а не корпуса.',
                                 'buttons': [
@@ -2128,9 +2270,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2140,8 +2282,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task6_do, MainGroup.Sport.Zaradka.Ten.task6_help, MainGroup.Sport.Zaradka.Ten.task6) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task6_do, MainGroup.Sport.Zaradka.Ten.task6_help,
+                            MainGroup.Sport.Zaradka.Ten.task6) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Вы молодцы, осталось совсем немного! Начинаем отжимания. ',
                                 'card': {
@@ -2169,9 +2314,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task7, MainGroup.Sport.Zaradka.Ten.task7_help,MainGroup.Sport.Zaradka.Ten.task7_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task7, MainGroup.Sport.Zaradka.Ten.task7_help,
+                        MainGroup.Sport.Zaradka.Ten.task7_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'В планке опускаем и поднимаем тело с помощью сгибания - разгибания рук от пола.',
                                 'buttons': [
@@ -2189,9 +2336,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2201,8 +2348,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task7_do, MainGroup.Sport.Zaradka.Ten.task7_help, MainGroup.Sport.Zaradka.Ten.task7) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task7_do, MainGroup.Sport.Zaradka.Ten.task7_help,
+                            MainGroup.Sport.Zaradka.Ten.task7) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'А теперь выполняем бег на месте.',
                                 'card': {
@@ -2230,9 +2380,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task8, MainGroup.Sport.Zaradka.Ten.task8_help,MainGroup.Sport.Zaradka.Ten.task8_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task8, MainGroup.Sport.Zaradka.Ten.task8_help,
+                        MainGroup.Sport.Zaradka.Ten.task8_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'По сути это тот же бег, но без передвижения. Спину необходимо держать прямо и ровно; руки согнуть в локтях, не задирая и не расслабляя их слишком сильно',
                                 'buttons': [
@@ -2250,9 +2402,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2262,8 +2414,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task8_do, MainGroup.Sport.Zaradka.Ten.task8_help, MainGroup.Sport.Zaradka.Ten.task8) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task8_do, MainGroup.Sport.Zaradka.Ten.task8_help,
+                            MainGroup.Sport.Zaradka.Ten.task8) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Вы, настоящий спортсмен! Далее переходим к наклонам корпуса. ',
                                 'card': {
@@ -2291,9 +2446,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task9, MainGroup.Sport.Zaradka.Ten.task9_help,MainGroup.Sport.Zaradka.Ten.task9_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task9, MainGroup.Sport.Zaradka.Ten.task9_help,
+                        MainGroup.Sport.Zaradka.Ten.task9_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Ноги на ширине плеч, спина прямая, лопатки сведены, руки подняты к ушам. Напрягите пресс и наклоняйтесь вниз. Постарайтесь тянуться грудью к бедрам, а не руками к полу.',
                                 'buttons': [
@@ -2311,9 +2468,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2323,8 +2480,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task9_do, MainGroup.Sport.Zaradka.Ten.task9_help, MainGroup.Sport.Zaradka.Ten.task9) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task9_do, MainGroup.Sport.Zaradka.Ten.task9_help,
+                            MainGroup.Sport.Zaradka.Ten.task9) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Поднажмём, последнее упражнение - это упражнение на пресс, а точнее поднятие корпуса лёжа на спине. ',
                                 'card': {
@@ -2352,9 +2512,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task10, MainGroup.Sport.Zaradka.Ten.task10_help,MainGroup.Sport.Zaradka.Ten.task10_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Ten.task10, MainGroup.Sport.Zaradka.Ten.task10_help,
+                        MainGroup.Sport.Zaradka.Ten.task10_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Ложимся на спину, прижимаем поясницу к полу, ноги чуть сгибаем в коленях. Руки закрепляем за головой или на груди. Локти разводим в стороны.'
                                         'Начинаем сгибание туловища. Подбородком тянемся к груди. Тянемся дальше, чтобы вслед за головой и шеей от пола отрывалась спина.',
@@ -2373,9 +2535,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2385,8 +2547,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Ten.task10_do, MainGroup.Sport.Zaradka.Ten.task10_help, MainGroup.Sport.Zaradka.Ten.task10) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Ten.task10_do, MainGroup.Sport.Zaradka.Ten.task10_help,
+                            MainGroup.Sport.Zaradka.Ten.task10) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Вы хорошо потрудились, поздравляю вас с очередной победой! Что вы выберите дальше: повторить или завершить тренировку?',
                                 'card': {
@@ -2408,10 +2573,10 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.final)
 
-            elif fsm.get_state(user_id) in MainGroup.Sport.Zaradka.Five:
-                if fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.start, MainGroup.Sport.Zaradka.Five.final):
+            elif state in MainGroup.Sport.Zaradka.Five:
+                if state in (MainGroup.Sport.Zaradka.Five.start, MainGroup.Sport.Zaradka.Five.final):
                     if 'друг' in command or 'не' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
                                 'card': {
@@ -2438,7 +2603,7 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Открывают нашу тренировку наклоны головы.',
                                 'card': {
@@ -2466,9 +2631,12 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task1, MainGroup.Sport.Zaradka.Five.task1_help,MainGroup.Sport.Zaradka.Five.task1_do) or (fsm.get_state(user_id) == MainGroup.Sport.Zaradka.Five.final and 'повтор' in command):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Five.task1, MainGroup.Sport.Zaradka.Five.task1_help,
+                        MainGroup.Sport.Zaradka.Five.task1_do) or (
+                        state == MainGroup.Sport.Zaradka.Five.final and 'повтор' in command):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Руки на поясе, ноги на ширине плеч, грудная клетка расправлена, живот втянут. Наклоны головы по очереди к правому и левому плечу',
                                 'buttons': [
@@ -2485,9 +2653,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2497,38 +2665,43 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task1_do, MainGroup.Sport.Zaradka.Five.task1_help, MainGroup.Sport.Zaradka.Five.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                            res.update({
-                                'response': {
-                                    'text': 'Далее разминаем руки круговыми вращениями.',
-                                    'card': {
-                                        'type': 'BigImage',
-                                        "image_id": '1540737/75d7fd59f370ba0f15f3',
-                                        "title": 'Упражнение 2',
-                                        "description": 'Круговые движения рук'
-                                    }
-                                    ,
-                                    'buttons': [
-                                        {
-                                            'title': 'Выполнить🔥',
-                                            'hide': True
-                                        },
-                                        {
-                                            'title': 'подробнее📄',
-                                            'hide': True
-                                        },
-                                        {
-                                            'title': 'Пропустить⏭',
-                                            'hide': True
-                                        }
-                                    ]
-
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Five.task1_do, MainGroup.Sport.Zaradka.Five.task1_help,
+                            MainGroup.Sport.Zaradka.Five.task1) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
+                            'response': {
+                                'text': 'Далее разминаем руки круговыми вращениями.',
+                                'card': {
+                                    'type': 'BigImage',
+                                    "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                    "title": 'Упражнение 2',
+                                    "description": 'Круговые движения рук'
                                 }
-                            })
-                            fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task2, MainGroup.Sport.Zaradka.Five.task2_help,MainGroup.Sport.Zaradka.Five.task2_do):
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2)
+                elif state in (
+                        MainGroup.Sport.Zaradka.Five.task2, MainGroup.Sport.Zaradka.Five.task2_help,
+                        MainGroup.Sport.Zaradka.Five.task2_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': ' Ладони должны быть разжаты. Удерживая плечи и предплечья неподвижными, вращайте кистями.',
                                 'buttons': [
@@ -2546,9 +2719,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2558,8 +2731,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task2_do, MainGroup.Sport.Zaradka.Five.task2_help, MainGroup.Sport.Zaradka.Five.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Five.task2_do, MainGroup.Sport.Zaradka.Five.task2_help,
+                            MainGroup.Sport.Zaradka.Five.task2) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'А теперь перейдём к полным круговым вращениям.',
                                 'card': {
@@ -2587,9 +2763,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task3, MainGroup.Sport.Zaradka.Five.task3_help,MainGroup.Sport.Zaradka.Five.task3_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Five.task3, MainGroup.Sport.Zaradka.Five.task3_help,
+                        MainGroup.Sport.Zaradka.Five.task3_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Встаньте прямо и вытяните руки по сторонам. Тело образует букву «Т». Выполняйте круговые движения прямыми руками вперёд, затем – назад.',
                                 'buttons': [
@@ -2607,9 +2785,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2619,8 +2797,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task3_do, MainGroup.Sport.Zaradka.Five.task3_help, MainGroup.Sport.Zaradka.Five.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Five.task3_do, MainGroup.Sport.Zaradka.Five.task3_help,
+                            MainGroup.Sport.Zaradka.Five.task3) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Наращиваем интенсивность. Не беспокойтесь, делаем классические приседания.',
                                 'card': {
@@ -2648,9 +2829,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task4, MainGroup.Sport.Zaradka.Five.task4_help,MainGroup.Sport.Zaradka.Five.task4_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Five.task4, MainGroup.Sport.Zaradka.Five.task4_help,
+                        MainGroup.Sport.Zaradka.Five.task4_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'Чтобы выполнить стандартное приседание, нужно держать спину прямо. После чего начните медленно опускать бедра, пока они не станут параллельны полу. ',
                                 'buttons': [
@@ -2668,9 +2851,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2680,8 +2863,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task4_do, MainGroup.Sport.Zaradka.Five.task4_help, MainGroup.Sport.Zaradka.Five.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Five.task4_do, MainGroup.Sport.Zaradka.Five.task4_help,
+                            MainGroup.Sport.Zaradka.Five.task4) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Ого, у вас хорошо получается, разнообразим тренировку необычным бегом на месте.',
                                 'card': {
@@ -2709,9 +2895,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task5, MainGroup.Sport.Zaradka.Five.task5_help,MainGroup.Sport.Zaradka.Five.task5_do):
+                elif state in (
+                        MainGroup.Sport.Zaradka.Five.task5, MainGroup.Sport.Zaradka.Five.task5_help,
+                        MainGroup.Sport.Zaradka.Five.task5_do):
                     if 'подробн' in command or 'объяс' in command:
-                        res.update({
+                        resp.update({
                             'response': {
                                 'text': 'По сути это тот же бег, но без передвижения. Спину необходимо держать прямо и ровно; руки согнуть в локтях. Важно не задирать и не расслаблять их слишком сильно.',
                                 'buttons': [
@@ -2729,9 +2917,9 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_help)
                     elif 'выполн' in command or 'дел' in command:
-                        res.update({
+                        resp.update({
                             'response': {
-                                'text': f'{random.choice(motivation)}',
+                                'text': f'{random.choice(motivations)}',
                                 'buttons': [
                                     {
                                         'title': 'Следующее упражнение▶',
@@ -2741,8 +2929,11 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_do)
-                    elif fsm.get_state(user_id) in (MainGroup.Sport.Zaradka.Five.task5_do, MainGroup.Sport.Zaradka.Five.task5_help, MainGroup.Sport.Zaradka.Five.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                        res.update({
+                    elif state in (
+                            MainGroup.Sport.Zaradka.Five.task5_do, MainGroup.Sport.Zaradka.Five.task5_help,
+                            MainGroup.Sport.Zaradka.Five.task5) and (
+                            'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                        resp.update({
                             'response': {
                                 'text': 'Вы хорошо потрудились, горжусь Вами. Что делаем дальше: повторим или завершим тренировку? Выбор за Вами.',
                                 'card': {
@@ -2764,38 +2955,10 @@ def main():
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.final)
 
-        elif fsm.get_state(user_id) in MainGroup.Sport.Power:
-            if fsm.get_state(user_id) == MainGroup.Sport.Power.state_1:
-                if 'нет' in command or 'не ' in command:
-                    res.update({
-                        'response': {
-                            'text': 'Давайте приступим к силовой тренировке. Для нее Вам нужен только боевой настрой. Одно упражнение длится 40 секунд. '
-                                    'Перед  его выполнением Вы можете изучить упражнение подробнее, начать делать его или пропустить выполнение и перейти к следующему.'
-                                    'Вы готовы к силовой тренировке или подберём Вам что-нибудь другое?'
-                                    'Вы готовы начать, или рассмотрим другую тренировку?',
-                            'card': {
-                                'type': 'ItemsList',
-                                'header': {
-                                    'text': 'Приступаем к выполнению силовой тренировки'
-                                },
-                                'items': [
-                                    {"title": 'Я готов', "button": {"text": 'Я готов'},
-                                     "image_id": '997614/72ab6692a3db3f4e3056'},
-                                    {"title": 'Выберем другую тренировку',
-                                     "button": {"text": 'Выберем другую тренировку'},
-                                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
-
-                                ]
-                            }
-
-                        }
-                    })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.start)
-                elif 'да' in command or 'конечн' in command:
-                    pass  # TODO: Прописать ветку разминки
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.start, MainGroup.Sport.Power.final):
+        elif state in MainGroup.Sport.Power:
+            if state in (MainGroup.Sport.Power.start, MainGroup.Sport.Power.final):
                 if 'друг' in command or 'не' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
                             'card': {
@@ -2822,7 +2985,7 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.state_home)
                 elif 'да' in command or 'готов' in command or 'повтор' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Давайте начнем. Первое упражнение - отжимания. ',
                             'card': {
@@ -2850,9 +3013,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task1)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task1, MainGroup.Sport.Power.task1_help, MainGroup.Sport.Power.task1_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task1, MainGroup.Sport.Power.task1_help, MainGroup.Sport.Power.task1_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Примите упор лежа и начинайте выполнять сгибания и разгибания рук. Следите за тем, чтобы линия вашего корпуса оставалась прямой, избегайте прогибов в области груди и поясницы.',
                             'buttons': [
@@ -2870,9 +3035,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task1_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -2882,8 +3047,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task1_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task1_do, MainGroup.Sport.Power.task1_help, MainGroup.Sport.Power.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
+                elif state in (
+                        MainGroup.Sport.Power.task1_do, MainGroup.Sport.Power.task1_help,
+                        MainGroup.Sport.Power.task1) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    resp.update({
                         'response': {
                             'text': 'У Вас здорово получается! Следующее упражнение - подтягивания.',
                             'card': {
@@ -2911,9 +3079,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task2)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task2, MainGroup.Sport.Power.task2_help, MainGroup.Sport.Power.task2_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task2, MainGroup.Sport.Power.task2_help, MainGroup.Sport.Power.task2_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Повисните на турнике и сделайте тяговое движение вверх, одновременно с этим делая выдох. Движение должно осуществляться за счет движения лопаток.'
                                     ' Не надо стараться тянуть себя вверх силой бицепсов, так как широчайшие мышцы спины – куда более сильная мышечная группа.',
@@ -2932,9 +3102,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task2_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -2944,8 +3114,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task2_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task2_do, MainGroup.Sport.Power.task2_help, MainGroup.Sport.Power.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
+                elif state in (
+                        MainGroup.Sport.Power.task2_do, MainGroup.Sport.Power.task2_help,
+                        MainGroup.Sport.Power.task2) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    resp.update({
                         'response': {
                             'text': 'Надеюсь Вы готовы, потому что мы начинаем наращивать интенсивность. Приступаем к отжиманиям обратным хватом.',
                             'card': {
@@ -2973,9 +3146,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task3)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task3, MainGroup.Sport.Power.task3_help, MainGroup.Sport.Power.task3_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task3, MainGroup.Sport.Power.task3_help, MainGroup.Sport.Power.task3_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Садимся на возвышенность (можно использовать стул), упираемся ладонями так, чтобы руки были на одинаковом расстоянии от линии позвоночника. '
                                     'Сгибаем руки в локтевых и плечевых суставах одновременно, опускаемся тазом вниз до уровня, когда предплечья станут параллельными полу. С выдохом разгибаем руки.',
@@ -2994,9 +3169,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task3_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -3006,8 +3181,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task3_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task3_do, MainGroup.Sport.Power.task3_help, MainGroup.Sport.Power.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
+                elif state in (
+                        MainGroup.Sport.Power.task3_do, MainGroup.Sport.Power.task3_help,
+                        MainGroup.Sport.Power.task3) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    resp.update({
                         'response': {
                             'text': 'Вы - настоящий спортсмен! Приступаем к приседаниям.',
                             'card': {
@@ -3035,9 +3213,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task4)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task4, MainGroup.Sport.Power.task4_help, MainGroup.Sport.Power.task4_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task4, MainGroup.Sport.Power.task4_help, MainGroup.Sport.Power.task4_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Встаньте прямо, ноги на ширине плеч, носки стоп слега разведите в стороны. Напрягите поясницу, '
                                     'отведите таз назад и немного наклоните торс вперед, согните ноги в коленях и опуститесь как можно ниже. Затем поднимитесь в исходное положение.',
@@ -3056,9 +3236,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task4_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -3068,8 +3248,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task4_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task4_do, MainGroup.Sport.Power.task4_help, MainGroup.Sport.Power.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
+                elif state in (
+                        MainGroup.Sport.Power.task4_do, MainGroup.Sport.Power.task4_help,
+                        MainGroup.Sport.Power.task4) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    resp.update({
                         'response': {
                             'text': 'Поднажмите, осталось не так много! Следующее упражнение - поднимания на носке.',
                             'card': {
@@ -3097,9 +3280,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task5)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task5, MainGroup.Sport.Power.task5_help, MainGroup.Sport.Power.task5_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task5, MainGroup.Sport.Power.task5_help, MainGroup.Sport.Power.task5_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Встаньте прямо и начинайте подниматься на носки и вновь опускаться на всю стопу. Вы можете воспользоваться дополнительной опорой, например, стенкой, если Вам это необходимо.',
                             'buttons': [
@@ -3117,9 +3302,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task5_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -3129,8 +3314,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task5_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task5_do, MainGroup.Sport.Power.task5_help, MainGroup.Sport.Power.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
+                elif state in (
+                        MainGroup.Sport.Power.task5_do, MainGroup.Sport.Power.task5_help,
+                        MainGroup.Sport.Power.task5) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    resp.update({
                         'response': {
                             'text': 'Следующее энергичное упражнение - велосипед.',
                             'card': {
@@ -3158,9 +3346,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task6)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task6, MainGroup.Sport.Power.task6_help, MainGroup.Sport.Power.task6_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task6, MainGroup.Sport.Power.task6_help, MainGroup.Sport.Power.task6_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Лягте на спину, уберите руки за голову и разведите локти в стороны. Поочерёдно сгибайте и выпрямляйте ноги, '
                                     'как будто крутите педали велосипеда, в это время локтями касайтесь колена противоположной ноги.',
@@ -3179,9 +3369,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task6_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -3191,8 +3381,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task6_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task6_do, MainGroup.Sport.Power.task6_help, MainGroup.Sport.Power.task6) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
+                elif state in (
+                        MainGroup.Sport.Power.task6_do, MainGroup.Sport.Power.task6_help,
+                        MainGroup.Sport.Power.task6) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    resp.update({
                         'response': {
                             'text': 'Выходим на финишную прямую! Завершающее упражнение - сгибанию рук с грузом.',
                             'card': {
@@ -3220,9 +3413,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task7)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task7, MainGroup.Sport.Power.task7_help, MainGroup.Sport.Power.task7_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task7, MainGroup.Sport.Power.task7_help, MainGroup.Sport.Power.task7_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Примите удобное положение. Возьмите любой груз, удобно лежащий в руке, и начинайте сгибание руки.',
                             'buttons': [
@@ -3240,9 +3435,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task7_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -3252,8 +3447,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task7_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task7_do, MainGroup.Sport.Power.task7_help, MainGroup.Sport.Power.task7) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    res.update({
+                elif state in (
+                        MainGroup.Sport.Power.task7_do, MainGroup.Sport.Power.task7_help,
+                        MainGroup.Sport.Power.task7) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    resp.update({
                         'response': {
                             'text': 'Отлично, Вы здорово справились со всеми заданиями. Отдохните и переведите дух. ',
                             'card': {
@@ -3281,9 +3479,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task8)
-            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task8, MainGroup.Sport.Power.task8_help, MainGroup.Sport.Power.task8_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+            elif state in (
+                    MainGroup.Sport.Power.task8, MainGroup.Sport.Power.task8_help, MainGroup.Sport.Power.task8_do) or (
+                    state == MainGroup.Sport.Power.final and 'повтор' in command):
                 if 'подробн' in command or 'объяс' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Просто отдохните. В этом нет ничего сложного😁',
                             'buttons': [
@@ -3301,9 +3501,9 @@ def main():
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task8_help)
                 elif 'выполн' in command or 'дел' in command:
-                    res.update({
+                    resp.update({
                         'response': {
-                            'text': f'{random.choice(motivation)}',
+                            'text': f'{random.choice(motivations)}',
                             'buttons': [
                                 {
                                     'title': 'Следующее упражнение▶',
@@ -3313,11 +3513,14 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task8_do)
-                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task8_do, MainGroup.Sport.Power.task8_help, MainGroup.Sport.Power.task8) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                elif state in (
+                        MainGroup.Sport.Power.task8_do, MainGroup.Sport.Power.task8_help,
+                        MainGroup.Sport.Power.task8) and (
+                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
                     answer_options = [
                         'Заминка нужна, чтобы снизить до нормального уровня частоту сердечных сокращений. Хотите её выпонить?',
                         'Будет здорово выполнить заминку! Заминка снижает склонность к закрепощению мышц после нагрузки.  Хотели бы Вы приступить к её выполнению?']
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': f'{random.choice(answer_options)}',
                             'card': {
@@ -3339,11 +3542,11 @@ def main():
 
                     fsm.set_state(user_id, MainGroup.Sport.Power.end)
 
-            elif fsm.get_state(user_id) == MainGroup.Sport.Power.end:
+            elif state == MainGroup.Sport.Power.end:
                 if 'да' in command or 'конечн' in command:
                     pass  # TODO: Прописать ветку заминки
                 elif 'нет' in command or 'не ' in command:
-                    res.update({
+                    resp.update({
                         'response': {
                             'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
                             'card': {
@@ -3364,11 +3567,11 @@ def main():
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.final)
-            elif fsm.get_state(user_id) == MainGroup.Sport.Power.final:
+            elif state == MainGroup.Sport.Power.final:
                 answer_options = [
                     'Давайте выполним заминку! Она нужна, чтобы нормализовать частоту сердечных сокращений и температуру тела. Хотите снять мышечное напряжение после тренировки?',
                     'Будет здорово выполнить заминку! Она помогает снизить синдром отсроченного начала мышечной болезненности. Хотите выполнить этот ряд упражнений?']
-                res.update({
+                resp.update({
                     'response': {
                         'text': f'{random.choice(answer_options)}',
                         'card': {
@@ -3390,17 +3593,63 @@ def main():
 
                 fsm.set_state(user_id, MainGroup.Sport.Power.end)
 
+        elif state in MainGroup.Sport.Wrap.WarmUp:
+            step: TrainingStep = warm_up_algorithm[fsm.get_data(user_id).get('step', 0)]
 
+            if state == MainGroup.Sport.Wrap.WarmUp.qw:
+                data = fsm.get_data(user_id)
+                if 'нет' in command or 'не ' in command:
+                    resp = data['callback'](user_id, resp)
+                elif 'да' in command or 'конечн' in command:
+                    resp = start_warmup(user_id, resp)
+
+            elif state == MainGroup.Sport.Wrap.WarmUp.start and is_positive(command):
+                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.task)
+                step: int = 0
+                fsm.update_data(user_id, step=step)
+
+                step: TrainingStep = warm_up_algorithm[step]
+
+                resp.update(step.generate_choice_resp())
+
+            elif 'подробн' in command or 'расскажи' in command:
+                resp.update(step.generate_detailed_description_resp())
+
+            elif is_positive(command):
+                resp.update(step.generate_do_training_resp(random.choice(motivations)))
+
+            elif state == MainGroup.Sport.Wrap.WarmUp.task and (
+                    'следующ' in command or 'дальш' in command or 'продолж' in command):
+                step = fsm.get_data(user_id).get('step', 0) + 1
+                fsm.update_data(user_id, step=step)
+
+                step: TrainingStep = warm_up_algorithm[step]
+
+                resp.update(step.generate_choice_resp())
+
+            elif 'пропуст' in command or 'следующ' in command:
+                step = fsm.get_data(user_id).get('step', 0) + 1
+                fsm.update_data(user_id, step=step)
+                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.task)
+
+                step: TrainingStep = warm_up_algorithm[step]
+
+                resp.update(step.generate_choice_resp())
+
+            else:
+                data = fsm.get_data(user_id)  # Возврат к упражнению которое было до начала разминки
+                print(f"{data['callback']=}")
+                data['callback'](user_id, resp)
 
     else:
-        res.update({
+        resp.update({
             'response': {
                 'text': f'Произошла ошибка. Скажите "поехали" чтобы вернуться в главное меню.'
             }
         })
         fsm.set_state(user_id, MainGroup.state_1)
 
-    return dict_to_json(res, ensure_ascii=False, indent=2)
+    return dict_to_json(resp, ensure_ascii=False, indent=2)
 
 
 app.run('localhost', port=5050, debug=True)

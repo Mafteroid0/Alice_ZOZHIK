@@ -153,7 +153,8 @@ class TrainingStep:
     def generate_do_training_resp(self, motivation: str) -> dict:
         return {
             'response': {
-                'text': f'{motivation}',  # TODO: Добавить сюда музыку через tts
+                'text': f'{motivation}',
+                # TODO: 'tts': self.audio,
                 'buttons': [
                     {
                         'title': 'Следующее упражнение▶',
@@ -226,6 +227,8 @@ class TrainingAlgorithm:
 
     def __iter__(self):
         node = self.left
+        if node is None:
+            return StopIteration
         while node.right is not None:
             yield node
             node = node.right
@@ -237,15 +240,3 @@ class TrainingAlgorithm:
             yield node
             node = node.left
         yield node
-
-# ll = LinkedList()
-# ll.append_left({})
-# ll.append_left({2: ''})
-# ll.append_right({'a': 'boba'})
-# ll.append_left({'fIjogfe': 'fttg43'})
-# print(ll)
-# item = ll[0]
-# print(item)
-# print(item.left, type(item.left))
-# print(item.right.right.right, type(item.right.right.right))
-# print(item.step, type(item.step))
