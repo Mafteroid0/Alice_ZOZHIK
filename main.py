@@ -209,7 +209,8 @@ def start_power_training(user_id: str, resp: dict) -> dict:
             'card': {
                 'type': 'ItemsList',
                 'header': {
-                    'text': 'Приступаем к выполнению силовой тренировки'
+                    'text': 'Комментарий: Если на этот этап мы перешли с разминки, то об этом будет написано'
+                            'Приступаем к выполнению силовой тренировки.'
                 },
                 'items': [
                     {"title": 'Я готов', "button": {"text": 'Я готов'},
@@ -278,6 +279,14 @@ def start_solo_cardio(user_id: str, resp: dict) -> dict:
     })
     fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.start)
     return resp
+
+
+def end_warmup(user_id: str, resp: dict,
+               data: dict | None = None) -> dict:  # Возврат к упражнению которое было до начала разминки
+    if data is None:
+        data = fsm.get_data(user_id)
+    fsm.update_data(user_id, step=0)
+    return data['callback'](user_id, resp)
 
 
 @app.route('/alice', methods=['POST'])
@@ -3606,9 +3615,8 @@ def main():
             step: TrainingStep = warm_up_algorithm[fsm.get_data(user_id).get('step', 0)]
 
             if state == MainGroup.Sport.Wrap.WarmUp.qw:
-                data = fsm.get_data(user_id)
                 if 'нет' in command or 'не ' in command:
-                    resp = data['callback'](user_id, resp)
+                    resp = end_warmup(user_id, resp)
                 elif 'да' in command or 'конечн' in command:
                     resp = start_warmup(user_id, resp)
 
@@ -3627,28 +3635,23 @@ def main():
             elif is_positive(command):
                 resp.update(step.generate_do_training_resp(random.choice(motivations)))
 
-            elif state == MainGroup.Sport.Wrap.WarmUp.task and (
-                    'следующ' in command or 'дальш' in command or 'продолж' in command):
-                step = fsm.get_data(user_id).get('step', 0) + 1
-                fsm.update_data(user_id, step=step)
+            elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
+                if state == MainGroup.Sport.Wrap.WarmUp.task:
+                    step = fsm.get_data(user_id).get('step', 0) + 1
+                    fsm.update_data(user_id, step=step)
 
-                step: TrainingStep = warm_up_algorithm[step]
+                    try:
+                        step: TrainingStep = warm_up_algorithm[step]
+                    except IndexError:
+                        end_warmup(user_id, resp)
+                    else:
+                        resp.update(step.generate_choice_resp())
 
-                resp.update(step.generate_choice_resp())
-
-            elif 'пропуст' in command or 'следующ' in command:
-                step = fsm.get_data(user_id).get('step', 0) + 1
-                fsm.update_data(user_id, step=step)
-                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.task)
-
-                step: TrainingStep = warm_up_algorithm[step]
-
-                resp.update(step.generate_choice_resp())
+                elif state == MainGroup.Sport.Wrap.WarmUp.start:
+                    end_warmup(user_id, resp)
 
             else:
-                data = fsm.get_data(user_id)  # Возврат к упражнению которое было до начала разминки
-                print(f"{data['callback']=}")
-                data['callback'](user_id, resp)
+                end_warmup(user_id, resp)
 
     else:
         resp.update({
@@ -3658,9 +3661,9 @@ def main():
         })
         fsm.set_state(user_id, MainGroup.state_1)
 
-    if not (response := resp.get('response', {})).get('buttons', None):
-        resp['response'] = response
-        resp['response']['buttons'] = {}  # Сюда впиши что тебе нужно
+    # if not (response := resp.get('response', {})).get('buttons', None):
+    #     resp['response'] = response
+    #     resp['response']['buttons'] = {}  # Сюда впиши что тебе нужно
 
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 
