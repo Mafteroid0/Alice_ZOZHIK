@@ -133,3 +133,6 @@ dmypy.json
 
 #temporary files
 *.temp.*
+
+#archive
+*.zip
