@@ -16,9 +16,11 @@ fsm = FSM()
 
 def dict_to_json(dict_: dict, *args, **kwargs):
     for key, value in dict_.items():
-        if isinstance(value, FriendlyDict):
+        try:
             dict_[key] = value.to_dict()
-    return json.dumps(dict_, *args, **kwargs)
+        except AttributeError:
+            pass
+    return json.dumps(dict_)
 
 
 class MainGroup(StatesGroup):  # Состояние по умолчанию это None, его не нужно явно определять
@@ -42,6 +44,8 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 start = State()
 
                 task = State()
+
+                end = State()
 
         state_home = State()
 
@@ -281,16 +285,73 @@ def start_solo_cardio(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def end_warmup(user_id: str, resp: dict,
-               data: dict | None = None) -> dict:  # Возврат к упражнению которое было до начала разминки
+def start_rope_cardio(user_id: str, resp: dict) -> dict:
+    resp.update({
+        'response': {
+            'text': 'Давайте приступим к кардиотренировке. Для нее Вам понадобится только скакалка и хорошее настроение.'
+                    ' Одно упражнение занимает 40 секунд. Перед тем, как его проделать, Вы можете изучить технику подробнее,'
+                    ' начать выполнение или пропустить его и перейти к следующему.Вы готовы к кардио или подберём другую тренировку?',
+            'card': {
+                'type': 'ItemsList',
+                'header': {
+                    'text': 'Приступаем к выполнению сосанию у Фарела кардиотренировки'
+                },
+                'items': [
+                    {"title": 'Я готов', "button": {"text": 'Я готов'},
+                     "image_id": '997614/72ab6692a3db3f4e3056'},
+                    {"title": 'Выберем другую тренировку',
+                     "button": {"text": 'Выберем другую тренировку'},
+                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                ]
+            }
+
+        }
+    })
+    fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.start)
+    return resp
+
+
+def end_warmup(user_id: str, resp: dict) -> dict:  # Возврат к упражнению которое было до начала разминки
+    resp.update({
+        'response': {
+            'text': 'Вы хорошо потрудились, поздравляю вас с победой! Что выберите дальше: скажите "повторить разминку", чтобы потренироваться ещё раз или "приступить к выполнению тренировки", чтобы начать основную тренировку?',
+            'card': {
+                'type': 'ItemsList',
+                'header': {
+                    'text': 'Повторим разминку или перейдём к основной тренировке?'
+                },
+                'items': [
+                    {"title": 'Повторить разминку', "button": {"text": 'Повторить разминку'},
+                     "image_id": '997614/15f977696a281092bcc0'},
+                    {"title": 'К основной тренировке',
+                     "button": {"text": 'К основной тренировке'},
+                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+                ]
+            }
+
+        }
+    })
+
+    fsm.update_data(user_id, step=0)
+    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.end)
+
+    return resp
+
+
+def cancel_warmup(user_id: str, resp: dict, data: dict | None = None) -> dict:
     if data is None:
         data = fsm.get_data(user_id)
-    fsm.update_data(user_id, step=0)
+
     return data['callback'](user_id, resp)
 
 
+def any_from(l: list[str], *, in_: str):
+    return any((i in l for i in in_))
+
+
 @app.route('/alice', methods=['POST'])
-def main():
+def main():  # event, context
     req = AliceUserRequest(request.data.decode())
     motivations = ['Удачи!', 'Так держать!', 'Вы справитесь!']
     command = req.request.command
@@ -652,50 +713,32 @@ def main():
 
         elif state in MainGroup.Sport.Cardio:
             if state == MainGroup.Sport.Cardio.state_1:
-                if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
-                    resp.update({
-                        'response': {
-                            'text': 'Хотите выполнить разминку перед тренировкой?',
-                            'card': {
-                                'type': 'ItemsList',
-                                'header': {
-                                    'text': 'Хотите выполнить разминку?'
-                                },
-                                'items': [
-                                    {"title": 'Выполнить разминку', "button": {"text": 'Да'},
-                                     "image_id": '213044/9c13b9b997d78cde2579'},
-                                    {"title": 'Продолжить без разминки', "button": {"text": 'Нет'},
-                                     "image_id": '1540737/cc47e154fc7c83b6ba0d'}
+                resp.update({
+                    'response': {
+                        'text': 'Хотите выполнить разминку перед тренировкой?',
+                        'card': {
+                            'type': 'ItemsList',
+                            'header': {
+                                'text': 'Хотите выполнить разминку?'
+                            },
+                            'items': [
+                                {"title": 'Выполнить разминку', "button": {"text": 'Да'},
+                                 "image_id": '213044/9c13b9b997d78cde2579'},
+                                {"title": 'Продолжить без разминки', "button": {"text": 'Нет'},
+                                 "image_id": '1540737/cc47e154fc7c83b6ba0d'}
 
-                                ]
-                            }
-
+                            ]
                         }
-                    })
+
+                    }
+                })
+                if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
                     fsm.update_data(user_id, callback=start_solo_cardio)
                     fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
                 elif 'скак' in command or 'со' in command or 'втор' in command:
-                    resp.update({
-                        'response': {
-                            'text': 'Хотите выполнить разминку перед тренировкой?',
-                            'card': {
-                                'type': 'ItemsList',
-                                'header': {
-                                    'text': 'Хотите выполнить разминку?'
-                                },
-                                'items': [
-                                    {"title": 'Выполнить разминку', "button": {"text": 'Да'},
-                                     "image_id": '213044/9c13b9b997d78cde2579'},
-                                    {"title": 'Продолжить без разминки', "button": {"text": 'Нет'},
-                                     "image_id": '1540737/cc47e154fc7c83b6ba0d'}
-
-                                ]
-                            }
-
-                        }
-                    })
                     fsm.update_data(user_id, callback=start_solo_cardio)
                     fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+
             elif state in MainGroup.Sport.Cardio.Solo:
                 if state == MainGroup.Sport.Cardio.Solo.state_1:
                     pass
@@ -1393,32 +1436,8 @@ def main():
 
             elif state in MainGroup.Sport.Cardio.Rope:
                 if state == MainGroup.Sport.Cardio.Rope.state_1:
-                    if 'нет' in command or 'не ' in command:
-                        resp.update({
-                            'response': {
-                                'text': 'Давайте приступим к кардиотренировке. Для нее Вам понадобится только скакалка и хорошее настроение.'
-                                        ' Одно упражнение занимает 40 секунд. Перед тем, как его проделать, Вы можете изучить технику подробнее,'
-                                        ' начать выполнение или пропустить его и перейти к следующему.Вы готовы к кардио или подберём другую тренировку?',
-                                'card': {
-                                    'type': 'ItemsList',
-                                    'header': {
-                                        'text': 'Приступаем к выполнению кардиотренировки'
-                                    },
-                                    'items': [
-                                        {"title": 'Я готов', "button": {"text": 'Я готов'},
-                                         "image_id": '997614/72ab6692a3db3f4e3056'},
-                                        {"title": 'Выберем другую тренировку',
-                                         "button": {"text": 'Выберем другую тренировку'},
-                                         "image_id": '1030494/cc3631c8499cdc8daf8b'}
-
-                                    ]
-                                }
-
-                            }
-                        })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.start)
-                    elif 'да' in command or 'конечн' in command:
-                        pass  # TODO: Прописать ветку разминки
+                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                    fsm.update_data(user_id, callback=start_rope_cardio)
                 elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
                     if 'друг' in command or 'не' in command:
                         resp.update({
@@ -3650,8 +3669,53 @@ def main():
                 elif state == MainGroup.Sport.Wrap.WarmUp.start:
                     end_warmup(user_id, resp)
 
+            elif 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
+                resp = start_warmup(user_id, resp)
+
             else:
                 end_warmup(user_id, resp)
+
+        # elif state in MainGroup.Sport.Wrap.WarmDown:
+        #     step: TrainingStep = warmp_down_algorithm[fsm.get_data(user_id).get('step', 0)]
+        #
+        #     if state == MainGroup.Sport.Wrap.WarmDown.qw:
+        #         if 'нет' in command or 'не ' in command:
+        #             resp = end_warmdown(user_id, resp)
+        #         elif 'да' in command or 'конечн' in command:
+        #             resp = start_warmdown(user_id, resp)
+        #
+        #     elif state == MainGroup.Sport.Wrap.WarmDown.start and is_positive(command):
+        #         fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.task)
+        #         step: int = 0
+        #         fsm.update_data(user_id, step=step)
+        #
+        #         step: TrainingStep = warmp_down_algorithm[step]
+        #
+        #         resp.update(step.generate_choice_resp())
+        #
+        #     elif 'подробн' in command or 'расскажи' in command:
+        #         resp.update(step.generate_detailed_description_resp())
+        #
+        #     elif is_positive(command):
+        #         resp.update(step.generate_do_training_resp(random.choice(motivations)))
+        #
+        #     elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
+        #         if state == MainGroup.Sport.Wrap.WarmDown.task:
+        #             step = fsm.get_data(user_id).get('step', 0) + 1
+        #             fsm.update_data(user_id, step=step)
+        #
+        #             try:
+        #                 step: TrainingStep = warmp_down_algorithm[step]
+        #             except IndexError:
+        #                 end_warmdown(user_id, resp)
+        #             else:
+        #                 resp.update(step.generate_choice_resp())
+        #
+        #         elif state == MainGroup.Sport.Wrap.WarmDown.start:
+        #             end_warmdown(user_id, resp)
+        #
+        #     else:
+        #         end_warmdown(user_id, resp)
 
     else:
         resp.update({
