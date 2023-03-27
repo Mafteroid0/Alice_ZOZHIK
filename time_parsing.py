@@ -2,12 +2,12 @@ import datetime
 import functools
 import typing
 
-import pymorphy2
+import pymorphy3
 from pandas import to_timedelta
 
 DEBUG = False
 
-morph = pymorphy2.MorphAnalyzer(lang='ru')
+morph = pymorphy3.MorphAnalyzer(lang='ru')
 TIME_UNITS = {
     'утро': 'h',
     'вечер': 'h',
