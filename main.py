@@ -44,6 +44,33 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
         class Power(StatesGroup):
             state_1 = State()
+            start = State()
+            task1 = State()
+            task1_help = State()
+            task1_do = State()
+            task2 = State()
+            task2_help = State()
+            task2_do = State()
+            task3 = State()
+            task3_help = State()
+            task3_do = State()
+            task4 = State()
+            task4_help = State()
+            task4_do = State()
+            task5 = State()
+            task5_help = State()
+            task5_do = State()
+            task6 = State()
+            task6_help = State()
+            task6_do = State()
+            task7 = State()
+            task7_help = State()
+            task7_do = State()
+            task8 = State()
+            task8_help = State()
+            task8_do = State()
+            end = State()
+            final = State()
 
         class Cardio(StatesGroup):
             state_1 = State()
@@ -329,13 +356,26 @@ def main():
 
             elif 'сил' in command:
                 answer_options = [
-                    'Классно, что Вы решили набрать мышечную массу 🤗. Поздравляю🥳, потому что в скором времени у Вас обязательно будет прекрасное и крепкое тело.'
-                    'Хотите выполнить разминку перед тренировкой?',
+                    'Замечательно! Кардиотренировки несут огромную пользу, а также поднимают настроение. Выберите тип кардио:  классическая или со скакалкой.',
 
-                    'Мышечная масса способствует развитию силы💪🔥.  Не хотели бы Вы размяться перед основной тренировкой для большего эффекта?']
+                    'Прекрасный выбор😍! Нагружая сердечно-сосудистую систему, мы укрепляем здоровье. Выберите тип кардио: классическая или со скакалкой.']
                 res.update({
                     'response': {
-                        'text': f'{random.choice(answer_options)}'
+                        'text': 'Хотите выполнить разминку перед тренировкой?',
+                        'card': {
+                            'type': 'ItemsList',
+                            'header': {
+                                'text': 'Хотите выполнить разминку?'
+                            },
+                            'items': [
+                                {"title": 'Выполнить разминку', "button": {"text": 'Да'},
+                                 "image_id": '213044/9c13b9b997d78cde2579'},
+                                {"title": 'Продолжить без разминки', "button": {"text": 'Нет'},
+                                 "image_id": '1540737/cc47e154fc7c83b6ba0d'}
+
+                            ]
+                        }
+
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Sport.Power.state_1)
@@ -2729,6 +2769,632 @@ def main():
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.final)
+
+        elif fsm.get_state(user_id) in MainGroup.Sport.Power:
+            if fsm.get_state(user_id) == MainGroup.Sport.Power.state_1:
+                if 'нет' in command or 'не ' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Давайте приступим к силовой тренировке. Для нее Вам нужен только боевой настрой. Одно упражнение длится 40 секунд. '
+                                    'Перед  его выполнением Вы можете изучить упражнение подробнее, начать делать его или пропустить выполнение и перейти к следующему.'
+                                    'Вы готовы к силовой тренировке или подберём Вам что-нибудь другое?'
+                                    'Вы готовы начать, или рассмотрим другую тренировку?',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Приступаем к выполнению силовой тренировки'
+                                },
+                                'items': [
+                                    {"title": 'Я готов', "button": {"text": 'Я готов'},
+                                     "image_id": '997614/72ab6692a3db3f4e3056'},
+                                    {"title": 'Выберем другую тренировку',
+                                     "button": {"text": 'Выберем другую тренировку'},
+                                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                ]
+                            }
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.start)
+                elif 'да' in command or 'конечн' in command:
+                    pass  # TODO: Прописать ветку разминки
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.start, MainGroup.Sport.Power.final):
+                if 'друг' in command or 'не' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Фазы сна".',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Чем займёмся на этот раз?'
+                                },
+                                'items': [
+                                    {"title": 'кардиотреннировка', 'button': {"text": 'кардиотреннировка'},
+                                     "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
+                                    {"title": 'силовая треннировка', "button": {"text": 'силовая треннировка'},
+                                     "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
+                                    {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
+                                     "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
+                                    {"title": 'водный баланс', "button": {"text": 'водный баланс'},
+                                     "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
+                                    {"title": 'фазы сна', "button": {"text": 'фазы сна'},
+                                     "description": 'описание...',
+                                     "image_id": '213044/e81c096eeedd03ef9a2e'}
+
+                                ]
+                            }
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.state_home)
+                elif 'да' in command or 'готов' in command or 'повтор' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Давайте начнем. Первое упражнение - отжимания. ',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Упражнение 1',
+                                "description": 'Отжимания'
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task1)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task1, MainGroup.Sport.Power.task1_help, MainGroup.Sport.Power.task1_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Примите упор лежа и начинайте выполнять сгибания и разгибания рук. Следите за тем, чтобы линия вашего корпуса оставалась прямой, избегайте прогибов в области груди и поясницы.',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task1_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task1_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task1_do, MainGroup.Sport.Power.task1_help, MainGroup.Sport.Power.task1) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    res.update({
+                        'response': {
+                            'text': 'У Вас здорово получается! Следующее упражнение - подтягивания.',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Упражнение 2',
+                                "description": 'Подтягивания'
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task2)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task2, MainGroup.Sport.Power.task2_help, MainGroup.Sport.Power.task2_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Повисните на турнике и сделайте тяговое движение вверх, одновременно с этим делая выдох. Движение должно осуществляться за счет движения лопаток.'
+                                    ' Не надо стараться тянуть себя вверх силой бицепсов, так как широчайшие мышцы спины – куда более сильная мышечная группа.',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task2_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task2_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task2_do, MainGroup.Sport.Power.task2_help, MainGroup.Sport.Power.task2) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    res.update({
+                        'response': {
+                            'text': 'Надеюсь Вы готовы, потому что мы начинаем наращивать интенсивность. Приступаем к отжиманиям обратным хватом.',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Упражнение 3',
+                                "description": 'Отжимания обратным хватом'
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task3)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task3, MainGroup.Sport.Power.task3_help, MainGroup.Sport.Power.task3_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Садимся на возвышенность (можно использовать стул), упираемся ладонями так, чтобы руки были на одинаковом расстоянии от линии позвоночника. '
+                                    'Сгибаем руки в локтевых и плечевых суставах одновременно, опускаемся тазом вниз до уровня, когда предплечья станут параллельными полу. С выдохом разгибаем руки.',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task3_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task3_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task3_do, MainGroup.Sport.Power.task3_help, MainGroup.Sport.Power.task3) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    res.update({
+                        'response': {
+                            'text': 'Вы - настоящий спортсмен! Приступаем к приседаниям.',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Упражнение 4',
+                                "description": 'Приседания'
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task4)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task4, MainGroup.Sport.Power.task4_help, MainGroup.Sport.Power.task4_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Встаньте прямо, ноги на ширине плеч, носки стоп слега разведите в стороны. Напрягите поясницу, '
+                                    'отведите таз назад и немного наклоните торс вперед, согните ноги в коленях и опуститесь как можно ниже. Затем поднимитесь в исходное положение.',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task4_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task4_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task4_do, MainGroup.Sport.Power.task4_help, MainGroup.Sport.Power.task4) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    res.update({
+                        'response': {
+                            'text': 'Поднажмите, осталось не так много! Следующее упражнение - поднимания на носке.',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Упражнение 5',
+                                "description": 'Поднимания на носке'
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task5)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task5, MainGroup.Sport.Power.task5_help, MainGroup.Sport.Power.task5_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Встаньте прямо и начинайте подниматься на носки и вновь опускаться на всю стопу. Вы можете воспользоваться дополнительной опорой, например, стенкой, если Вам это необходимо.',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task5_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task5_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task5_do, MainGroup.Sport.Power.task5_help, MainGroup.Sport.Power.task5) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    res.update({
+                        'response': {
+                            'text': 'Следующее энергичное упражнение - велосипед.',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Упражнение 6',
+                                "description": 'Велосипед'
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task6)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task6, MainGroup.Sport.Power.task6_help, MainGroup.Sport.Power.task6_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Лягте на спину, уберите руки за голову и разведите локти в стороны. Поочерёдно сгибайте и выпрямляйте ноги, '
+                                    'как будто крутите педали велосипеда, в это время локтями касайтесь колена противоположной ноги.',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task6_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task6_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task6_do, MainGroup.Sport.Power.task6_help, MainGroup.Sport.Power.task6) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    res.update({
+                        'response': {
+                            'text': 'Выходим на финишную прямую! Завершающее упражнение - сгибанию рук с грузом.',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Упражнение 7',
+                                "description": 'Сгибание рук с грузом'
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task7)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task7, MainGroup.Sport.Power.task7_help, MainGroup.Sport.Power.task7_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Примите удобное положение. Возьмите любой груз, удобно лежащий в руке, и начинайте сгибание руки.',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task7_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task7_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task7_do, MainGroup.Sport.Power.task7_help, MainGroup.Sport.Power.task7) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    res.update({
+                        'response': {
+                            'text': 'Отлично, Вы здорово справились со всеми заданиями. Отдохните и переведите дух. ',
+                            'card': {
+                                'type': 'BigImage',
+                                "image_id": '1540737/75d7fd59f370ba0f15f3',
+                                "title": 'Отдых',
+                                "description": 'Отдохните и переведите дух. '
+                            }
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task8)
+            elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task8, MainGroup.Sport.Power.task8_help, MainGroup.Sport.Power.task8_do) or (fsm.get_state(user_id) == MainGroup.Sport.Power.final and 'повтор' in command):
+                if 'подробн' in command or 'объяс' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Просто отдохните. В этом нет ничего сложного😁',
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task8_help)
+                elif 'выполн' in command or 'дел' in command:
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(motivation)}',
+                            'buttons': [
+                                {
+                                    'title': 'Следующее упражнение▶',
+                                    'hide': True
+                                }
+                            ]
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.task8_do)
+                elif fsm.get_state(user_id) in (MainGroup.Sport.Power.task8_do, MainGroup.Sport.Power.task8_help, MainGroup.Sport.Power.task8) and ('проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
+                    answer_options = [
+                        'Заминка нужна, чтобы снизить до нормального уровня частоту сердечных сокращений. Хотите её выпонить?',
+                        'Будет здорово выполнить заминку! Заминка снижает склонность к закрепощению мышц после нагрузки.  Хотели бы Вы приступить к её выполнению?']
+                    res.update({
+                        'response': {
+                            'text': f'{random.choice(answer_options)}',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Хотите выполнить заминку?'
+                                },
+                                'items': [
+                                    {"title": 'Выполнить заминку', "button": {"text": 'Да'},
+                                     "image_id": '213044/9c13b9b997d78cde2579'},
+                                    {"title": 'Завершить без заминки', "button": {"text": 'Нет'},
+                                     "image_id": '1540737/cc47e154fc7c83b6ba0d'}
+
+                                ]
+                            }
+
+                        }
+                    })
+
+                    fsm.set_state(user_id, MainGroup.Sport.Power.end)
+
+            elif fsm.get_state(user_id) == MainGroup.Sport.Power.end:
+                if 'да' in command or 'конечн' in command:
+                    pass  # TODO: Прописать ветку заминки
+                elif 'нет' in command or 'не ' in command:
+                    res.update({
+                        'response': {
+                            'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': 'Повторим тренировку или вернёмся в меню?'
+                                },
+                                'items': [
+                                    {"title": 'Повторить треннировку', "button": {"text": 'Повторить треннировку'},
+                                     "image_id": '997614/15f977696a281092bcc0'},
+                                    {"title": 'Вернуться в меню',
+                                     "button": {"text": 'Вернуться в меню'},
+                                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
+
+                                ]
+                            }
+
+                        }
+                    })
+                    fsm.set_state(user_id, MainGroup.Sport.Power.final)
+            elif fsm.get_state(user_id) == MainGroup.Sport.Power.final:
+                answer_options = [
+                    'Давайте выполним заминку! Она нужна, чтобы нормализовать частоту сердечных сокращений и температуру тела. Хотите снять мышечное напряжение после тренировки?',
+                    'Будет здорово выполнить заминку! Она помогает снизить синдром отсроченного начала мышечной болезненности. Хотите выполнить этот ряд упражнений?']
+                res.update({
+                    'response': {
+                        'text': f'{random.choice(answer_options)}',
+                        'card': {
+                            'type': 'ItemsList',
+                            'header': {
+                                'text': 'Хотите выполнить заминку?'
+                            },
+                            'items': [
+                                {"title": 'Выполнить заминку', "button": {"text": 'Да'},
+                                 "image_id": '213044/9c13b9b997d78cde2579'},
+                                {"title": 'Завершить без заминки', "button": {"text": 'Нет'},
+                                 "image_id": '1540737/cc47e154fc7c83b6ba0d'}
+
+                            ]
+                        }
+
+                    }
+                })
+
+                fsm.set_state(user_id, MainGroup.Sport.Power.end)
 
 
 
