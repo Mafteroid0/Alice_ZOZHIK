@@ -116,6 +116,14 @@ class StatesGroupMeta(type):
         return cls._group_name
 
     @property
+    def help_message(cls) -> str:
+        if hasattr(cls, '_help_message'):
+            return cls._help_message
+        if cls._parent is not None:
+            return cls._parent.help_message
+        return 'Затычка помощи для этой ветки даилога'
+
+    @property
     def states(cls) -> tuple:
         return cls._states
 
