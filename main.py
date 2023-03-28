@@ -108,7 +108,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         class Cardio(StatesGroup):
             _help_message = 'Вас есть выбор между классической (вызывается командой "классическая") и тренировкой с дополнительным инвентарём в виде скакалки (команда - "Со скакалкой")'
 
-            state_1 = State()
+            state_1 = State(_help_message='У Вас есть выбор между классической (вызывается командой "классическая") и тренировкой с дополнительным инвентарём в виде скакалки (команда - "Со скакалкой")')
 
             class Solo(StatesGroup):
                 _help_message = ''
@@ -144,7 +144,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task9 = State()
                 task9_help = State()
                 task9_do = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
             class Rope(StatesGroup):
                 _help_message = ''
@@ -169,12 +169,12 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task5_help = State()
                 task5_do = State()
                 end = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
         class Zaradka(StatesGroup):
             _help_message = ''
 
-            state_1 = State()
+            state_1 = State(_help_message='используйте одну из команд "5-минутная" или "10-минутная";')
 
             class Five(StatesGroup):
                 _help_message = ''
@@ -198,7 +198,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task5_help = State()
                 task5_do = State()
                 end = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
             class Ten(StatesGroup):
                 _help_message = ''
@@ -237,7 +237,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task10_help = State()
                 task10_do = State()
                 end = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
 
 # Шаблон для условий:  if state == MyStates.state_1
@@ -245,7 +245,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
 
 def is_positive(command: str) -> bool:
-    return 'готов' in command or 'погн' in command or 'поехали' in command or 'давай' in command or 'да' in command or 'выполн' in command
+    return 'готов' in command or 'погн' in command or 'поехали' in command or 'давай' in command or 'да' in command or 'выполн' in command or 'запус' in command
 
 
 def start_power_training(user_id: str, resp: dict) -> dict:
@@ -419,7 +419,7 @@ def start_session(user_id: str, resp: dict, add_help_button: bool = True) -> dic
                 {
                     "title": "Поехали!",
                     "hide": True
-                },
+                }
             ]
         }
     })
@@ -738,7 +738,7 @@ def main():  # event, context
                     }
                 })
                 fsm.set_state(user_id, MainGroup.Dream.state_1)
-                print('SON?')  # TODO: Chto, papa?
+                print('SON?')
 
             elif 'сил' in command:
                 answer_options = [
@@ -967,6 +967,24 @@ def main():  # event, context
                 elif 'скак' in command or 'со' in command or 'втор' in command:
                     fsm.update_data(user_id, callback=start_rope_cardio)
                     fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Повторите пожалуйста, какую именно кардиотренировку вы хотите выполнить: классическую или со скакалкой'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Классическая',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Со скакалкой',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
 
             elif state in MainGroup.Sport.Cardio.Solo:
                 if state == MainGroup.Sport.Cardio.Solo.state_1:
@@ -976,7 +994,7 @@ def main():  # event, context
                     # elif 'да' in command or 'конечн' in command:
                     #     fsm.set_state
                 elif state in (MainGroup.Sport.Cardio.Solo.start, MainGroup.Sport.Cardio.Solo.final):
-                    if 'друг' in command or 'не' in command:
+                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
                         print(2)
                         resp.update({
                             'response': {
@@ -1004,7 +1022,7 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
-                    elif 'да' in command or 'готов' in command or 'повтор' in command:
+                    elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
                                 'text': 'Начинаем первое упражнение!'
@@ -1034,6 +1052,24 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Вернуться в меню',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Запустить тренировку',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task1, MainGroup.Sport.Cardio.Solo.task1_help,
                         MainGroup.Sport.Cardio.Solo.task1_do) or (
@@ -1103,6 +1139,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task2, MainGroup.Sport.Cardio.Solo.task2_help,
@@ -1172,6 +1230,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task3, MainGroup.Sport.Cardio.Solo.task3_help,
@@ -1240,6 +1320,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task4, MainGroup.Sport.Cardio.Solo.task4_help,
@@ -1308,6 +1410,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task5, MainGroup.Sport.Cardio.Solo.task5_help,
@@ -1376,6 +1500,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task6, MainGroup.Sport.Cardio.Solo.task6_help,
@@ -1444,6 +1590,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task7, MainGroup.Sport.Cardio.Solo.task7_help,
@@ -1512,6 +1680,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task8, MainGroup.Sport.Cardio.Solo.task8_help,
@@ -1580,6 +1770,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
                 elif state in (
                         MainGroup.Sport.Cardio.Solo.task9, MainGroup.Sport.Cardio.Solo.task9_help,
@@ -1647,12 +1859,40 @@ def main():  # event, context
                         fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
                         fsm.update_data(user_id, callback=finish_solo_cardio)
 
+                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.end)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+
+                elif state == MainGroup.Sport.Cardio.Solo.end:
+                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
+                    fsm.update_data(user_id, callback=finish_solo_cardio)
+
             elif state in MainGroup.Sport.Cardio.Rope:
                 if state == MainGroup.Sport.Cardio.Rope.state_1:
                     fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
                     fsm.update_data(user_id, callback=start_rope_cardio)
                 elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
-                    if 'друг' in command or 'не' in command:
+                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
                         print(3)
                         resp.update({
                             'response': {
@@ -1680,7 +1920,7 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
-                    elif 'да' in command or 'готов' in command or 'повтор' in command:
+                    elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
                                 'text': 'Начинаем нашу энергичную тренировку с прыжков на скакалке.',
@@ -1709,6 +1949,24 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Вернуться в меню',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Запустить тренировку',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Cardio.Rope.task1, MainGroup.Sport.Cardio.Rope.task1_help,
                         MainGroup.Sport.Cardio.Rope.task1_do) or (
@@ -1777,6 +2035,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Cardio.Rope.task2, MainGroup.Sport.Cardio.Rope.task2_help,
                         MainGroup.Sport.Cardio.Rope.task2_do):
@@ -1844,6 +2124,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Cardio.Rope.task3, MainGroup.Sport.Cardio.Rope.task3_help,
                         MainGroup.Sport.Cardio.Rope.task3_do):
@@ -1911,6 +2213,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Cardio.Rope.task4, MainGroup.Sport.Cardio.Rope.task4_help,
                         MainGroup.Sport.Cardio.Rope.task4_do):
@@ -1978,6 +2302,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Cardio.Rope.task5, MainGroup.Sport.Cardio.Rope.task5_help,
                         MainGroup.Sport.Cardio.Rope.task5_do):
@@ -2042,6 +2388,32 @@ def main():  # event, context
 
                         fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
                         fsm.update_data(user_id, callback=finish_rope_cardio)
+                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.end)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
+                elif state == MainGroup.Sport.Cardio.Rope.end:
+                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
+                    fsm.update_data(user_id, callback=finish_rope_cardio)
 
         elif state in MainGroup.Sport.Zaradka:
             if state == MainGroup.Sport.Zaradka.state_1:
@@ -2091,9 +2463,27 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.start)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Уточните, пожалуйста, Вы собираетесь выполнить пятиминутную или десятиминутную тренировку?'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'пятиминутная',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Десятиминутная',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in MainGroup.Sport.Zaradka.Ten:
                 if state in (MainGroup.Sport.Zaradka.Ten.start, MainGroup.Sport.Zaradka.Ten.final):
-                    if 'друг' in command or 'не' in command:
+                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
                         print(4)
                         resp.update({
                             'response': {
@@ -2121,7 +2511,7 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
-                    elif 'да' in command or 'готов' in command or 'повтор' in command:
+                    elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
                                 'text': 'Приступаем  к растиранию шеи!',
@@ -2150,6 +2540,24 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Вернуться в меню',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Запустить тренировку',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task1, MainGroup.Sport.Zaradka.Ten.task1_help,
                         MainGroup.Sport.Zaradka.Ten.task1_do) or (
@@ -2218,6 +2626,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task2, MainGroup.Sport.Zaradka.Ten.task2_help,
                         MainGroup.Sport.Zaradka.Ten.task2_do):
@@ -2285,6 +2715,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task3, MainGroup.Sport.Zaradka.Ten.task3_help,
                         MainGroup.Sport.Zaradka.Ten.task3_do):
@@ -2352,6 +2804,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task4, MainGroup.Sport.Zaradka.Ten.task4_help,
                         MainGroup.Sport.Zaradka.Ten.task4_do):
@@ -2419,6 +2893,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task5, MainGroup.Sport.Zaradka.Ten.task5_help,
                         MainGroup.Sport.Zaradka.Ten.task5_do):
@@ -2486,6 +2982,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task6, MainGroup.Sport.Zaradka.Ten.task6_help,
                         MainGroup.Sport.Zaradka.Ten.task6_do):
@@ -2553,6 +3071,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task7, MainGroup.Sport.Zaradka.Ten.task7_help,
                         MainGroup.Sport.Zaradka.Ten.task7_do):
@@ -2620,6 +3160,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task8, MainGroup.Sport.Zaradka.Ten.task8_help,
                         MainGroup.Sport.Zaradka.Ten.task8_do):
@@ -2687,6 +3249,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task9, MainGroup.Sport.Zaradka.Ten.task9_help,
                         MainGroup.Sport.Zaradka.Ten.task9_do):
@@ -2754,6 +3338,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task10, MainGroup.Sport.Zaradka.Ten.task10_help,
                         MainGroup.Sport.Zaradka.Ten.task10_do):
@@ -2815,10 +3421,32 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.final)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
             elif state in MainGroup.Sport.Zaradka.Five:
                 if state in (MainGroup.Sport.Zaradka.Five.start, MainGroup.Sport.Zaradka.Five.final):
-                    if 'друг' in command or 'не' in command:
+                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
                         print(5)
                         resp.update({
                             'response': {
@@ -2846,7 +3474,7 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.state_home)
-                    elif 'да' in command or 'готов' in command or 'повтор' in command:
+                    elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
                                 'text': 'Открывают нашу тренировку наклоны головы.',
@@ -2875,6 +3503,24 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Вернуться в меню',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Запустить тренировку',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Five.task1, MainGroup.Sport.Zaradka.Five.task1_help,
                         MainGroup.Sport.Zaradka.Five.task1_do) or (
@@ -2942,6 +3588,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Five.task2, MainGroup.Sport.Zaradka.Five.task2_help,
                         MainGroup.Sport.Zaradka.Five.task2_do):
@@ -3009,6 +3677,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Five.task3, MainGroup.Sport.Zaradka.Five.task3_help,
                         MainGroup.Sport.Zaradka.Five.task3_do):
@@ -3076,6 +3766,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Five.task4, MainGroup.Sport.Zaradka.Five.task4_help,
                         MainGroup.Sport.Zaradka.Five.task4_do):
@@ -3143,6 +3855,28 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
                 elif state in (
                         MainGroup.Sport.Zaradka.Five.task5, MainGroup.Sport.Zaradka.Five.task5_help,
                         MainGroup.Sport.Zaradka.Five.task5_do):
@@ -3203,10 +3937,32 @@ def main():  # event, context
                             }
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.final)
+                    else:
+                        resp.update({
+                            'response': {
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                                ,
+                                'buttons': [
+                                    {
+                                        'title': 'Выполнить🔥',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'подробнее📄',
+                                        'hide': True
+                                    },
+                                    {
+                                        'title': 'Пропустить⏭',
+                                        'hide': True
+                                    }
+                                ]
+
+                            }
+                        })
 
         elif state in MainGroup.Sport.Power:
             if state in (MainGroup.Sport.Power.start, MainGroup.Sport.Power.final):
-                if 'друг' in command or 'не' in command:
+                if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
                     print(6)
                     resp.update({
                         'response': {
@@ -3234,7 +3990,7 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.state_home)
-                elif 'да' in command or 'готов' in command or 'повтор' in command:
+                elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                     resp.update({
                         'response': {
                             'text': 'Давайте начнем. Первое упражнение - отжимания. ',
@@ -3263,6 +4019,24 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task1)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Вернуться в меню',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Запустить тренировку',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task1, MainGroup.Sport.Power.task1_help, MainGroup.Sport.Power.task1_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3330,6 +4104,28 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task2)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task2, MainGroup.Sport.Power.task2_help, MainGroup.Sport.Power.task2_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3398,6 +4194,28 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task3)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task3, MainGroup.Sport.Power.task3_help, MainGroup.Sport.Power.task3_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3466,6 +4284,28 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task4)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task4, MainGroup.Sport.Power.task4_help, MainGroup.Sport.Power.task4_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3534,6 +4374,28 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task5)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task5, MainGroup.Sport.Power.task5_help, MainGroup.Sport.Power.task5_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3601,6 +4463,28 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task6)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task6, MainGroup.Sport.Power.task6_help, MainGroup.Sport.Power.task6_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3669,6 +4553,28 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task7)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task7, MainGroup.Sport.Power.task7_help, MainGroup.Sport.Power.task7_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3736,6 +4642,28 @@ def main():  # event, context
                         }
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Power.task8)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state in (
                     MainGroup.Sport.Power.task8, MainGroup.Sport.Power.task8_help, MainGroup.Sport.Power.task8_do) or (
                     state == MainGroup.Sport.Power.final and 'повтор' in command):
@@ -3800,6 +4728,28 @@ def main():  # event, context
                     })
                     fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
                     fsm.update_data(user_id, callback=finish_power_training)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Выполнить🔥',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'подробнее📄',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Пропустить⏭',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
             elif state == MainGroup.Sport.Power.final:
                 answer_options = [
                     'Давайте выполним заминку! Она нужна, чтобы нормализовать частоту сердечных сокращений и температуру тела. Хотите снять мышечное напряжение после тренировки?',
@@ -3834,6 +4784,24 @@ def main():  # event, context
                     resp = cancel_warmup(user_id, resp)
                 elif 'да' in command or 'конечн' in command:
                     resp = start_warmup(user_id, resp)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить разминку?'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Да',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Нет',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
 
             elif state == MainGroup.Sport.Wrap.WarmUp.start and is_positive(command):
                 fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.task)
@@ -3884,6 +4852,24 @@ def main():  # event, context
                     resp = cancel_warmdown(user_id, resp)
                 elif 'да' in command or 'конечн' in command:
                     resp = start_warmdown(user_id, resp)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить разминку?'
+                            ,
+                            'buttons': [
+                                {
+                                    'title': 'Да',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Нет',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
 
             elif state == MainGroup.Sport.Wrap.WarmDown.start and is_positive(command):
                 fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.task)
