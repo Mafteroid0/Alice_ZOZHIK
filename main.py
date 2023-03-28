@@ -595,6 +595,8 @@ def main():  # event, context
 
     print(command)
     if any_from(('помо', 'help'), in_=command):
+        print({'text': state.help_message if state is not None else MainGroup.help_message,
+                                  'buttons': fsm.get_data(user_id).get('buttons', [])})
         # resp = start_session(user_id, resp, add_help_button=False)
         resp.update({'response': {'text': state.help_message if state is not None else MainGroup.help_message,
                                   'buttons': fsm.get_data(user_id).get('buttons', [])}})

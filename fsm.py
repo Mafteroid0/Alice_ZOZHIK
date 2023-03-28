@@ -20,7 +20,7 @@ class State:
     def help_message(self):
         if self._help_message:
             return self._help_message
-        if self.group:
+        if self.group is not None:
             return self.group.help_message
         return 'Затычка помощи для состояния'
 
@@ -120,9 +120,9 @@ class StatesGroupMeta(type):
 
     @property
     def help_message(cls) -> str:
-        if hasattr(cls, '_help_message'):
+        if hasattr(cls, '_help_message') and cls._help_message:
             return cls._help_message
-        if cls._parent is not None:
+        elif cls._parent is not None:
             return cls._parent.help_message
         return 'Затычка помощи для этой ветки даилога'
 
