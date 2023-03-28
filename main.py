@@ -596,7 +596,8 @@ def main():  # event, context
     print(command)
     if any_from(('помо', 'help'), in_=command):
         # resp = start_session(user_id, resp, add_help_button=False)
-        resp.update({'response': {'text': state.help_message if state is not None else MainGroup.help_message}})
+        resp.update({'response': {'text': state.help_message if state is not None else MainGroup.help_message,
+                                  'buttons': fsm.get_data(user_id).get('buttons', [])}})
         #                                    'Не беспокойтесь я подскажу Вам, что делать в зависимости от того, где Вы сейчас находитесь. Если Вы сейчас ...\n'
         #                                  'На этапе приветствия, то Вам доступны следующие команды: "Я готов" (чтобы перейти к выбору тренировки или расчёту информации)'
         #                                  ' и "Что ты умеешь?" (для уточнения моего функционала);\n'
@@ -4925,7 +4926,12 @@ def main():  # event, context
     if not (buttons := response.get('buttons', [])):
         response['buttons'] = buttons
 
-    buttons.append({'title': 'Помощь', 'hide': False})
+    for button in buttons:
+        if button.get('title', '').lower() == 'помощь':
+            break
+    else:
+        buttons.append({'title': 'Помощь', 'hide': False})
+    fsm.update_data(user_id, last_buttons=buttons)
 
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 
