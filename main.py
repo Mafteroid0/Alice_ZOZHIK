@@ -108,7 +108,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         class Cardio(StatesGroup):
             _help_message = 'Вас есть выбор между классической (вызывается командой "классическая") и тренировкой с дополнительным инвентарём в виде скакалки (команда - "Со скакалкой")'
 
-            state_1 = State()
+            state_1 = State(_help_message='У Вас есть выбор между классической (вызывается командой "классическая") и тренировкой с дополнительным инвентарём в виде скакалки (команда - "Со скакалкой")')
 
             class Solo(StatesGroup):
                 _help_message = ''
@@ -144,7 +144,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task9 = State()
                 task9_help = State()
                 task9_do = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
             class Rope(StatesGroup):
                 _help_message = ''
@@ -169,12 +169,12 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task5_help = State()
                 task5_do = State()
                 end = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
         class Zaradka(StatesGroup):
             _help_message = ''
 
-            state_1 = State()
+            state_1 = State(_help_message='используйте одну из команд "5-минутная" или "10-минутная";')
 
             class Five(StatesGroup):
                 _help_message = ''
@@ -198,7 +198,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task5_help = State()
                 task5_do = State()
                 end = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
             class Ten(StatesGroup):
                 _help_message = ''
@@ -237,7 +237,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                 task10_help = State()
                 task10_do = State()
                 end = State()
-                final = State()
+                final = State(_help_message='Вы можете "Повторить тренировку" или "Завершить тренировку"')
 
 
 # Шаблон для условий:  if state == MyStates.state_1
@@ -419,7 +419,7 @@ def start_session(user_id: str, resp: dict, add_help_button: bool = True) -> dic
                 {
                     "title": "Поехали!",
                     "hide": True
-                },
+                }
             ]
         }
     })
