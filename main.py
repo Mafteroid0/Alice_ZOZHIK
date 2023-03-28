@@ -596,7 +596,7 @@ def main():  # event, context
     print(command)
     if any_from(('помо', 'help'), in_=command):
         resp = start_session(user_id, resp, add_help_button=False)
-        resp['response'].update({'text': state.help_message})
+        resp['response'].update({'text': state.help_message if state is not None else MainGroup.help_message})
         #                                    'Не беспокойтесь я подскажу Вам, что делать в зависимости от того, где Вы сейчас находитесь. Если Вы сейчас ...\n'
         #                                  'На этапе приветствия, то Вам доступны следующие команды: "Я готов" (чтобы перейти к выбору тренировки или расчёту информации)'
         #                                  ' и "Что ты умеешь?" (для уточнения моего функционала);\n'
