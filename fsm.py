@@ -1,30 +1,33 @@
 from __future__ import annotations
+
+import dataclasses
 import inspect
 import typing
 
 
+@dataclasses.dataclass
 class State:
-    def __init__(self, machine: FSM | None = None, state: str | None = None, group_name: str | None = None):
-        self.machine = machine
-        self.name = state
-        self.group_name = group_name
+    _help_message: str | None = None
+
+    machine: FSM | None = None
+    name: str | None = None
+    group: type[StatesGroup] | None = None
 
     def set(self, user: str):
         return self.machine.set_state(user, self)
+    
+    @property
+    def help_message(self):
+        if self._help_message:
+            return self._help_message
+        if self.group:
+            return self.group.help_message
+        return 'Затычка помощи для состояния'
 
     def __repr__(self):
-        return f'{self.group_name}.{self.name}'
+        return f'{self.group}.{self.name}'
 
-    def __str__(self):
-        return f'{self.name}'
-
-    def __eq__(self, other: State | None):
-        if other is None:
-            return False
-
-        return self.name == other.name and \
-            self.group_name == other.group_name and \
-            self.machine == other.machine
+    # __str__ == __repr__
 
 
 class FSM:
@@ -91,7 +94,7 @@ class StatesGroupMeta(type):
             if isinstance(prop, State):
                 prop.machine = fsm
                 prop.name = name
-                prop.group_name = cls._group_name
+                prop.group = cls
                 states.append(prop)
                 continue
             if inspect.isclass(prop) and issubclass(prop, StatesGroup):
@@ -152,6 +155,9 @@ class StatesGroupMeta(type):
     @property
     def states_names(cls) -> tuple:
         return tuple(state.name for state in cls.states)
+
+    def __repr__(self):
+        return self.__full_group_name__
 
     def __contains__(self, state: State):
         if state in self._states:
