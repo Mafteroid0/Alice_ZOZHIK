@@ -1,6 +1,6 @@
-from typing_ import TrainingAlgorithm, TrainingStep
+from typing_ import TrainingDialog, TrainingStep
 
-warm_up_algorithm = TrainingAlgorithm()
+warm_up_algorithm = TrainingDialog()
 
 warm_up_algorithm.append(TrainingStep(
     text='Поехали! Плавно наклоняйте голову в правую, левую сторону',
@@ -53,7 +53,7 @@ warm_up_algorithm.append(TrainingStep(
 ))
 
 
-warm_down_algorithm = TrainingAlgorithm()
+warm_down_algorithm = TrainingDialog()
 
 warm_down_algorithm.append(TrainingStep(
     text='Запаситесь хорошим настроением и приготовьтесь получить заряд бодрости. Правила всё те же. Начинаем с прыжков на месте.',
