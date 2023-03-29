@@ -4,7 +4,8 @@ import typing
 
 from flask import Flask, request
 
-from typing_ import AliceUserRequest, TrainingStep, to_dict
+from typing_ import AliceUserRequest, TrainingStep
+from typing_.response import Response, ResponseField, Card, CardType, Card, CardItemsListHeader
 from fsm import StatesGroup, State, FSM
 from time_parsing import parse_time, iter_go_sleep_time
 from dialogs import warm_up_algorithm, warm_down_algorithm
@@ -14,13 +15,21 @@ app = Flask(__name__)
 fsm = FSM()
 
 
+def trans_to_dict(dict_: dict) -> dict:
+    for key, value in dict_.items():
+        if hasattr(value, 'to_dict'):
+            value = value.to_dict()
+        dict_[key] = value
+    return dict_
+
+
 def dict_to_json(dict_: dict, *args, **kwargs):
-    return json.dumps(to_dict(dict_), *args, **kwargs)
+    return json.dumps(trans_to_dict(dict_), *args, **kwargs)
 
 
 class MainGroup(StatesGroup):  # Состояние по умолчанию это None, его не нужно явно определять
     _fsm = fsm
-    _help_message = 'Вам доступны следующие команды: "Я готов" (чтобы перейти к выбору тренировки или расчёту информации) и "Что ты умеешь?" (для уточнения моего функционала)'
+    _help_message = 'Вам доступны следующие команды: "Поехали" (чтобы перейти к выбору тренировки или расчёту информации) и "Что ты умеешь?" (для уточнения моего функционала)'
     _default_state = None
 
     state_1 = State()
@@ -266,10 +275,8 @@ def start_power_training(user_id: str, resp: dict) -> dict:
                     {"title": 'Выберем другую тренировку',
                      "button": {"text": 'Выберем другую тренировку'},
                      "image_id": '1030494/cc3631c8499cdc8daf8b'}
-
                 ]
             }
-
         }
     })
     fsm.set_state(user_id, MainGroup.Sport.Power.start)
@@ -857,35 +864,39 @@ def main():  # event, context
                 fsm.set_state(user_id, MainGroup.Sport.state_home)
         elif state in MainGroup.Dream:
             if state == MainGroup.Dream.state_1:
-                time = parse_time(command)
-                go_sleep_times = list(iter_go_sleep_time(time))
-                print(time)
-                print(go_sleep_times)
-                answer_options = [
-                    f'Чтобы после сна чувствовать себя полным энергией, Вам следует лечь спать в {go_sleep_times[0].strftime("%H:%M")} '
-                    f'или в {go_sleep_times[1].strftime("%H:%M")}😴. Не забудьте завести будильник!',
+                try:
+                    time = parse_time(command)
+                except RuntimeError:
+                    pass
+                else:
+                    go_sleep_times = list(iter_go_sleep_time(time))
+                    print(time)
+                    print(go_sleep_times)
+                    answer_options = [
+                        f'Чтобы после сна чувствовать себя полным энергией, Вам следует лечь спать в {go_sleep_times[0].strftime("%H:%M")} '
+                        f'или в {go_sleep_times[1].strftime("%H:%M")}😴. Не забудьте завести будильник!',
 
-                    f'Ложитесь спать в {go_sleep_times[0].strftime("%H:%M")} или в {go_sleep_times[1].strftime("%H:%M")}, '
-                    f'чтобы утром чувствовать себя полным сил. Не забудьте завести будильник!']
-                resp.update({
-                    'response': {
-                        'text': f'{random.choice(answer_options)}',
-                        'card': {
-                            'type': 'ItemsList',
-                            'header': {
-                                'text': f'{random.choice(answer_options)}'
-                            },
-                            'items': [
-                                {"title": 'Рассчитать ещё раз', 'button': {"text": 'Рассчитать ещё раз'},
-                                 "description": 'описание...', "image_id": '997614/15f977696a281092bcc0'},
-                                {"title": 'Вернуться к основному списку', "button": {"text": 'Назад'},
-                                 "description": 'описание...', "image_id": '1030494/cc3631c8499cdc8daf8b'}
+                        f'Ложитесь спать в {go_sleep_times[0].strftime("%H:%M")} или в {go_sleep_times[1].strftime("%H:%M")}, '
+                        f'чтобы утром чувствовать себя полным сил. Не забудьте завести будильник!']
+                    resp.update({
+                        'response': {
+                            'text': f'{random.choice(answer_options)}',
+                            'card': {
+                                'type': 'ItemsList',
+                                'header': {
+                                    'text': f'{random.choice(answer_options)}'
+                                },
+                                'items': [
+                                    {"title": 'Рассчитать ещё раз', 'button': {"text": 'Рассчитать ещё раз'},
+                                     "description": 'описание...', "image_id": '997614/15f977696a281092bcc0'},
+                                    {"title": 'Вернуться к основному списку', "button": {"text": 'Назад'},
+                                     "description": 'описание...', "image_id": '1030494/cc3631c8499cdc8daf8b'}
 
-                            ]
+                                ]
+                            }
                         }
-                    }
-                })
-                fsm.set_state(user_id, MainGroup.Dream.end)
+                    })
+                    fsm.set_state(user_id, MainGroup.Dream.end)
             elif state == MainGroup.Dream.end:
                 resp.update({
                     'response': {
