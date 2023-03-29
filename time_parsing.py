@@ -39,8 +39,9 @@ def is_real_time(text: str) -> bool:
 
 
 def clean(text: str) -> str:
-    for i in ('-', '.', ',', ':', '/', '\\', '|'):
+    for i in ('.', ',', ':', '/', '\\', '|'):
         text = text.replace(i, '')
+    text.replace('-', ' ')
     return text
 
 
@@ -64,7 +65,8 @@ def parse_time(text: str) -> datetime.datetime:
     try:
         text = text.lower()
         if text.startswith('в '):
-            text.removeprefix('в ')
+            text = text.removeprefix('в ')
+        text = text.replace('всем', '7')
 
         time = MyTime.fromdatetime(today())
         if DEBUG:
@@ -160,6 +162,10 @@ def parse_time(text: str) -> datetime.datetime:
 
             if time.hour in (12, 0) and time.day == today().day + 1:
                 time -= datetime.timedelta(hours=12)
+
+            if time == today() and text != 'полночь':
+                raise ValueError(f'Невозможно распарсить текст: {text}')
+
     except BaseException as e:
         raise RuntimeError(f'Some error occurred while parsing time from text: {e}')
 
@@ -196,6 +202,7 @@ time_parsing_testcases = {
     '3 часа дня и 10 минут': today_ + datetime.timedelta(hours=15, minutes=10),
     'час дня': today_ + datetime.timedelta(hours=13),
     'час ночи': today_ + datetime.timedelta(hours=1),
+    'всем': today_ + datetime.timedelta(hours=7)
 }
 
 for inp, excepting in time_parsing_testcases.items():
