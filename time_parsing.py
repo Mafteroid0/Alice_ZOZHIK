@@ -41,7 +41,7 @@ def is_real_time(text: str) -> bool:
 def clean(text: str) -> str:
     for i in ('-', '.', ',', ':', '/', '\\', '|'):
         text = text.replace(i, '')
-    return text.lower()
+    return text
 
 
 class MyTime(datetime.datetime):
@@ -60,8 +60,12 @@ class MyTime(datetime.datetime):
         return super().__sub__(other)
 
 
-def parse_time(text: str) -> datetime.datetime: # TODO: Сделать чтобы парсило "час дня"
+def parse_time(text: str) -> datetime.datetime:
     try:
+        text = text.lower()
+        if text.startswith('в '):
+            text.removeprefix('в ')
+
         time = MyTime.fromdatetime(today())
         if DEBUG:
             print('t', time)
@@ -74,7 +78,12 @@ def parse_time(text: str) -> datetime.datetime: # TODO: Сделать чтоб�
         elif text.count(':') > 2:
             raise ValueError()
 
-        time += datetime.timedelta(hours=12)
+        # time += datetime.timedelta(hours=12)
+
+        if text == 'час дня':
+            return time + datetime.timedelta(hours=13)
+        elif text == 'час ночи':
+            return time + datetime.timedelta(hours=1)
 
         temp = [[]]
         index = 0
@@ -100,8 +109,8 @@ def parse_time(text: str) -> datetime.datetime: # TODO: Сделать чтоб�
                 if not word_is_time:
                     word = normalize(word)
                     match word:
-                        case 'ночь' | 'утро':
-                            time -= datetime.timedelta(hours=12)
+                        case 'вечер' | 'день':
+                            time += datetime.timedelta(hours=12)
                         case 'пол':
                             time -= datetime.timedelta(minutes=30)
                         case 'четверть':
@@ -143,7 +152,8 @@ def parse_time(text: str) -> datetime.datetime: # TODO: Сделать чтоб�
                     continue
 
             # Тут хендлим всё, что не попадает под модель "число указатель" или "указатель число"
-            if time == today() + datetime.timedelta(hours=12) and num_buf is not None:
+
+            if time == today() and num_buf is not None:
                 num_buf: int = int(num_buf)  # TODO: Опасное место, может правоцировать много ошибок. Нужно проработать
                 time += datetime.timedelta(
                     hours=num_buf)
@@ -167,24 +177,26 @@ def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6) -> typin
         yield first_go_sleep_time + datetime.timedelta(minutes=(i + 1) * 90)
 
 
+today_ = today()
+
 time_parsing_testcases = {
-    'Полдень': today() + datetime.timedelta(hours=12),
-    'Полночь': today(),
-    '7 утра': today() + datetime.timedelta(hours=7),
-    '7 часов утра': today() + datetime.timedelta(hours=7),
-    '3 ночи': today() + datetime.timedelta(hours=3),
-    '3 дня': today() + datetime.timedelta(hours=15),
-    'пол 3': today() + datetime.timedelta(hours=14, minutes=30),
-    'четверть 3': today() + datetime.timedelta(hours=14, minutes=15),
-    '3': today() + datetime.timedelta(hours=15),
-    '12:32': today() + datetime.timedelta(hours=12, minutes=32),
-    '12-32': today() + datetime.timedelta(hours=12, minutes=32),
-    '3 часа 10 минут': today() + datetime.timedelta(hours=15, minutes=10),
-    '3 часа и 10 минут': today() + datetime.timedelta(hours=15, minutes=10),
-    '3 часа ночи и 10 минут': today() + datetime.timedelta(hours=3, minutes=10)
+    'Полдень': today_ + datetime.timedelta(hours=12),
+    'Полночь': today_,
+    '7 утра': today_ + datetime.timedelta(hours=7),
+    '7 часов утра': today_ + datetime.timedelta(hours=7),
+    '3 ночи': today_ + datetime.timedelta(hours=3),
+    '3 дня': today_ + datetime.timedelta(hours=15),
+    'пол 3': today_ + datetime.timedelta(hours=2, minutes=30),
+    'четверть 3': today_ + datetime.timedelta(hours=2, minutes=15),
+    '3': today_ + datetime.timedelta(hours=3),
+    '12:32': today_ + datetime.timedelta(hours=12, minutes=32),
+    '12-32': today_ + datetime.timedelta(hours=12, minutes=32),
+    '3 часа 10 минут': today_ + datetime.timedelta(hours=3, minutes=10),
+    '3 часа и 10 минут': today_ + datetime.timedelta(hours=3, minutes=10),
+    '3 часа дня и 10 минут': today_ + datetime.timedelta(hours=15, minutes=10),
+    'час дня': today_ + datetime.timedelta(hours=13),
+    'час ночи': today_ + datetime.timedelta(hours=1),
 }
 
 for inp, excepting in time_parsing_testcases.items():
-    assert (out := parse_time(inp)) == excepting, f'With input {inp} excepted output {excepting}, but getted {out}'
-
-# print([*iter_go_sleep_time(parse_time('12 часов дня'))][0])
+    assert (out := parse_time(inp)) == excepting, f'parse_time test failed: with input {inp} excepted output {excepting}, but got {out}'
