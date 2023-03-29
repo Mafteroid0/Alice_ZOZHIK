@@ -4,11 +4,10 @@ import typing
 
 from flask import Flask, request
 
-from typing_ import AliceUserRequest
+from typing_ import AliceUserRequest, TrainingStep, to_dict
 from fsm import StatesGroup, State, FSM
 from time_parsing import parse_time, iter_go_sleep_time
 from dialogs import warm_up_algorithm, warm_down_algorithm
-from typing_ import TrainingStep
 
 app = Flask(__name__)
 
@@ -16,12 +15,7 @@ fsm = FSM()
 
 
 def dict_to_json(dict_: dict, *args, **kwargs):
-    for key, value in dict_.items():
-        try:
-            dict_[key] = value.to_dict()
-        except AttributeError:
-            pass
-    return json.dumps(dict_)
+    return json.dumps(to_dict(dict_), *args, **kwargs)
 
 
 class MainGroup(StatesGroup):  # Состояние по умолчанию это None, его не нужно явно определять
@@ -52,8 +46,10 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
             class WarmUp(StatesGroup):
                 _help_message = ''
 
-                qw = State(_help_message='Вы можете перейти к разминке командой "Да". Также вы можете пропустить разминку командой "Нет"')
-                start = State(_help_message='Вы можете перейти к разминке командой "Да". Также вы можете пропустить разминку командой "Пропустить"')
+                qw = State(
+                    _help_message='Вы можете перейти к разминке командой "Да". Также вы можете пропустить разминку командой "Нет"')
+                start = State(
+                    _help_message='Вы можете перейти к разминке командой "Да". Также вы можете пропустить разминку командой "Пропустить"')
 
                 task = State()
 
@@ -62,8 +58,10 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
             class WarmDown(StatesGroup):
                 _help_message = ''
 
-                qw = State(_help_message='Вы можете перейти к заминке командой "Поехали". Также можно вернуться обратно к выбору тренировки командой "Вернуться к основному списку"')
-                start = State(_help_message='Вы можете перейти к заминке командой "Поехали". Также можно вернуться обратно к выбору тренировки командой "Вернуться к основному списку"')
+                qw = State(
+                    _help_message='Вы можете перейти к заминке командой "Поехали". Также можно вернуться обратно к выбору тренировки командой "Вернуться к основному списку"')
+                start = State(
+                    _help_message='Вы можете перейти к заминке командой "Поехали". Также можно вернуться обратно к выбору тренировки командой "Вернуться к основному списку"')
 
                 task = State()
 
@@ -108,7 +106,8 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         class Cardio(StatesGroup):
             _help_message = 'Вас есть выбор между классической (вызывается командой "классическая") и тренировкой с дополнительным инвентарём в виде скакалки (команда - "Со скакалкой")'
 
-            state_1 = State(_help_message='У Вас есть выбор между классической (вызывается командой "классическая") и тренировкой с дополнительным инвентарём в виде скакалки (команда - "Со скакалкой")')
+            state_1 = State(
+                _help_message='У Вас есть выбор между классической (вызывается командой "классическая") и тренировкой с дополнительным инвентарём в виде скакалки (команда - "Со скакалкой")')
 
             class Solo(StatesGroup):
                 _help_message = ''
@@ -596,7 +595,7 @@ def main():  # event, context
     print(command)
     if any_from(('помо', 'help'), in_=command):
         print({'text': state.help_message if state is not None else MainGroup.help_message,
-                                  'buttons': fsm.get_data(user_id).get('buttons', [])})
+               'buttons': fsm.get_data(user_id).get('buttons', [])})
         # resp = start_session(user_id, resp, add_help_button=False)
         resp.update({'response': {'text': state.help_message if state is not None else MainGroup.help_message,
                                   'buttons': fsm.get_data(user_id).get('buttons', [])}})
@@ -761,7 +760,6 @@ def main():  # event, context
                                  "image_id": '213044/9c13b9b997d78cde2579'},
                                 {"title": 'Продолжить без разминки', "button": {"text": 'Нет'},
                                  "image_id": '1540737/cc47e154fc7c83b6ba0d'}
-
                             ]
                         }
 
@@ -776,8 +774,6 @@ def main():  # event, context
 
                     'Прекрасный выбор😍! Нагружая сердечно-сосудистую систему, мы укрепляем здоровье. Выберите тип кардио: классическая или со скакалкой.']
                 resp.update({
-                    'version': req['version'],
-                    'session': req['session'],
                     'response': {
                         'text': f'{random.choice(answer_options)}',
                         'card': {
@@ -1028,13 +1024,13 @@ def main():  # event, context
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
-                                'text': 'Начинаем первое упражнение!'
-                                        'Поочерёдное сгибание ног с последующим подниманием коленей к груди',
-                                'card': {
+                                'text': "Начинаем первое упражнение!"
+                                        "Поочерёдное сгибание ног с последующим подниманием коленей к груди",
+                                "card": {
                                     'type': 'BigImage',
                                     "image_id": '997614/15bfafd8b629b323890b',
                                     "title": 'Упражнение 1',
-                                    "description": 'Поочерёдное сгибание ног с последующим подниманием коленей к груди'
+                                    'description': 'Поочерёдное сгибание ног с последующим подниманием коленей к груди'
                                 }
                                 ,
                                 'buttons': [
@@ -1751,10 +1747,9 @@ def main():  # event, context
                                 'card': {
                                     'type': 'BigImage',
                                     "image_id": '213044/ebc7322f94861b2942e9',
-                                    "title": 'Упражнение 9',
+                                    'title': 'Упражнение 9',
                                     "description": 'Выпрыгивания из полувыпада.'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1862,7 +1857,6 @@ def main():  # event, context
                         fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
                         fsm.update_data(user_id, callback=finish_solo_cardio)
 
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.end)
                     else:
                         resp.update({
                             'response': {
@@ -1885,10 +1879,6 @@ def main():  # event, context
 
                             }
                         })
-
-                elif state == MainGroup.Sport.Cardio.Solo.end:
-                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                    fsm.update_data(user_id, callback=finish_solo_cardio)
 
             elif state in MainGroup.Sport.Cardio.Rope:
                 if state == MainGroup.Sport.Cardio.Rope.state_1:
@@ -2382,7 +2372,6 @@ def main():  # event, context
                                          "image_id": '213044/9c13b9b997d78cde2579'},
                                         {"title": 'Завершить без заминки', "button": {"text": 'Нет'},
                                          "image_id": '1540737/cc47e154fc7c83b6ba0d'}
-
                                     ]
                                 }
 
