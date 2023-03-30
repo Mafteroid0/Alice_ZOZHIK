@@ -76,7 +76,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
                 end = State()
 
-        state_home = State()
+        state_home = State(_help_message = 'произнесите названеие занятия из приведённого списка, чтобы перейти к нему')
 
         class Power(StatesGroup):
             _help_message = ''
@@ -4938,4 +4938,4 @@ def main():  # event, context
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 
 
-app.run('localhost', port=5050, debug=True)
+# app.run('localhost', port=5050, debug=True)
