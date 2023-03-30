@@ -16,6 +16,16 @@ ResponseFieldDict = dict[str, str | CardDict]
 
 ResponseDict = dict[str, str, ResponseFieldDict]
 
+dict_models = (
+    ButtonDict,
+    ItemButtonDict,
+    ItemDict,
+    CardItemsListHeaderDict,
+    CardDict,
+    ResponseFieldDict,
+    ResponseDict
+)
+
 DictPairModifier = typing.Callable[[str, typing.Any, typing.Callable | None], tuple[str, typing.Any]]
 
 
@@ -55,6 +65,9 @@ class RespDataClass:
 
     def _modifier(self, key: str, value: typing.Any, modifier: DictPairModifier | None = None):
         return (modifier or (lambda _key, _value, _: (_key, _value)))(key, value, None)
+
+    # def update(self):  # TODO: Сделать функцию update
+    #     pass
 
 
 @dataclass
@@ -150,48 +163,46 @@ class Response(RespDataClass):
     response: ResponseField | dict
 
 
-r = Response(
-    version='1.0',
-    session='',
-    response=ResponseField(
-        text='Начинаем первое упражнение! Поочерёдное сгибание ног с последующим подниманием коленей к груди',
-        card=Card(
-            type=CardType.ItemsList,
-            header='Комментарий: Если на этот этап мы перешли с разминки, то об этом будет написано Приступаем к выполнению силовой тренировки.',
-            items=[
-                Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
-                Item(title='Выберем другую тренировку', button='Выберем другую тренировку',
-                     image_id='1030494/cc3631c8499cdc8daf8b')
-            ]
-        ),
-    )
-)
-
-print(json.dumps(r.to_dict()))
+# r = Response(
+#     version='1.0',
+#     session='',
+#     response=ResponseField(
+#         text='Начинаем первое упражнение! Поочерёдное сгибание ног с последующим подниманием коленей к груди',
+#         card=Card(
+#             type=CardType.ItemsList,
+#             header='Комментарий: Если на этот этап мы перешли с разминки, то об этом будет написано Приступаем к выполнению силовой тренировки.',
+#             items=[
+#                 Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
+#                 Item(title='Выберем другую тренировку', button='Выберем другую тренировку',
+#                      image_id='1030494/cc3631c8499cdc8daf8b')
+#             ]
+#         ),
+#     )
+# )
+#
+# print(json.dumps(r.to_dict()))
 
 __all__ = tuple(
     map(
-        lambda cls: cls.__name__,
-        reversed(
-            (
-                Response,
-                ResponseDict,
-                ResponseField,
-                ResponseFieldDict,
-                Card,
-                BigImageCard,
-                ItemsListCard,
-                Item,
-                ItemDict,
-                ItemButton,
-                ItemButtonDict,
-                CardDict,
-                CardType,
-                CardItemsListHeader,
-                CardItemsListHeaderDict,
-                Button,
-                ButtonDict
-            )
+        lambda cls: cls.__name__ if not isinstance(cls, str) else cls,
+        (
+            Response,
+            ResponseField,
+            Card,
+            BigImageCard,
+            ItemsListCard,
+            Item,
+            ItemButton,
+            CardType,
+            CardItemsListHeader,
+            Button,
+            'ButtonDict',
+            'ItemButtonDict',
+            'ItemDict',
+            'CardItemsListHeaderDict',
+            'CardDict',
+            'ResponseFieldDict',
+            'ResponseDict'
         )
     )
 )
