@@ -5,7 +5,7 @@ import typing
 from flask import Flask, request
 
 from typing_ import AliceUserRequest, TrainingStep
-from typing_.response import Response, ResponseField, Card, CardType, Card, CardItemsListHeader
+from typing_.response import RespDataClass, Response, ResponseField, Card, CardType, Card, CardItemsListHeader
 from fsm import StatesGroup, State, FSM
 from time_parsing import parse_time, iter_go_sleep_time
 from dialogs import warm_up_algorithm, warm_down_algorithm
@@ -15,11 +15,14 @@ app = Flask(__name__)
 fsm = FSM()
 
 
-def trans_to_dict(dict_: dict) -> dict:
-    for key, value in dict_.items():
-        if hasattr(value, 'to_dict'):
-            value = value.to_dict()
-        dict_[key] = value
+def trans_to_dict(dict_: dict | RespDataClass) -> dict:
+    if hasattr(dict_, 'to_dict'):
+        dict_ = dict_.to_dict()
+    else:
+        for key, value in dict_.items():
+            if hasattr(value, 'to_dict'):
+                value = value.to_dict()
+            dict_[key] = value
     return dict_
 
 
@@ -76,7 +79,7 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
 
                 end = State()
 
-        state_home = State(_help_message = 'произнесите названеие занятия из приведённого списка, чтобы перейти к нему')
+        state_home = State(_help_message='произнесите названеие занятия из приведённого списка, чтобы перейти к нему')
 
         class Power(StatesGroup):
             _help_message = ''
@@ -256,7 +259,7 @@ def is_positive(command: str) -> bool:
     return 'готов' in command or 'погн' in command or 'поехали' in command or 'давай' in command or 'да' in command or 'выполн' in command or 'запус' in command
 
 
-def start_power_training(user_id: str, resp: dict) -> dict:
+def start_power_training(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Давайте приступим к силовой тренировке. Для нее Вам нужен только боевой настрой. Одно упражнение длится 40 секунд. '
@@ -283,7 +286,7 @@ def start_power_training(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def start_warmup(user_id: str, resp: dict) -> dict:
+def start_warmup(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Во время тренировки Вы можете изучить упражнение подробнее, начать выполнять его или '
@@ -308,7 +311,7 @@ def start_warmup(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def start_solo_cardio(user_id: str, resp: dict) -> dict:
+def start_solo_cardio(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Давайте приступим к кардиотренировке. Для нее вам не понадобится дополнительный инвентарь,'
@@ -336,7 +339,7 @@ def start_solo_cardio(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def start_rope_cardio(user_id: str, resp: dict) -> dict:
+def start_rope_cardio(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Давайте приступим к кардиотренировке. Для нее Вам понадобится только скакалка и хорошее настроение.'
@@ -363,7 +366,7 @@ def start_rope_cardio(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def end_warmup(user_id: str, resp: dict) -> dict:  # Возврат к упражнению которое было до начала разминки
+def end_warmup(user_id: str, resp: dict | Response) -> dict | Response:  # Возврат к упражнению которое было до начала разминки
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, поздравляю вас с победой! Что выберите дальше: скажите "повторить разминку", чтобы потренироваться ещё раз или "к тренировке", чтобы начать основную тренировку?',
@@ -390,7 +393,7 @@ def end_warmup(user_id: str, resp: dict) -> dict:  # Возврат к упра�
     return resp
 
 
-def cancel_warmup(user_id: str, resp: dict, data: dict | None = None) -> dict:
+def cancel_warmup(user_id: str, resp: dict | Response, data: dict | None = None) -> dict | Response:
     if data is None:
         data = fsm.get_data(user_id)
 
@@ -401,7 +404,7 @@ def any_from(l: typing.Sequence[str], *, in_: str):
     return any((i in in_ for i in l))
 
 
-def start_session(user_id: str, resp: dict, add_help_button: bool = True) -> dict:
+def start_session(user_id: str, resp: dict | Response, add_help_button: bool = True) -> dict | Response:
     # Действия при новой сессии
     answer_options = ['Привет🖐!  Всегда хотели окунуться в мир здорового образа жизни? '
                       'Поздравляю, Вы сделали правильный выбор.'
@@ -438,7 +441,7 @@ def start_session(user_id: str, resp: dict, add_help_button: bool = True) -> dic
     return resp
 
 
-def start_warmdown(user_id: str, resp: dict) -> dict:
+def start_warmdown(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Во время тренировки Вы можете изучить упражнение подробнее, '
@@ -463,7 +466,7 @@ def start_warmdown(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def end_warmdown(user_id: str, resp: dict) -> dict:  # Возврат к упражнению которое было до начала разминки
+def end_warmdown(user_id: str, resp: dict | Response) -> dict | Response:  # Возврат к упражнению которое было до начала разминки
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, поздравляю вас с  очередной победой! Что выберите дальше: '
@@ -491,14 +494,14 @@ def end_warmdown(user_id: str, resp: dict) -> dict:  # Возврат к упр�
     return resp
 
 
-def cancel_warmdown(user_id: str, resp: dict, data: dict | None = None) -> dict:
+def cancel_warmdown(user_id: str, resp: dict | Response, data: dict | None = None) -> dict | Response:
     if data is None:
         data = fsm.get_data(user_id)
 
     return data['callback'](user_id, resp)
 
 
-def finish_solo_cardio(user_id: str, resp: dict) -> dict:
+def finish_solo_cardio(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
@@ -523,7 +526,7 @@ def finish_solo_cardio(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def finish_rope_cardio(user_id: str, resp: dict) -> dict:
+def finish_rope_cardio(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
@@ -548,7 +551,7 @@ def finish_rope_cardio(user_id: str, resp: dict) -> dict:
     return resp
 
 
-def finish_power_training(user_id: str, resp: dict) -> dict:
+def finish_power_training(user_id: str, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
@@ -590,8 +593,7 @@ def main():  # event, context
     user_id = req.session.user.user_id
     state = fsm.get_state(user_id)
 
-    resp = {'version': req.version,
-            'session': req.session}
+    resp = Response(version=req.version, session=req.session)
 
     print(f'{state=}')
     print(f'data={fsm.get_data(user_id)}')
@@ -601,11 +603,11 @@ def main():  # event, context
 
     print(command)
     if any_from(('помо', 'help'), in_=command):
-        print({'text': state.help_message if state is not None else MainGroup.help_message,
-               'buttons': fsm.get_data(user_id).get('buttons', [])})
+        print(ResponseField(text=state.help_message if state is not None else MainGroup.help_message,
+                            buttons=fsm.get_data(user_id).get('buttons', None)))
         # resp = start_session(user_id, resp, add_help_button=False)
-        resp.update({'response': {'text': state.help_message if state is not None else MainGroup.help_message,
-                                  'buttons': fsm.get_data(user_id).get('buttons', [])}})
+        resp.update(dict(response=dict(text=state.help_message if state is not None else MainGroup.help_message,
+                                       buttons=fsm.get_data(user_id).get('buttons', []))))
         #                                    'Не беспокойтесь я подскажу Вам, что делать в зависимости от того, где Вы сейчас находитесь. Если Вы сейчас ...\n'
         #                                  'На этапе приветствия, то Вам доступны следующие команды: "Я готов" (чтобы перейти к выбору тренировки или расчёту информации)'
         #                                  ' и "Что ты умеешь?" (для уточнения моего функционала);\n'
@@ -637,22 +639,10 @@ def main():  # event, context
                           '🥛 Водный баланс\n'
                           'К каждому из упражнений будет предоставлено описание и GIF, наглядно демонстрирующий , как выполнять упражнение. Чтобы перейти к списку, скажите "Поехали".']
 
-        resp.update({
-            'response': {
-                'text': f'{random.choice(answer_options)} \n',
-                'buttons': [
-                    {
-                        'title': 'Поехали!',
-                        'hide': True
-                    },
-                    {
-                        'title': 'Помощь',
-                        'hide': False
-                    }
-                ]
-
-            }
-        })
+        resp.update(dict(response=dict(text=f'{random.choice(answer_options)} \n', buttons=[
+            dict(title='Поехали!', hide=True),
+            dict(title='Помощь', hide=False)
+        ])))
         fsm.set_state(user_id, MainGroup.state_1)
         return dict_to_json(resp, ensure_ascii=False, indent=2)
 
@@ -666,61 +656,82 @@ def main():  # event, context
         #                   'Время выбирать, чем хотите заняться или что Вам нужно узнать:\n'
         #                   '"Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".']
 
-        resp.update({
-            'response': {
-                'text': 'Это сообщение никто не увидит :(',
-                'tts': f'Вы уже в нескольких шагах от здорового образа жизни! Чем сегодня займёмся? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
-                'card': {
-                    'type': 'ItemsList',
-                    'header': {
-                        'text': 'Чем сегодня займёмся? Выбирайте: #Кнопка "идеальный вес" временно недоступна# '
-                    },
-                    'items': [
-                        {"title": 'кардиотренировка', 'button': {"text": 'кардиотренировка'},
-                         "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
-                        {"title": 'силовая тренировка', "button": {"text": 'силовая тренировка'},
-                         "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
-                        {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
-                         "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
-                        {"title": 'водный баланс', "button": {"text": 'водный баланс'}, "description": 'описание...',
-                         "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
-                        {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...',
-                         "image_id": '213044/e81c096eeedd03ef9a2e'}
-
-                    ]
-                }
-            }
-        })
+        resp.update(
+            dict(
+                response=dict(
+                    text='Это сообщение никто не увидит :(',
+                    tts=f'Вы уже в нескольких шагах от здорового образа жизни! Чем сегодня займёмся? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
+                    card=dict(
+                        type='ItemsList', header={
+                            'text': 'Чем сегодня займёмся? Выбирайте: #Кнопка "идеальный вес" временно недоступна# '
+                        },
+                        items=[
+                            dict(
+                                title='кардиотренировка',
+                                button={"text": 'кардиотренировка'},
+                                description='описание...',
+                                image_id='1533899/13a130643a2fcdac537a'
+                            ),
+                            dict(
+                                title='силовая тренировка',
+                                button={"text": 'силовая тренировка'},
+                                description='описание...',
+                                image_id='1533899/f030bee0ec7edea516e3'
+                            ),
+                            dict(
+                                title='утренняя зарядка',
+                                button={"text": 'утренняя зарядка'},
+                                description='описание...',
+                                image_id='1540737/cc26a14712e6995a6624'
+                            ),
+                            dict(
+                                title='водный баланс',
+                                button={"text": 'водный баланс'},
+                                description='описание...',
+                                image_id='1540737/dc7c3c075dd3ecc22fc7'
+                            ),
+                            dict(
+                                title='фазы сна',
+                                button={"text": 'фазы сна'},
+                                description='описание...',
+                                image_id='213044/e81c096eeedd03ef9a2e'
+                            )
+                        ]
+                    )
+                )
+            )
+        )
         fsm.reset_state(user_id, with_data=True)
         fsm.set_state(user_id, MainGroup.Sport.state_home)
 
     elif state in MainGroup:
         if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
             print(1)
-            resp.update({
-                'response': {
-                    'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
-                    'card': {
-                        'type': 'ItemsList',
-                        'header': {
+            resp.update(
+                dict(
+                    response=dict(
+                        text='Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
+                        card=dict(type='ItemsList', header={
                             'text': 'Чем займёмся на этот раз? #Кнопка "идеальный вес" временно недоступна#'
-                        },
-                        'items': [
-                            {"title": 'кардиотренировка', 'button': {"text": 'кардиотренировка'},
-                             "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
-                            {"title": 'силовая тренировка', "button": {"text": 'силовая тренировка'},
-                             "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
-                            {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
-                             "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
-                            {"title": 'водный баланс', "button": {"text": 'водный баланс'},
-                             "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
-                            {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...',
-                             "image_id": '213044/e81c096eeedd03ef9a2e'}
-
+                        }, items=[
+                            dict(title='кардиотренировка', button=dict(text='кардиотренировка'),
+                                 description='описание...',
+                                 image_id='1533899/13a130643a2fcdac537a'),
+                            dict(title='силовая тренировка', button={"text": 'силовая тренировка'},
+                                 description='описание...',
+                                 image_id='1533899/f030bee0ec7edea516e3'),
+                            dict(title='утренняя зарядка', button={"text": 'утренняя зарядка'},
+                                 description='описание...',
+                                 image_id='1540737/cc26a14712e6995a6624'),
+                            dict(title='водный баланс', button={"text": 'водный баланс'}, description='описание...',
+                                 image_id='1540737/dc7c3c075dd3ecc22fc7'),
+                            dict(title='фазы сна', button={"text": 'фазы сна'}, description='описание...',
+                                 image_id='213044/e81c096eeedd03ef9a2e')
                         ]
-                    }
-                }
-            })
+                                  )
+                    )
+                )
+            )
             fsm.set_state(user_id, MainGroup.Sport.state_home)
         elif state == MainGroup.Sport.state_home:
             if 'вод' in command or 'баланс' in command:
@@ -2544,23 +2555,17 @@ def main():  # event, context
                         })
                         fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1)
                     else:
-                        resp.update({
-                            'response': {
-                                'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?'
-                                ,
-                                'buttons': [
-                                    {
-                                        'title': 'Вернуться в меню',
-                                        'hide': True
-                                    },
-                                    {
-                                        'title': 'Запустить тренировку',
-                                        'hide': True
-                                    }
-                                ]
-
-                            }
-                        })
+                        resp.update(
+                            dict(
+                                response=dict(
+                                    text='Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?',
+                                    buttons=[
+                                        dict(title='Вернуться в меню', hide=True),
+                                        dict(title='Запустить тренировку', hide=True)
+                                    ]
+                                )
+                            )
+                        )
                 elif state in (
                         MainGroup.Sport.Zaradka.Ten.task1, MainGroup.Sport.Zaradka.Ten.task1_help,
                         MainGroup.Sport.Zaradka.Ten.task1_do) or (
@@ -4937,5 +4942,4 @@ def main():  # event, context
 
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 
-
-# app.run('localhost', port=5050, debug=True)
+app.run('localhost', port=5050, debug=True)
