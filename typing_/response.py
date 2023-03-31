@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import copy
-import json
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
+
+from .types_ import KeyToAttr
+from .request import Session
 
 ButtonDict = dict[str, str | bool]
 
@@ -33,25 +37,27 @@ DictPairModifier = typing.Callable[[str, typing.Any, typing.Callable | None], tu
 class RespDataClass:
     def to_dict(
             self,
-            modifier: DictPairModifier | None = None
+            modifier: DictPairModifier | None = None,
+            recursive: bool = True
     ) -> dict:
-        print()
-        print(self)
+        # print()
+        # print(self)
         modifier = modifier or self._modifier
         res = {}
         for annot_key in self.__annotations__.keys():
             key, value = annot_key, getattr(self, annot_key)
-            print(key, value)
+            # print(key, value)
             if value is None:
                 continue
 
             key, value = modifier(key, value, None)
 
             if hasattr(value, 'to_dict'):
-                value = value.to_dict()
+                if recursive:
+                    value = value.to_dict()
             elif isinstance(value, typing.Sequence) and not isinstance(value, str):
                 value = [i.to_dict() if hasattr(i, 'to_dict') else i for i in value]
-                print('\t', value)
+                # print('\t', value)
 
             res[key] = value
         return res
@@ -66,8 +72,45 @@ class RespDataClass:
     def _modifier(self, key: str, value: typing.Any, modifier: DictPairModifier | None = None):
         return (modifier or (lambda _key, _value, _: (_key, _value)))(key, value, None)
 
-    # def update(self):  # TODO: Сделать функцию update
-    #     pass
+    def update(self, udict: dict | RespDataClass, recursive: bool = False):  # TODO: Сделать функцию update
+        print()
+        print(self)
+        for key, value in udict.items():
+            print(key, value)
+            if hasattr(value, 'update'):
+                print(1)
+                if recursive:
+                    print(2, value)
+                    try:
+                        value = getattr(self, key, value).update(value, recursive)
+                    except TypeError:
+                        value = getattr(self, key, value).update(value)
+                    print(2.5, value)
+            print(3)
+            setattr(self, key, value)
+
+        return self
+
+    def __getitem__(self, item):
+        try:
+            return self.__getattribute__(item)
+        except AttributeError:
+            raise KeyError()
+
+    def __setitem__(self, key, value):
+        try:
+            return self.__setattr__(key, value)
+        except AttributeError:
+            raise KeyError()
+
+    def items(self):
+        yield from ((key, value) for key, value in self.to_dict().items())
+
+    def get(self, item, default):
+        try:
+            return self.__getitem__(item)
+        except KeyError:
+            return default
 
 
 @dataclass
@@ -98,8 +141,10 @@ class CardType(Enum):
     ItemsList: str = 'ItemsList'
     BigImage: str = 'BigImage'
 
-    def __str__(self):
+    def __repr__(self):
         return f'{self.name}'.split('.')[-1]
+
+    __str__ = __repr__
 
     def to_dict(self) -> str:
         return f'{self}'
@@ -159,8 +204,8 @@ class ResponseField(RespDataClass):
 @dataclass
 class Response(RespDataClass):
     version: str
-    session: str
-    response: ResponseField | dict
+    session: Session  # TODO: | SessionDict
+    response: ResponseField | ResponseFieldDict | None = None
 
 
 # r = Response(
@@ -180,7 +225,8 @@ class Response(RespDataClass):
 #     )
 # )
 #
-# print(json.dumps(r.to_dict()))
+# r.update({'response': {'text': '23', 'card': {'description': 'descr'}}}, recursive=True)
+# print(r)
 
 __all__ = tuple(
     map(
@@ -196,6 +242,8 @@ __all__ = tuple(
             CardType,
             CardItemsListHeader,
             Button,
+            Session,
+            # SessionDict,
             'ButtonDict',
             'ItemButtonDict',
             'ItemDict',

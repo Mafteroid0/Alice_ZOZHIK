@@ -15,7 +15,7 @@ class KeyToAttr(UserDict):
             return super().__getattribute__(item)
         except AttributeError as e:
             try:
-                return self.get(item)
+                return super().get(item)
             except KeyError:
                 raise e
 
