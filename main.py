@@ -577,7 +577,7 @@ def finish_power_training(user_id: str, resp: dict | Response) -> dict | Respons
 
 
 @app.route('/alice', methods=['POST'])
-def main():  # event, context
+def _main():  # event, context
     tracks_fourteen = [
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/bd88f1cd-426b-430f-adc4-e66d4f19549d.opus">',
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/047165c7-4a08-4426-ade7-ce961e87aad1.opus">',
