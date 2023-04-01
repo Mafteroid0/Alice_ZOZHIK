@@ -10,6 +10,8 @@ from fsm import FSMContext
 from time_parsing import parse_time, iter_go_sleep_time
 from dialogs import warm_up_algorithm, warm_down_algorithm
 
+import handlers.dream
+
 from states import MainGroup
 
 app = Flask(__name__)
@@ -379,20 +381,24 @@ def _main():
 
     context = fsm.build_context(user_id)
 
-    state = context.get_state(user_id)
+    state = context.get_state()
 
     resp = Response(version=req.version, session=req.session)
 
+    # print(context.get_state())
+
+    # print(f'{command=}')
+
     print(f'{state=}')
-    print(f'data={context.get_data(user_id)}')
+    # print(f'data={context.get_data(user_id)}')
     if req.session.new:
         resp = start_session(context, resp)
         return dict_to_json(resp, ensure_ascii=False, indent=2)
 
-    print(command)
+    # print(command)
     if any_from(('помо', 'help'), in_=command):
-        print(ResponseField(text=state.help_message if state is not None else MainGroup.help_message,
-                            buttons=context.get_data(user_id).get('buttons', None)))
+        # print(ResponseField(text=state.help_message if state is not None else MainGroup.help_message,
+        #                     buttons=context.get_data(user_id).get('buttons', None)))
         # resp = start_session(user_id, resp, add_help_button=False)
         resp.update(dict(response=dict(text=state.help_message if state is not None else MainGroup.help_message,
                                        buttons=context.get_data(user_id).get('buttons', []))))
@@ -431,11 +437,10 @@ def _main():
             dict(title='Поехали!', hide=True),
             dict(title='Помощь', hide=False)
         ])))
-        context.set_state(user_id, MainGroup.state_1)
+        context.set_state(MainGroup.state_1)
         return dict_to_json(resp, ensure_ascii=False, indent=2)
 
-    elif (state in (MainGroup.state_1, None)) and (
-            'поехали' in command or 'нач' in command):  # TODO: Добавить в условия номера стейтов, из которых можно сюда попасть (см. диаграмму)
+    elif (state in (MainGroup.state_1, None)) and is_positive(command):  # TODO: Добавить в условия номера стейтов, из которых можно сюда попасть (см. диаграмму)
         # answer_options = ['Вау, Вы уже в нескольких шагах от здорового образа жизни очень рада за Вас 😍. '
         #                   'Для начала выберите, чем хотите заняться или что Вам нужно узнать:'
         #                   ' "Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".',
@@ -489,8 +494,8 @@ def _main():
                 )
             )
         )
-        context.reset_state(user_id, with_data=True)
-        context.set_state(user_id, MainGroup.Sport.state_home)
+        context.reset_state(with_data=True)
+        context.set_state(MainGroup.Sport.state_home)
 
     elif state in MainGroup:
         if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
@@ -520,7 +525,7 @@ def _main():
                     )
                 )
             )
-            context.set_state(user_id, MainGroup.Sport.state_home)
+            context.set_state(MainGroup.Sport.state_home)
         elif state == MainGroup.Sport.state_home:
             if 'вод' in command or 'баланс' in command:
                 answer_options = [
@@ -535,7 +540,7 @@ def _main():
                         'text': f'{random.choice(answer_options)}'
                     }
                 })
-                context.set_state(user_id, MainGroup.Water.state_1)
+                context.set_state(MainGroup.Water.state_1)
 
             elif 'сон' in command or 'сна' in command or 'фаз' in command:
                 resp.update({
@@ -545,7 +550,7 @@ def _main():
                                 ' а я Вам подскажу идеальное время, когда необходимо будет лечь спать, чтобы встать бодрым.'
                     }
                 })
-                context.set_state(user_id, MainGroup.Dream.state_1)
+                context.set_state(MainGroup.Dream.state_1)
                 print('SON?')
 
             elif 'сил' in command:
@@ -571,8 +576,8 @@ def _main():
 
                     }
                 })
-                context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
-                context.update_data(user_id, callback=start_power_training)
+                context.set_state(MainGroup.Sport.Wrap.WarmUp.qw)
+                context.update_data(callback=start_power_training)
 
             elif 'кард' in command:
                 answer_options = [
@@ -598,7 +603,7 @@ def _main():
 
                     }
                 })
-                context.set_state(user_id, MainGroup.Sport.Cardio.state_1)
+                context.set_state(MainGroup.Sport.Cardio.state_1)
 
             elif 'заряд' in command:
                 answer_options = [
@@ -624,7 +629,7 @@ def _main():
 
                     }
                 })
-                context.set_state(user_id, MainGroup.Sport.Zaradka.state_1)
+                context.set_state(MainGroup.Sport.Zaradka.state_1)
 
             elif 'вес' in command:
                 resp.update({
@@ -632,7 +637,7 @@ def _main():
                         'text': f'# К сожалению, наши программисты не успели доделать эту часть навыка😣\nНо не переживайте, совсем скоро эта функция станет доступна!\nСкажите "поехали" чтобы вернуться в главное меню. #'
                     }
                 })
-                context.set_state(user_id, MainGroup.state_1)
+                context.set_state(MainGroup.state_1)
 
             else:
                 resp.update({
@@ -660,49 +665,50 @@ def _main():
                         }
                     }
                 })
-                context.set_state(user_id, MainGroup.Sport.state_home)
+                context.set_state(MainGroup.Sport.state_home)
         elif state in MainGroup.Dream:
-            if state == MainGroup.Dream.state_1:
-                try:
-                    time = parse_time(command)
-                except RuntimeError:
-                    pass
-                else:
-                    go_sleep_times = list(iter_go_sleep_time(time))
-                    print(time)
-                    print(go_sleep_times)
-                    answer_options = [
-                        f'Чтобы после сна чувствовать себя полным энергией, Вам следует лечь спать в {go_sleep_times[0].strftime("%H:%M")} '
-                        f'или в {go_sleep_times[1].strftime("%H:%M")}😴. Не забудьте завести будильник!',
-
-                        f'Ложитесь спать в {go_sleep_times[0].strftime("%H:%M")} или в {go_sleep_times[1].strftime("%H:%M")}, '
-                        f'чтобы утром чувствовать себя полным сил. Не забудьте завести будильник!']
-                    resp.update({
-                        'response': {
-                            'text': f'{random.choice(answer_options)}',
-                            'card': {
-                                'type': 'ItemsList',
-                                'header': {
-                                    'text': f'{random.choice(answer_options)}'
-                                },
-                                'items': [
-                                    {"title": 'Рассчитать ещё раз', 'button': {"text": 'Рассчитать ещё раз'},
-                                     "description": 'описание...', "image_id": '997614/15f977696a281092bcc0'},
-                                    {"title": 'Вернуться к основному списку', "button": {"text": 'Назад'},
-                                     "description": 'описание...', "image_id": '1030494/cc3631c8499cdc8daf8b'}
-
-                                ]
-                            }
-                        }
-                    })
-                    context.set_state(user_id, MainGroup.Dream.end)
-            elif state == MainGroup.Dream.end:
-                resp.update({
-                    'response': {
-                        'text': 'Во сколько вы хотите проснуться?'
-                    }
-                })
-                context.set_state(user_id, MainGroup.Dream.state_1)
+            handlers.dream.dream_heandler(context, req, resp)
+            # if state == MainGroup.Dream.state_1:
+            #     try:
+            #         time = parse_time(command)
+            #     except RuntimeError:
+            #         pass
+            #     else:
+            #         go_sleep_times = list(iter_go_sleep_time(time))
+            #         print(time)
+            #         print(go_sleep_times)
+            #         answer_options = [
+            #             f'Чтобы после сна чувствовать себя полным энергией, Вам следует лечь спать в {go_sleep_times[0].strftime("%H:%M")} '
+            #             f'или в {go_sleep_times[1].strftime("%H:%M")}😴. Не забудьте завести будильник!',
+            #
+            #             f'Ложитесь спать в {go_sleep_times[0].strftime("%H:%M")} или в {go_sleep_times[1].strftime("%H:%M")}, '
+            #             f'чтобы утром чувствовать себя полным сил. Не забудьте завести будильник!']
+            #         resp.update({
+            #             'response': {
+            #                 'text': f'{random.choice(answer_options)}',
+            #                 'card': {
+            #                     'type': 'ItemsList',
+            #                     'header': {
+            #                         'text': f'{random.choice(answer_options)}'
+            #                     },
+            #                     'items': [
+            #                         {"title": 'Рассчитать ещё раз', 'button': {"text": 'Рассчитать ещё раз'},
+            #                          "description": 'описание...', "image_id": '997614/15f977696a281092bcc0'},
+            #                         {"title": 'Вернуться к основному списку', "button": {"text": 'Назад'},
+            #                          "description": 'описание...', "image_id": '1030494/cc3631c8499cdc8daf8b'}
+            #
+            #                     ]
+            #                 }
+            #             }
+            #         })
+            #         context.set_state(MainGroup.Dream.end)
+            # elif state == MainGroup.Dream.end:
+            #     resp.update({
+            #         'response': {
+            #             'text': 'Во сколько вы хотите проснуться?'
+            #         }
+            #     })
+            #     context.set_state(MainGroup.Dream.state_1)
         elif state in MainGroup.Water:
             if state == MainGroup.Water.state_1:
                 st = command.replace(',', '.')
@@ -732,7 +738,7 @@ def _main():
                                 }
                             }
                         })
-                        context.set_state(user_id, MainGroup.Water.end)
+                        context.set_state(MainGroup.Water.end)
                         break
                     else:
                         resp.update({
@@ -747,7 +753,7 @@ def _main():
                         'text': 'Скажите свой вес в килограммах'
                     }
                 })
-                context.set_state(user_id, MainGroup.Water.state_1)
+                context.set_state(MainGroup.Water.state_1)
 
         elif state in MainGroup.Sport.Cardio:
             if state == MainGroup.Sport.Cardio.state_1:
@@ -771,11 +777,11 @@ def _main():
                     }
                 })
                 if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
-                    context.update_data(user_id, callback=start_solo_cardio)
-                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                    context.update_data(callback=start_solo_cardio)
+                    context.set_state(MainGroup.Sport.Wrap.WarmUp.qw)
                 elif 'скак' in command or 'со' in command or 'втор' in command:
-                    context.update_data(user_id, callback=start_rope_cardio)
-                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                    context.update_data(callback=start_rope_cardio)
+                    context.set_state(MainGroup.Sport.Wrap.WarmUp.qw)
                 else:
                     resp.update({
                         'response': {
@@ -830,7 +836,7 @@ def _main():
                                 }
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -860,7 +866,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task1)
                     else:
                         resp.update({
                             'response': {
@@ -901,7 +907,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -915,7 +921,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task1_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task1_do, MainGroup.Sport.Cardio.Solo.task1_help,
                             MainGroup.Sport.Cardio.Solo.task1) and (
@@ -946,7 +952,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task2)
                     else:
                         resp.update({
                             'response': {
@@ -991,7 +997,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1005,7 +1011,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task2_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task2_do, MainGroup.Sport.Cardio.Solo.task2_help,
                             MainGroup.Sport.Cardio.Solo.task2) and (
@@ -1036,7 +1042,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task3)
                     else:
                         resp.update({
                             'response': {
@@ -1080,7 +1086,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1094,7 +1100,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task3_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task3_do, MainGroup.Sport.Cardio.Solo.task3_help,
                             MainGroup.Sport.Cardio.Solo.task3) and (
@@ -1125,7 +1131,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task4)
                     else:
                         resp.update({
                             'response': {
@@ -1169,7 +1175,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1183,7 +1189,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task4_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task4_do, MainGroup.Sport.Cardio.Solo.task4_help,
                             MainGroup.Sport.Cardio.Solo.task4) and (
@@ -1215,7 +1221,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task5)
                     else:
                         resp.update({
                             'response': {
@@ -1259,7 +1265,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1273,7 +1279,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task5_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task5_do, MainGroup.Sport.Cardio.Solo.task5_help,
                             MainGroup.Sport.Cardio.Solo.task5) and (
@@ -1304,7 +1310,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task6)
                     else:
                         resp.update({
                             'response': {
@@ -1347,7 +1353,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task6_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1361,7 +1367,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task6_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task6_do, MainGroup.Sport.Cardio.Solo.task6_help,
                             MainGroup.Sport.Cardio.Solo.task6) and (
@@ -1392,7 +1398,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task7)
                     else:
                         resp.update({
                             'response': {
@@ -1435,7 +1441,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task7_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1449,7 +1455,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task7_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task7_do, MainGroup.Sport.Cardio.Solo.task7_help,
                             MainGroup.Sport.Cardio.Solo.task7) and (
@@ -1480,7 +1486,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task8)
                     else:
                         resp.update({
                             'response': {
@@ -1523,7 +1529,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task8_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1537,7 +1543,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task8_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task8_do, MainGroup.Sport.Cardio.Solo.task8_help,
                             MainGroup.Sport.Cardio.Solo.task8) and (
@@ -1568,7 +1574,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task9)
                     else:
                         resp.update({
                             'response': {
@@ -1613,7 +1619,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_help)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task9_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1627,7 +1633,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_do)
+                        context.set_state(MainGroup.Sport.Cardio.Solo.task9_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task9_do, MainGroup.Sport.Cardio.Solo.task9_help,
                             MainGroup.Sport.Cardio.Solo.task9) and (
@@ -1654,8 +1660,8 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                        context.update_data(user_id, callback=finish_solo_cardio)
+                        context.set_state(MainGroup.Sport.Wrap.WarmDown.qw)
+                        context.update_data(callback=finish_solo_cardio)
 
                     else:
                         resp.update({
@@ -1682,8 +1688,8 @@ def _main():
 
             elif state in MainGroup.Sport.Cardio.Rope:
                 if state == MainGroup.Sport.Cardio.Rope.state_1:
-                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
-                    context.update_data(user_id, callback=start_rope_cardio)
+                    context.set_state(MainGroup.Sport.Wrap.WarmUp.qw)
+                    context.update_data(callback=start_rope_cardio)
                 elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
                     if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
                         print(3)
@@ -1712,7 +1718,7 @@ def _main():
                                 }
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -1741,7 +1747,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task1)
                     else:
                         resp.update({
                             'response': {
@@ -1780,7 +1786,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_help)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1794,7 +1800,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_do)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task1_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task1_do, MainGroup.Sport.Cardio.Rope.task1_help,
                             MainGroup.Sport.Cardio.Rope.task1) and (
@@ -1825,7 +1831,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task2)
                     else:
                         resp.update({
                             'response': {
@@ -1867,7 +1873,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_help)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1881,7 +1887,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_do)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task2_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task2_do, MainGroup.Sport.Cardio.Rope.task2_help,
                             MainGroup.Sport.Cardio.Rope.task2) and (
@@ -1912,7 +1918,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task3)
                     else:
                         resp.update({
                             'response': {
@@ -1954,7 +1960,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_help)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1968,7 +1974,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_do)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task3_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task3_do, MainGroup.Sport.Cardio.Rope.task3_help,
                             MainGroup.Sport.Cardio.Rope.task3) and (
@@ -1999,7 +2005,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task4)
                     else:
                         resp.update({
                             'response': {
@@ -2041,7 +2047,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_help)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2055,7 +2061,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_do)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task4_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task4_do, MainGroup.Sport.Cardio.Rope.task4_help,
                             MainGroup.Sport.Cardio.Rope.task4) and (
@@ -2086,7 +2092,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task5)
                     else:
                         resp.update({
                             'response': {
@@ -2129,7 +2135,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_help)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2143,7 +2149,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_do)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.task5_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task5_do, MainGroup.Sport.Cardio.Rope.task5_help,
                             MainGroup.Sport.Cardio.Rope.task5) and (
@@ -2170,9 +2176,9 @@ def _main():
                             }
                         })
 
-                        context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                        context.update_data(user_id, callback=finish_rope_cardio)
-                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.end)
+                        context.set_state(MainGroup.Sport.Wrap.WarmDown.qw)
+                        context.update_data(callback=finish_rope_cardio)
+                        context.set_state(MainGroup.Sport.Cardio.Rope.end)
                     else:
                         resp.update({
                             'response': {
@@ -2195,8 +2201,8 @@ def _main():
                             }
                         })
                 elif state == MainGroup.Sport.Cardio.Rope.end:
-                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                    context.update_data(user_id, callback=finish_rope_cardio)
+                    context.set_state(MainGroup.Sport.Wrap.WarmDown.qw)
+                    context.update_data(callback=finish_rope_cardio)
 
         elif state in MainGroup.Sport.Zaradka:
             if state == MainGroup.Sport.Zaradka.state_1:
@@ -2222,7 +2228,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Zaradka.Five.start)
+                    context.set_state(MainGroup.Sport.Zaradka.Five.start)
                 elif 'дес' in command or '10' in command:
                     resp.update({
                         'response': {
@@ -2245,7 +2251,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.start)
+                    context.set_state(MainGroup.Sport.Zaradka.Ten.start)
                 else:
                     resp.update({
                         'response': {
@@ -2292,7 +2298,7 @@ def _main():
                                 }
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -2321,7 +2327,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task1)
                     else:
                         resp.update(
                             dict(
@@ -2355,7 +2361,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2369,7 +2375,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task1_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task1_do, MainGroup.Sport.Zaradka.Ten.task1_help,
                             MainGroup.Sport.Zaradka.Ten.task1) and (
@@ -2400,7 +2406,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task2)
                     else:
                         resp.update({
                             'response': {
@@ -2442,7 +2448,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2456,7 +2462,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task2_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task2_do, MainGroup.Sport.Zaradka.Ten.task2_help,
                             MainGroup.Sport.Zaradka.Ten.task2) and (
@@ -2487,7 +2493,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task3)
                     else:
                         resp.update({
                             'response': {
@@ -2529,7 +2535,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2543,7 +2549,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task3_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task3_do, MainGroup.Sport.Zaradka.Ten.task3_help,
                             MainGroup.Sport.Zaradka.Ten.task3) and (
@@ -2574,7 +2580,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task4)
                     else:
                         resp.update({
                             'response': {
@@ -2617,7 +2623,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2631,7 +2637,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task4_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task4_do, MainGroup.Sport.Zaradka.Ten.task4_help,
                             MainGroup.Sport.Zaradka.Ten.task4) and (
@@ -2663,7 +2669,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task5)
                     else:
                         resp.update({
                             'response': {
@@ -2706,7 +2712,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2720,7 +2726,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task5_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task5_do, MainGroup.Sport.Zaradka.Ten.task5_help,
                             MainGroup.Sport.Zaradka.Ten.task5) and (
@@ -2752,7 +2758,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task6)
                     else:
                         resp.update({
                             'response': {
@@ -2795,7 +2801,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task6_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2809,7 +2815,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task6_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task6_do, MainGroup.Sport.Zaradka.Ten.task6_help,
                             MainGroup.Sport.Zaradka.Ten.task6) and (
@@ -2841,7 +2847,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task7)
                     else:
                         resp.update({
                             'response': {
@@ -2884,7 +2890,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task7_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2898,7 +2904,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task7_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task7_do, MainGroup.Sport.Zaradka.Ten.task7_help,
                             MainGroup.Sport.Zaradka.Ten.task7) and (
@@ -2930,7 +2936,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task8)
                     else:
                         resp.update({
                             'response': {
@@ -2973,7 +2979,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task8_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2987,7 +2993,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task8_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task8_do, MainGroup.Sport.Zaradka.Ten.task8_help,
                             MainGroup.Sport.Zaradka.Ten.task8) and (
@@ -3019,7 +3025,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task9)
                     else:
                         resp.update({
                             'response': {
@@ -3062,7 +3068,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task9_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3076,7 +3082,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task9_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task9_do, MainGroup.Sport.Zaradka.Ten.task9_help,
                             MainGroup.Sport.Zaradka.Ten.task9) and (
@@ -3108,7 +3114,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task10)
                     else:
                         resp.update({
                             'response': {
@@ -3152,7 +3158,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task10_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3166,7 +3172,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.task10_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task10_do, MainGroup.Sport.Zaradka.Ten.task10_help,
                             MainGroup.Sport.Zaradka.Ten.task10) and (
@@ -3191,7 +3197,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.final)
+                        context.set_state(MainGroup.Sport.Zaradka.Ten.final)
                     else:
                         resp.update({
                             'response': {
@@ -3244,7 +3250,7 @@ def _main():
                                 }
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -3273,7 +3279,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task1)
                     else:
                         resp.update({
                             'response': {
@@ -3312,7 +3318,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3326,7 +3332,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task1_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task1_do, MainGroup.Sport.Zaradka.Five.task1_help,
                             MainGroup.Sport.Zaradka.Five.task1) and (
@@ -3358,7 +3364,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task2)
                     else:
                         resp.update({
                             'response': {
@@ -3401,7 +3407,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3415,7 +3421,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task2_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task2_do, MainGroup.Sport.Zaradka.Five.task2_help,
                             MainGroup.Sport.Zaradka.Five.task2) and (
@@ -3447,7 +3453,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task3)
                     else:
                         resp.update({
                             'response': {
@@ -3490,7 +3496,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3504,7 +3510,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task3_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task3_do, MainGroup.Sport.Zaradka.Five.task3_help,
                             MainGroup.Sport.Zaradka.Five.task3) and (
@@ -3536,7 +3542,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task4)
                     else:
                         resp.update({
                             'response': {
@@ -3579,7 +3585,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3593,7 +3599,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task4_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task4_do, MainGroup.Sport.Zaradka.Five.task4_help,
                             MainGroup.Sport.Zaradka.Five.task4) and (
@@ -3625,7 +3631,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task5)
                     else:
                         resp.update({
                             'response': {
@@ -3668,7 +3674,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_help)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3682,7 +3688,7 @@ def _main():
                                 ]
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_do)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.task5_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task5_do, MainGroup.Sport.Zaradka.Five.task5_help,
                             MainGroup.Sport.Zaradka.Five.task5) and (
@@ -3707,7 +3713,7 @@ def _main():
 
                             }
                         })
-                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.final)
+                        context.set_state(MainGroup.Sport.Zaradka.Five.final)
                     else:
                         resp.update({
                             'response': {
@@ -3760,7 +3766,7 @@ def _main():
                             }
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.state_home)
+                    context.set_state(MainGroup.Sport.state_home)
                 elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                     resp.update({
                         'response': {
@@ -3789,7 +3795,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task1)
+                    context.set_state(MainGroup.Sport.Power.task1)
                 else:
                     resp.update({
                         'response': {
@@ -3828,7 +3834,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task1_help)
+                    context.set_state(MainGroup.Sport.Power.task1_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -3842,7 +3848,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task1_do)
+                    context.set_state(MainGroup.Sport.Power.task1_do)
                 elif state in (
                         MainGroup.Sport.Power.task1_do, MainGroup.Sport.Power.task1_help,
                         MainGroup.Sport.Power.task1) and (
@@ -3874,7 +3880,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task2)
+                    context.set_state(MainGroup.Sport.Power.task2)
                 else:
                     resp.update({
                         'response': {
@@ -3918,7 +3924,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task2_help)
+                    context.set_state(MainGroup.Sport.Power.task2_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -3932,7 +3938,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task2_do)
+                    context.set_state(MainGroup.Sport.Power.task2_do)
                 elif state in (
                         MainGroup.Sport.Power.task2_do, MainGroup.Sport.Power.task2_help,
                         MainGroup.Sport.Power.task2) and (
@@ -3964,7 +3970,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task3)
+                    context.set_state(MainGroup.Sport.Power.task3)
                 else:
                     resp.update({
                         'response': {
@@ -4008,7 +4014,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task3_help)
+                    context.set_state(MainGroup.Sport.Power.task3_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4022,7 +4028,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task3_do)
+                    context.set_state(MainGroup.Sport.Power.task3_do)
                 elif state in (
                         MainGroup.Sport.Power.task3_do, MainGroup.Sport.Power.task3_help,
                         MainGroup.Sport.Power.task3) and (
@@ -4054,7 +4060,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task4)
+                    context.set_state(MainGroup.Sport.Power.task4)
                 else:
                     resp.update({
                         'response': {
@@ -4098,7 +4104,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task4_help)
+                    context.set_state(MainGroup.Sport.Power.task4_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4112,7 +4118,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task4_do)
+                    context.set_state(MainGroup.Sport.Power.task4_do)
                 elif state in (
                         MainGroup.Sport.Power.task4_do, MainGroup.Sport.Power.task4_help,
                         MainGroup.Sport.Power.task4) and (
@@ -4144,7 +4150,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task5)
+                    context.set_state(MainGroup.Sport.Power.task5)
                 else:
                     resp.update({
                         'response': {
@@ -4187,7 +4193,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task5_help)
+                    context.set_state(MainGroup.Sport.Power.task5_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4201,7 +4207,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task5_do)
+                    context.set_state(MainGroup.Sport.Power.task5_do)
                 elif state in (
                         MainGroup.Sport.Power.task5_do, MainGroup.Sport.Power.task5_help,
                         MainGroup.Sport.Power.task5) and (
@@ -4233,7 +4239,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task6)
+                    context.set_state(MainGroup.Sport.Power.task6)
                 else:
                     resp.update({
                         'response': {
@@ -4277,7 +4283,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task6_help)
+                    context.set_state(MainGroup.Sport.Power.task6_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4291,7 +4297,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task6_do)
+                    context.set_state(MainGroup.Sport.Power.task6_do)
                 elif state in (
                         MainGroup.Sport.Power.task6_do, MainGroup.Sport.Power.task6_help,
                         MainGroup.Sport.Power.task6) and (
@@ -4323,7 +4329,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task7)
+                    context.set_state(MainGroup.Sport.Power.task7)
                 else:
                     resp.update({
                         'response': {
@@ -4366,7 +4372,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task7_help)
+                    context.set_state(MainGroup.Sport.Power.task7_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4380,7 +4386,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task7_do)
+                    context.set_state(MainGroup.Sport.Power.task7_do)
                 elif state in (
                         MainGroup.Sport.Power.task7_do, MainGroup.Sport.Power.task7_help,
                         MainGroup.Sport.Power.task7) and (
@@ -4412,7 +4418,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task8)
+                    context.set_state(MainGroup.Sport.Power.task8)
                 else:
                     resp.update({
                         'response': {
@@ -4455,7 +4461,7 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task8_help)
+                    context.set_state(MainGroup.Sport.Power.task8_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4469,7 +4475,7 @@ def _main():
                             ]
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Power.task8_do)
+                    context.set_state(MainGroup.Sport.Power.task8_do)
                 elif (state in (
                         MainGroup.Sport.Power.task8_do, MainGroup.Sport.Power.task8_help,
                         MainGroup.Sport.Power.task8) and (
@@ -4497,8 +4503,8 @@ def _main():
 
                         }
                     })
-                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                    context.update_data(user_id, callback=finish_power_training)
+                    context.set_state(MainGroup.Sport.Wrap.WarmDown.qw)
+                    context.update_data(callback=finish_power_training)
                 else:
                     resp.update({
                         'response': {
@@ -4544,10 +4550,10 @@ def _main():
                     }
                 })
 
-                context.set_state(user_id, MainGroup.Sport.Power.end)
+                context.set_state(MainGroup.Sport.Power.end)
 
         elif state in MainGroup.Sport.Wrap.WarmUp:
-            step: TrainingStep = warm_up_algorithm[context.get_data(user_id).get('step', 0)]
+            step: TrainingStep = warm_up_algorithm[context.get_data().get('step', 0)]
 
             if state == MainGroup.Sport.Wrap.WarmUp.qw:
                 if 'нет' in command or 'не ' in command:
@@ -4573,9 +4579,9 @@ def _main():
                     })
 
             elif state == MainGroup.Sport.Wrap.WarmUp.start and is_positive(command):
-                context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.task)
+                context.set_state(MainGroup.Sport.Wrap.WarmUp.task)
                 step: int = 0
-                context.update_data(user_id, step=step)
+                context.update_data(step=step)
 
                 step: TrainingStep = warm_up_algorithm[step]
 
@@ -4596,8 +4602,8 @@ def _main():
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmUp.task:
-                    step = context.get_data(user_id).get('step', 0) + 1
-                    context.update_data(user_id, step=step)
+                    step = context.get_data().get('step', 0) + 1
+                    context.update_data(step=step)
                     print(f'{step=}')
 
                     try:
@@ -4614,7 +4620,7 @@ def _main():
                 end_warmup(context, resp)
 
         elif state in MainGroup.Sport.Wrap.WarmDown:
-            step: TrainingStep = warm_down_algorithm[context.get_data(user_id).get('step', 0)]
+            step: TrainingStep = warm_down_algorithm[context.get_data().get('step', 0)]
 
             if state == MainGroup.Sport.Wrap.WarmDown.qw:
                 if 'нет' in command or 'не ' in command:
@@ -4640,9 +4646,9 @@ def _main():
                     })
 
             elif state == MainGroup.Sport.Wrap.WarmDown.start and is_positive(command):
-                context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.task)
+                context.set_state(MainGroup.Sport.Wrap.WarmDown.task)
                 step: int = 0
-                context.update_data(user_id, step=step)
+                context.update_data(step=step)
 
                 step: TrainingStep = warm_down_algorithm[step]
 
@@ -4663,8 +4669,8 @@ def _main():
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmDown.task:
-                    step = context.get_data(user_id).get('step', 0) + 1
-                    context.update_data(user_id, step=step)
+                    step = context.get_data().get('step', 0) + 1
+                    context.update_data(step=step)
                     print(f'{step=}')
 
                     try:
@@ -4686,7 +4692,7 @@ def _main():
                 'text': f'Произошла ошибка. Скажите "поехали" чтобы вернуться в главное меню.'
             }
         })
-        context.set_state(user_id, MainGroup.state_1)
+        context.set_state(MainGroup.state_1)
 
     if not (response := resp.get('response', {'text': 'Затычечный текст на случай если сообщение не захендлилось'})):
         resp['response'] = response
@@ -4698,7 +4704,7 @@ def _main():
             break
     else:
         buttons.append({'title': 'Помощь', 'hide': False})
-    context.update_data(user_id, last_buttons=buttons)
+    context.update_data(last_buttons=buttons)
 
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 
