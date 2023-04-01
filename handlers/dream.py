@@ -50,3 +50,5 @@ def dream_heandler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
                 }
             })
             MainGroup.Dream.state_1.set(context)
+
+    return resp
