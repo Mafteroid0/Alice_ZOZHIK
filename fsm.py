@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-import functools
 import inspect
-import typing
 
 
 @dataclasses.dataclass
@@ -46,16 +44,20 @@ class FSMContext:
         return self._user_id
     
     def build_context(self, user_id: str):
+        self._check_and_create_user(user_id)
         return FSMContext(user_id, self)
 
     def _check_and_create_user(self, user_id: str):
         if self._data.get(user_id, None) is None:
             self._data[user_id] = {'state': None, 'data': {}}
+        print(f'{self._data[user_id]=}')
 
     def set_state(self, state: State | str | None, user_id: str | State | None = None) -> State | None:
+        print('pre', f'{state=}', f'{user_id=}')
         if isinstance(state, str) and isinstance(user_id, State):
             state, user_id = user_id, state  # Нормализация данных во имя обратной совместимости, ведь я поменял
             # аргументы местами
+        print(f'{state=}', f'{user_id=}')
 
         user_id = user_id or self._user_id
 
@@ -82,25 +84,29 @@ class FSMContext:
     def reset_state(self, with_data: bool = True, user_id: str | None = None):
         user_id = user_id or self._user_id
 
-        self.set_state(user_id, None)
+        self.set_state(None)
         if with_data:
             self.reset_data(user_id)
 
     def reset_data(self, user_id: str | None = None):
         user_id = user_id or self._user_id
 
-        self.set_data(user_id, {})
+        self.set_data({}, user_id)
 
     def get_state(self, user_id: str | None = None) -> State | None:
         user_id = user_id or self._user_id
+        # print(f'{user_id=}')
+        # print(self._data.get(user_id, {'state': None}))
 
-        return self._data.get(user_id, {'state': None})['state']
+        self._check_and_create_user(user_id)
+
+        return self._data[user_id]['state']
 
     @property
     def state(self):
         if self.user_id is None:
             raise ValueError('state as property available only in user contexts')
-        return self.state
+        return self.get_state()
 
     @property
     def data(self):
@@ -211,10 +217,3 @@ class StatesGroupMeta(type):
 
 class StatesGroup(metaclass=StatesGroupMeta):
     pass
-
-
-def __range(*args, **kwargs):
-    yield from range(*args, **kwargs)
-
-
-print(__range, __range(1)())
