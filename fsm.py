@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import inspect
 import typing
 
@@ -9,13 +10,12 @@ import typing
 class State:
     _help_message: str | None = None
 
-    machine: FSM | None = None
     name: str | None = None
     group: type[StatesGroup] | None = None
 
-    def set(self, user: str):
-        return self.machine.set_state(user, self)
-    
+    def set(self, context: FSMContext):
+        return context.set_state(self)
+
     @property
     def help_message(self):
         if self._help_message:
@@ -25,58 +25,102 @@ class State:
         return 'Затычка помощи для состояния'
 
     def __repr__(self):
-        return f'{self.group}.{self.name}'
+        if not (self.name and self.group):
+            return f'{super().__repr__()}'
+        return f'{self.group}.{self.name}' if self.group is not None else f'{self.name}'
 
-    # __str__ == __repr__
 
+class FSMContext:
+    def __init__(self, user_id: str | None = None, parent: FSMContext | None = None):
+        if sum(map(lambda x: x is None, (user_id, parent))) not in (0, 2):
+            raise ValueError()
 
-class FSM:
-    def __init__(self):
-        self._data = {}
+        self._data = {}  # Так а не через однострочник чтобы подсказки работали лучше
+        if parent is not None:
+            self._data = parent._data
 
-    def _check_and_create_user(self, user: str):
-        if self._data.get(user, None) is None:
-            self._data[user] = {'state': None, 'data': {}}
+        self._user_id = user_id
 
-    def set_state(self, user: str, state: State | None) -> State | None:
-        self._check_and_create_user(user)
-        self._data[user]['state'] = state
-        return self._data[user]['state']
+    @property
+    def user_id(self):
+        return self._user_id
+    
+    def build_context(self, user_id: str):
+        return FSMContext(user_id, self)
 
-    def set_data(self, user: str, data: dict | None = None, **kwargs) -> dict:
+    def _check_and_create_user(self, user_id: str):
+        if self._data.get(user_id, None) is None:
+            self._data[user_id] = {'state': None, 'data': {}}
+
+    def set_state(self, state: State | str | None, user_id: str | State | None = None) -> State | None:
+        if isinstance(state, str) and isinstance(user_id, State):
+            state, user_id = user_id, state  # Нормализация данных во имя обратной совместимости, ведь я поменял
+            # аргументы местами
+
+        user_id = user_id or self._user_id
+
+        self._check_and_create_user(user_id)
+        self._data[user_id]['state'] = state
+        return self._data[user_id]['state']
+
+    def set_data(self, data: dict | None = None, user_id: str | None = None, **kwargs) -> dict:
+        user_id = user_id or self._user_id
+
         data = data or {}
-        self._check_and_create_user(user)
-        self._data[user]['data'] = {**data, **kwargs}
-        return self._data[user]['data']
+        self._check_and_create_user(user_id)
+        self._data[user_id]['data'] = {**data, **kwargs}
+        return self._data[user_id]['data']
 
-    def update_data(self, user, udata: dict | None = None, **kwargs) -> dict:
+    def update_data(self, udata: dict | None = None, user_id: str | None = None, **kwargs) -> dict:
+        user_id = user_id or self._user_id
+
         udata = udata or {}
-        self._check_and_create_user(user)
-        self._data[user]['data'].update({**udata, **kwargs})
-        return self._data[user]['data']
+        self._check_and_create_user(user_id)
+        self._data[user_id]['data'].update({**udata, **kwargs})
+        return self._data[user_id]['data']
 
-    def reset_state(self, user: str, with_data: bool = True):
-        self.set_state(user, None)
+    def reset_state(self, with_data: bool = True, user_id: str | None = None):
+        user_id = user_id or self._user_id
+
+        self.set_state(user_id, None)
         if with_data:
-            self.reset_data(user)
+            self.reset_data(user_id)
 
-    def reset_data(self, user: str):
-        self.set_data(user, {})
+    def reset_data(self, user_id: str | None = None):
+        user_id = user_id or self._user_id
 
-    def get_state(self, user: str) -> State | None:
-        return self._data.get(user, {'state': None})['state']
+        self.set_data(user_id, {})
 
-    def get_data(self, user: str) -> dict:
-        return self._data.get(user, {'data': {}})['data']
+    def get_state(self, user_id: str | None = None) -> State | None:
+        user_id = user_id or self._user_id
 
-    def filter(self, state: State):
-        def sub_wrapper(f: typing.Callable):
-            def wrapper(*args, **kwargs):
-                req = args[0]
-                # Тут надо проверять стейт
-                f(*args, **kwargs)
+        return self._data.get(user_id, {'state': None})['state']
 
-        return sub_wrapper
+    @property
+    def state(self):
+        if self.user_id is None:
+            raise ValueError('state as property available only in user contexts')
+        return self.state
+
+    @property
+    def data(self):
+        if self.user_id is None:
+            return self._data
+        return self.get_data()
+
+    def get_data(self, user_id: str | None = None) -> dict:
+        user_id = user_id or self._user_id
+
+        return self._data.get(user_id, {'data': {}})['data']
+
+    # def filter(self, state: State):  # TODO: Сделать фильтр состояний (лучше его перенести в StatesGroupMeta и State, чтобы было красиво)
+    #     def sub_wrapper(f: typing.Callable):
+    #         def wrapper(*args, **kwargs):
+    #             req = args[0]
+    #             # Тут надо проверять стейт
+    #             f(*args, **kwargs)
+    #
+    #     return sub_wrapper
 
 
 class StatesGroupMeta(type):
@@ -92,7 +136,6 @@ class StatesGroupMeta(type):
 
         for name, prop in namespace.items():
             if isinstance(prop, State):
-                prop.machine = fsm
                 prop.name = name
                 prop.group = cls
                 states.append(prop)
@@ -168,3 +211,10 @@ class StatesGroupMeta(type):
 
 class StatesGroup(metaclass=StatesGroupMeta):
     pass
+
+
+def __range(*args, **kwargs):
+    yield from range(*args, **kwargs)
+
+
+print(__range, __range(1)())
