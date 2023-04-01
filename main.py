@@ -5,14 +5,16 @@ import typing
 from flask import Flask, request
 
 from typing_ import AliceUserRequest, TrainingStep
-from typing_.response import RespDataClass, Response, ResponseField, Card, CardType, Card, CardItemsListHeader
-from fsm import StatesGroup, State, FSM
+from typing_.response import RespDataClass, Response, ResponseField  # , Card, CardType, Card, CardItemsListHeader
+from fsm import FSMContext
 from time_parsing import parse_time, iter_go_sleep_time
 from dialogs import warm_up_algorithm, warm_down_algorithm
 
+from states import MainGroup
+
 app = Flask(__name__)
 
-fsm = FSM()
+fsm = FSMContext()
 
 
 def trans_to_dict(dict_: dict | RespDataClass) -> dict:
@@ -26,7 +28,7 @@ def trans_to_dict(dict_: dict | RespDataClass) -> dict:
     return dict_
 
 
-def dict_to_json(dict_: dict, *args, **kwargs):
+def dict_to_json(dict_: dict | Response, *args, **kwargs):
     return json.dumps(trans_to_dict(dict_), *args, **kwargs)
 
 
@@ -259,7 +261,7 @@ def is_positive(command: str) -> bool:
     return 'готов' in command or 'погн' in command or 'поехали' in command or 'давай' in command or 'да' in command or 'выполн' in command or 'запус' in command
 
 
-def start_power_training(user_id: str, resp: dict | Response) -> dict | Response:
+def start_power_training(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Давайте приступим к силовой тренировке. Для нее Вам нужен только боевой настрой. Одно упражнение длится 40 секунд. '
@@ -282,11 +284,11 @@ def start_power_training(user_id: str, resp: dict | Response) -> dict | Response
             }
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Power.start)
+    context.set_state(MainGroup.Sport.Power.start)
     return resp
 
 
-def start_warmup(user_id: str, resp: dict | Response) -> dict | Response:
+def start_warmup(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Во время тренировки Вы можете изучить упражнение подробнее, начать выполнять его или '
@@ -307,11 +309,11 @@ def start_warmup(user_id: str, resp: dict | Response) -> dict | Response:
             }
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.start)
+    context.set_state(MainGroup.Sport.Wrap.WarmUp.start)
     return resp
 
 
-def start_solo_cardio(user_id: str, resp: dict | Response) -> dict | Response:
+def start_solo_cardio(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Давайте приступим к кардиотренировке. Для нее вам не понадобится дополнительный инвентарь,'
@@ -335,11 +337,11 @@ def start_solo_cardio(user_id: str, resp: dict | Response) -> dict | Response:
 
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.start)
+    context.set_state(MainGroup.Sport.Cardio.Solo.start)
     return resp
 
 
-def start_rope_cardio(user_id: str, resp: dict | Response) -> dict | Response:
+def start_rope_cardio(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Давайте приступим к кардиотренировке. Для нее Вам понадобится только скакалка и хорошее настроение.'
@@ -362,11 +364,12 @@ def start_rope_cardio(user_id: str, resp: dict | Response) -> dict | Response:
 
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.start)
+    context.set_state(MainGroup.Sport.Cardio.Rope.start)
     return resp
 
 
-def end_warmup(user_id: str, resp: dict | Response) -> dict | Response:  # Возврат к упражнению которое было до начала разминки
+def end_warmup(context: FSMContext,
+               resp: dict | Response) -> dict | Response:  # Возврат к упражнению которое было до начала разминки
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, поздравляю вас с победой! Что выберите дальше: скажите "повторить разминку", чтобы потренироваться ещё раз или "к тренировке", чтобы начать основную тренировку?',
@@ -387,24 +390,24 @@ def end_warmup(user_id: str, resp: dict | Response) -> dict | Response:  # Во�
         }
     })
 
-    fsm.update_data(user_id, step=0)
-    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.end)
+    context.update_data(step=0)
+    context.set_state(MainGroup.Sport.Wrap.WarmUp.end)
 
     return resp
 
 
-def cancel_warmup(user_id: str, resp: dict | Response, data: dict | None = None) -> dict | Response:
+def cancel_warmup(context: FSMContext, resp: dict | Response, data: dict | None = None) -> dict | Response:
     if data is None:
-        data = fsm.get_data(user_id)
+        data = context.get_data()
 
-    return data['callback'](user_id, resp)
+    return data['callback'](resp)
 
 
 def any_from(l: typing.Sequence[str], *, in_: str):
     return any((i in in_ for i in l))
 
 
-def start_session(user_id: str, resp: dict | Response, add_help_button: bool = True) -> dict | Response:
+def start_session(context: FSMContext, resp: dict | Response, add_help_button: bool = True) -> dict | Response:
     # Действия при новой сессии
     answer_options = ['Привет🖐!  Всегда хотели окунуться в мир здорового образа жизни? '
                       'Поздравляю, Вы сделали правильный выбор.'
@@ -437,11 +440,11 @@ def start_session(user_id: str, resp: dict | Response, add_help_button: bool = T
             'title': 'Помощь',
             'hide': False
         })
-    fsm.reset_state(user_id, with_data=True)
+    context.reset_state(with_data=True)
     return resp
 
 
-def start_warmdown(user_id: str, resp: dict | Response) -> dict | Response:
+def start_warmdown(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Во время тренировки Вы можете изучить упражнение подробнее, '
@@ -462,11 +465,12 @@ def start_warmdown(user_id: str, resp: dict | Response) -> dict | Response:
             }
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.start)
+    context.set_state(MainGroup.Sport.Wrap.WarmDown.start)
     return resp
 
 
-def end_warmdown(user_id: str, resp: dict | Response) -> dict | Response:  # Возврат к упражнению которое было до начала разминки
+def end_warmdown(context: FSMContext,
+                 resp: dict | Response) -> dict | Response:  # Возврат к упражнению которое было до начала разминки
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, поздравляю вас с  очередной победой! Что выберите дальше: '
@@ -488,20 +492,20 @@ def end_warmdown(user_id: str, resp: dict | Response) -> dict | Response:  # В�
         }
     })
 
-    fsm.update_data(user_id, step=0)
-    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.end)
+    context.update_data(step=0)
+    context.set_state(MainGroup.Sport.Wrap.WarmDown.end)
 
     return resp
 
 
-def cancel_warmdown(user_id: str, resp: dict | Response, data: dict | None = None) -> dict | Response:
+def cancel_warmdown(context: FSMContext, resp: dict | Response, data: dict | None = None) -> dict | Response:
     if data is None:
-        data = fsm.get_data(user_id)
+        data = context.get_data()
 
-    return data['callback'](user_id, resp)
+    return data['callback'](context.user_id, resp)
 
 
-def finish_solo_cardio(user_id: str, resp: dict | Response) -> dict | Response:
+def finish_solo_cardio(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
@@ -522,11 +526,11 @@ def finish_solo_cardio(user_id: str, resp: dict | Response) -> dict | Response:
 
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.final)
+    context.set_state(MainGroup.Sport.Cardio.Solo.final)
     return resp
 
 
-def finish_rope_cardio(user_id: str, resp: dict | Response) -> dict | Response:
+def finish_rope_cardio(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
@@ -547,11 +551,11 @@ def finish_rope_cardio(user_id: str, resp: dict | Response) -> dict | Response:
 
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.final)
+    context.set_state(MainGroup.Sport.Cardio.Rope.final)
     return resp
 
 
-def finish_power_training(user_id: str, resp: dict | Response) -> dict | Response:
+def finish_power_training(context: FSMContext, resp: dict | Response) -> dict | Response:
     resp.update({
         'response': {
             'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
@@ -572,12 +576,12 @@ def finish_power_training(user_id: str, resp: dict | Response) -> dict | Respons
 
         }
     })
-    fsm.set_state(user_id, MainGroup.Sport.Power.final)
+    context.set_state(MainGroup.Sport.Power.final)
     return resp
 
 
 @app.route('/alice', methods=['POST'])
-def _main():  # event, context
+def _main():
     tracks_fourteen = [
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/bd88f1cd-426b-430f-adc4-e66d4f19549d.opus">',
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/047165c7-4a08-4426-ade7-ce961e87aad1.opus">',
@@ -587,27 +591,32 @@ def _main():  # event, context
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/cce10ad9-c6be-46ec-a0e0-1897db4841e3.opus">',
         '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/471315ec-dbf4-4821-ac6d-9171af52f3f9.opus">']
     req = AliceUserRequest(request.data.decode())
+
     motivations = ['Удачи! #в данный момент проигрывается трек#', 'Так держать! #в данный момент проигрывается трек#',
                    'Вы справитесь! #в данный момент проигрывается трек#']
+
     command = req.request.command
     user_id = req.session.user.user_id
-    state = fsm.get_state(user_id)
+
+    context = fsm.build_context(user_id)
+
+    state = context.get_state(user_id)
 
     resp = Response(version=req.version, session=req.session)
 
     print(f'{state=}')
-    print(f'data={fsm.get_data(user_id)}')
+    print(f'data={context.get_data(user_id)}')
     if req.session.new:
-        resp = start_session(user_id, resp)
+        resp = start_session(context, resp)
         return dict_to_json(resp, ensure_ascii=False, indent=2)
 
     print(command)
     if any_from(('помо', 'help'), in_=command):
         print(ResponseField(text=state.help_message if state is not None else MainGroup.help_message,
-                            buttons=fsm.get_data(user_id).get('buttons', None)))
+                            buttons=context.get_data(user_id).get('buttons', None)))
         # resp = start_session(user_id, resp, add_help_button=False)
         resp.update(dict(response=dict(text=state.help_message if state is not None else MainGroup.help_message,
-                                       buttons=fsm.get_data(user_id).get('buttons', []))))
+                                       buttons=context.get_data(user_id).get('buttons', []))))
         #                                    'Не беспокойтесь я подскажу Вам, что делать в зависимости от того, где Вы сейчас находитесь. Если Вы сейчас ...\n'
         #                                  'На этапе приветствия, то Вам доступны следующие команды: "Я готов" (чтобы перейти к выбору тренировки или расчёту информации)'
         #                                  ' и "Что ты умеешь?" (для уточнения моего функционала);\n'
@@ -643,7 +652,7 @@ def _main():  # event, context
             dict(title='Поехали!', hide=True),
             dict(title='Помощь', hide=False)
         ])))
-        fsm.set_state(user_id, MainGroup.state_1)
+        context.set_state(user_id, MainGroup.state_1)
         return dict_to_json(resp, ensure_ascii=False, indent=2)
 
     elif (state in (MainGroup.state_1, None)) and (
@@ -701,8 +710,8 @@ def _main():  # event, context
                 )
             )
         )
-        fsm.reset_state(user_id, with_data=True)
-        fsm.set_state(user_id, MainGroup.Sport.state_home)
+        context.reset_state(user_id, with_data=True)
+        context.set_state(user_id, MainGroup.Sport.state_home)
 
     elif state in MainGroup:
         if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
@@ -732,7 +741,7 @@ def _main():  # event, context
                     )
                 )
             )
-            fsm.set_state(user_id, MainGroup.Sport.state_home)
+            context.set_state(user_id, MainGroup.Sport.state_home)
         elif state == MainGroup.Sport.state_home:
             if 'вод' in command or 'баланс' in command:
                 answer_options = [
@@ -747,7 +756,7 @@ def _main():  # event, context
                         'text': f'{random.choice(answer_options)}'
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Water.state_1)
+                context.set_state(user_id, MainGroup.Water.state_1)
 
             elif 'сон' in command or 'сна' in command or 'фаз' in command:
                 resp.update({
@@ -757,7 +766,7 @@ def _main():  # event, context
                                 ' а я Вам подскажу идеальное время, когда необходимо будет лечь спать, чтобы встать бодрым.'
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Dream.state_1)
+                context.set_state(user_id, MainGroup.Dream.state_1)
                 print('SON?')
 
             elif 'сил' in command:
@@ -783,8 +792,8 @@ def _main():  # event, context
 
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
-                fsm.update_data(user_id, callback=start_power_training)
+                context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                context.update_data(user_id, callback=start_power_training)
 
             elif 'кард' in command:
                 answer_options = [
@@ -810,7 +819,7 @@ def _main():  # event, context
 
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Sport.Cardio.state_1)
+                context.set_state(user_id, MainGroup.Sport.Cardio.state_1)
 
             elif 'заряд' in command:
                 answer_options = [
@@ -836,7 +845,7 @@ def _main():  # event, context
 
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Sport.Zaradka.state_1)
+                context.set_state(user_id, MainGroup.Sport.Zaradka.state_1)
 
             elif 'вес' in command:
                 resp.update({
@@ -844,7 +853,7 @@ def _main():  # event, context
                         'text': f'# К сожалению, наши программисты не успели доделать эту часть навыка😣\nНо не переживайте, совсем скоро эта функция станет доступна!\nСкажите "поехали" чтобы вернуться в главное меню. #'
                     }
                 })
-                fsm.set_state(user_id, MainGroup.state_1)
+                context.set_state(user_id, MainGroup.state_1)
 
             else:
                 resp.update({
@@ -872,7 +881,7 @@ def _main():  # event, context
                         }
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Sport.state_home)
+                context.set_state(user_id, MainGroup.Sport.state_home)
         elif state in MainGroup.Dream:
             if state == MainGroup.Dream.state_1:
                 try:
@@ -907,14 +916,14 @@ def _main():  # event, context
                             }
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Dream.end)
+                    context.set_state(user_id, MainGroup.Dream.end)
             elif state == MainGroup.Dream.end:
                 resp.update({
                     'response': {
                         'text': 'Во сколько вы хотите проснуться?'
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Dream.state_1)
+                context.set_state(user_id, MainGroup.Dream.state_1)
         elif state in MainGroup.Water:
             if state == MainGroup.Water.state_1:
                 st = command.replace(',', '.')
@@ -944,7 +953,7 @@ def _main():  # event, context
                                 }
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Water.end)
+                        context.set_state(user_id, MainGroup.Water.end)
                         break
                     else:
                         resp.update({
@@ -959,7 +968,7 @@ def _main():  # event, context
                         'text': 'Скажите свой вес в килограммах'
                     }
                 })
-                fsm.set_state(user_id, MainGroup.Water.state_1)
+                context.set_state(user_id, MainGroup.Water.state_1)
 
         elif state in MainGroup.Sport.Cardio:
             if state == MainGroup.Sport.Cardio.state_1:
@@ -983,11 +992,11 @@ def _main():  # event, context
                     }
                 })
                 if 'клас' in command or 'станд' in command or 'перв' in command or 'обычн' in command or 'без' in command:
-                    fsm.update_data(user_id, callback=start_solo_cardio)
-                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                    context.update_data(user_id, callback=start_solo_cardio)
+                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
                 elif 'скак' in command or 'со' in command or 'втор' in command:
-                    fsm.update_data(user_id, callback=start_rope_cardio)
-                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                    context.update_data(user_id, callback=start_rope_cardio)
+                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
                 else:
                     resp.update({
                         'response': {
@@ -1042,7 +1051,7 @@ def _main():  # event, context
                                 }
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -1072,7 +1081,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1)
                     else:
                         resp.update({
                             'response': {
@@ -1113,7 +1122,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1127,7 +1136,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task1_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task1_do, MainGroup.Sport.Cardio.Solo.task1_help,
                             MainGroup.Sport.Cardio.Solo.task1) and (
@@ -1140,8 +1149,7 @@ def _main():  # event, context
                                     "image_id": '1540737/6cd05842046b48c768bc',
                                     "title": 'Упражнение 2',
                                     "description": 'Энергичные прыжки с поднятием рук.'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1159,7 +1167,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2)
                     else:
                         resp.update({
                             'response': {
@@ -1204,7 +1212,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1218,7 +1226,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task2_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task2_do, MainGroup.Sport.Cardio.Solo.task2_help,
                             MainGroup.Sport.Cardio.Solo.task2) and (
@@ -1231,8 +1239,7 @@ def _main():  # event, context
                                     "image_id": '1030494/94bcca53f06da5b24f90',
                                     "title": 'Упражнение 3',
                                     "description": 'Бег в планке'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1250,7 +1257,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3)
                     else:
                         resp.update({
                             'response': {
@@ -1294,7 +1301,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1308,7 +1315,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task3_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task3_do, MainGroup.Sport.Cardio.Solo.task3_help,
                             MainGroup.Sport.Cardio.Solo.task3) and (
@@ -1321,8 +1328,7 @@ def _main():  # event, context
                                     "image_id": '213044/bf1b200f757b3aae40df',
                                     "title": 'Упражнение 4',
                                     "description": 'Прыжки в планке'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1340,7 +1346,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4)
                     else:
                         resp.update({
                             'response': {
@@ -1384,7 +1390,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1398,7 +1404,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task4_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task4_do, MainGroup.Sport.Cardio.Solo.task4_help,
                             MainGroup.Sport.Cardio.Solo.task4) and (
@@ -1430,7 +1436,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5)
                     else:
                         resp.update({
                             'response': {
@@ -1474,7 +1480,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1488,7 +1494,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task5_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task5_do, MainGroup.Sport.Cardio.Solo.task5_help,
                             MainGroup.Sport.Cardio.Solo.task5) and (
@@ -1501,8 +1507,7 @@ def _main():  # event, context
                                     "image_id": '997614/538aaaa7db557abbda82',
                                     "title": 'Упражнение 6',
                                     "description": 'упражнение бёрпи.'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1520,12 +1525,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1564,7 +1568,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1578,7 +1582,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task6_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task6_do, MainGroup.Sport.Cardio.Solo.task6_help,
                             MainGroup.Sport.Cardio.Solo.task6) and (
@@ -1591,8 +1595,7 @@ def _main():  # event, context
                                     "image_id": '997614/1ef3a8d9152694fe40e3',
                                     "title": 'Упражнение 7',
                                     "description": 'Велосипед'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1610,12 +1613,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1654,7 +1656,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1668,7 +1670,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task7_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task7_do, MainGroup.Sport.Cardio.Solo.task7_help,
                             MainGroup.Sport.Cardio.Solo.task7) and (
@@ -1681,8 +1683,7 @@ def _main():  # event, context
                                     "image_id": '937455/184ba7336b4638e1442e',
                                     "title": 'Упражнение 8',
                                     "description": 'Отжимания'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1700,12 +1701,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1744,7 +1744,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1758,7 +1758,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task8_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task8_do, MainGroup.Sport.Cardio.Solo.task8_help,
                             MainGroup.Sport.Cardio.Solo.task8) and (
@@ -1789,12 +1789,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -1835,7 +1834,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -1849,7 +1848,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Solo.task9_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Solo.task9_do, MainGroup.Sport.Cardio.Solo.task9_help,
                             MainGroup.Sport.Cardio.Solo.task9) and (
@@ -1876,8 +1875,8 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                        fsm.update_data(user_id, callback=finish_solo_cardio)
+                        context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
+                        context.update_data(user_id, callback=finish_solo_cardio)
 
                     else:
                         resp.update({
@@ -1904,8 +1903,8 @@ def _main():  # event, context
 
             elif state in MainGroup.Sport.Cardio.Rope:
                 if state == MainGroup.Sport.Cardio.Rope.state_1:
-                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
-                    fsm.update_data(user_id, callback=start_rope_cardio)
+                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.qw)
+                    context.update_data(user_id, callback=start_rope_cardio)
                 elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
                     if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
                         print(3)
@@ -1934,7 +1933,7 @@ def _main():  # event, context
                                 }
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -1963,12 +1962,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?'
-                                ,
+                                'text': 'Извините, не поняла вас. Пожалуйста, уточните: Мы начинаем выполнение тренировки, или возвращаемся в меню?',
                                 'buttons': [
                                     {
                                         'title': 'Вернуться в меню',
@@ -2003,7 +2001,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2017,7 +2015,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task1_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task1_do, MainGroup.Sport.Cardio.Rope.task1_help,
                             MainGroup.Sport.Cardio.Rope.task1) and (
@@ -2030,8 +2028,7 @@ def _main():  # event, context
                                     "image_id": '997614/2fb79577b25dcbe1b8e5',
                                     "title": 'Упражнение 2',
                                     "description": 'Отжимания'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2049,12 +2046,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2092,7 +2088,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2106,7 +2102,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task2_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task2_do, MainGroup.Sport.Cardio.Rope.task2_help,
                             MainGroup.Sport.Cardio.Rope.task2) and (
@@ -2119,8 +2115,7 @@ def _main():  # event, context
                                     "image_id": '937455/0f3a8ac10be8dcbc3655',
                                     "title": 'Упражнение 3',
                                     "description": 'Приседания с выпрыгиванием'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2138,12 +2133,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2181,7 +2175,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2195,7 +2189,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task3_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task3_do, MainGroup.Sport.Cardio.Rope.task3_help,
                             MainGroup.Sport.Cardio.Rope.task3) and (
@@ -2208,8 +2202,7 @@ def _main():  # event, context
                                     "image_id": '1540737/b7da038fa8ed18797346',
                                     "title": 'Упражнение 4',
                                     "description": 'Прыжки на скакалке'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2227,12 +2220,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2270,7 +2262,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2284,7 +2276,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task4_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task4_do, MainGroup.Sport.Cardio.Rope.task4_help,
                             MainGroup.Sport.Cardio.Rope.task4) and (
@@ -2297,8 +2289,7 @@ def _main():  # event, context
                                     "image_id": '1533899/2c5cbca42380f3ebf856',
                                     "title": 'Упражнение 5',
                                     "description": 'Упражнение бёрпи'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2316,7 +2307,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5)
                     else:
                         resp.update({
                             'response': {
@@ -2359,7 +2350,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_help)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2373,7 +2364,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_do)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.task5_do)
                     elif state in (
                             MainGroup.Sport.Cardio.Rope.task5_do, MainGroup.Sport.Cardio.Rope.task5_help,
                             MainGroup.Sport.Cardio.Rope.task5) and (
@@ -2400,14 +2391,13 @@ def _main():  # event, context
                             }
                         })
 
-                        fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                        fsm.update_data(user_id, callback=finish_rope_cardio)
-                        fsm.set_state(user_id, MainGroup.Sport.Cardio.Rope.end)
+                        context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
+                        context.update_data(user_id, callback=finish_rope_cardio)
+                        context.set_state(user_id, MainGroup.Sport.Cardio.Rope.end)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2426,8 +2416,8 @@ def _main():  # event, context
                             }
                         })
                 elif state == MainGroup.Sport.Cardio.Rope.end:
-                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                    fsm.update_data(user_id, callback=finish_rope_cardio)
+                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
+                    context.update_data(user_id, callback=finish_rope_cardio)
 
         elif state in MainGroup.Sport.Zaradka:
             if state == MainGroup.Sport.Zaradka.state_1:
@@ -2453,7 +2443,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.start)
+                    context.set_state(user_id, MainGroup.Sport.Zaradka.Five.start)
                 elif 'дес' in command or '10' in command:
                     resp.update({
                         'response': {
@@ -2476,12 +2466,11 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.start)
+                    context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.start)
                 else:
                     resp.update({
                         'response': {
-                            'text': 'Уточните, пожалуйста, Вы собираетесь выполнить пятиминутную или десятиминутную тренировку?'
-                            ,
+                            'text': 'Уточните, пожалуйста, Вы собираетесь выполнить пятиминутную или десятиминутную тренировку?',
                             'buttons': [
                                 {
                                     'title': 'пятиминутная',
@@ -2524,7 +2513,7 @@ def _main():  # event, context
                                 }
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -2553,7 +2542,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1)
                     else:
                         resp.update(
                             dict(
@@ -2587,7 +2576,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2601,7 +2590,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task1_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task1_do, MainGroup.Sport.Zaradka.Ten.task1_help,
                             MainGroup.Sport.Zaradka.Ten.task1) and (
@@ -2614,8 +2603,7 @@ def _main():  # event, context
                                     "image_id": '997614/580e288f2c7678c15fc1',
                                     "title": 'Упражнение 2',
                                     "description": 'Наклоны головы'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2633,12 +2621,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2676,7 +2663,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2690,7 +2677,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task2_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task2_do, MainGroup.Sport.Zaradka.Ten.task2_help,
                             MainGroup.Sport.Zaradka.Ten.task2) and (
@@ -2703,8 +2690,7 @@ def _main():  # event, context
                                     "image_id": '213044/1e95ab71033fd2f5a670',
                                     "title": 'Упражнение 3',
                                     "description": 'круговые вращения кистей'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2722,12 +2708,11 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3)
                     else:
                         resp.update({
                             'response': {
-                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                                ,
+                                'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2765,7 +2750,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2779,7 +2764,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task3_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task3_do, MainGroup.Sport.Zaradka.Ten.task3_help,
                             MainGroup.Sport.Zaradka.Ten.task3) and (
@@ -2792,8 +2777,7 @@ def _main():  # event, context
                                     "image_id": '965417/1f515b785dbec2f0ce30',
                                     "title": 'Упражнение 4',
                                     "description": 'Наклоны корпуса'
-                                }
-                                ,
+                                },
                                 'buttons': [
                                     {
                                         'title': 'Выполнить🔥',
@@ -2811,7 +2795,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4)
                     else:
                         resp.update({
                             'response': {
@@ -2854,7 +2838,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2868,7 +2852,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task4_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task4_do, MainGroup.Sport.Zaradka.Ten.task4_help,
                             MainGroup.Sport.Zaradka.Ten.task4) and (
@@ -2900,7 +2884,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5)
                     else:
                         resp.update({
                             'response': {
@@ -2943,7 +2927,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -2957,7 +2941,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task5_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task5_do, MainGroup.Sport.Zaradka.Ten.task5_help,
                             MainGroup.Sport.Zaradka.Ten.task5) and (
@@ -2989,7 +2973,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6)
                     else:
                         resp.update({
                             'response': {
@@ -3032,7 +3016,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3046,7 +3030,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task6_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task6_do, MainGroup.Sport.Zaradka.Ten.task6_help,
                             MainGroup.Sport.Zaradka.Ten.task6) and (
@@ -3078,7 +3062,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7)
                     else:
                         resp.update({
                             'response': {
@@ -3121,7 +3105,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3135,7 +3119,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task7_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task7_do, MainGroup.Sport.Zaradka.Ten.task7_help,
                             MainGroup.Sport.Zaradka.Ten.task7) and (
@@ -3167,7 +3151,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8)
                     else:
                         resp.update({
                             'response': {
@@ -3210,7 +3194,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3224,7 +3208,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task8_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task8_do, MainGroup.Sport.Zaradka.Ten.task8_help,
                             MainGroup.Sport.Zaradka.Ten.task8) and (
@@ -3256,7 +3240,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9)
                     else:
                         resp.update({
                             'response': {
@@ -3299,7 +3283,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3313,7 +3297,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task9_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task9_do, MainGroup.Sport.Zaradka.Ten.task9_help,
                             MainGroup.Sport.Zaradka.Ten.task9) and (
@@ -3345,7 +3329,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10)
                     else:
                         resp.update({
                             'response': {
@@ -3389,7 +3373,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3403,7 +3387,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.task10_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Ten.task10_do, MainGroup.Sport.Zaradka.Ten.task10_help,
                             MainGroup.Sport.Zaradka.Ten.task10) and (
@@ -3428,7 +3412,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Ten.final)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Ten.final)
                     else:
                         resp.update({
                             'response': {
@@ -3481,7 +3465,7 @@ def _main():  # event, context
                                 }
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.state_home)
+                        context.set_state(user_id, MainGroup.Sport.state_home)
                     elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                         resp.update({
                             'response': {
@@ -3510,7 +3494,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1)
                     else:
                         resp.update({
                             'response': {
@@ -3549,7 +3533,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3563,7 +3547,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task1_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task1_do, MainGroup.Sport.Zaradka.Five.task1_help,
                             MainGroup.Sport.Zaradka.Five.task1) and (
@@ -3595,7 +3579,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2)
                     else:
                         resp.update({
                             'response': {
@@ -3638,7 +3622,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3652,7 +3636,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task2_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task2_do, MainGroup.Sport.Zaradka.Five.task2_help,
                             MainGroup.Sport.Zaradka.Five.task2) and (
@@ -3684,7 +3668,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3)
                     else:
                         resp.update({
                             'response': {
@@ -3727,7 +3711,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3741,7 +3725,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task3_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task3_do, MainGroup.Sport.Zaradka.Five.task3_help,
                             MainGroup.Sport.Zaradka.Five.task3) and (
@@ -3773,7 +3757,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4)
                     else:
                         resp.update({
                             'response': {
@@ -3816,7 +3800,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3830,7 +3814,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task4_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task4_do, MainGroup.Sport.Zaradka.Five.task4_help,
                             MainGroup.Sport.Zaradka.Five.task4) and (
@@ -3862,7 +3846,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5)
                     else:
                         resp.update({
                             'response': {
@@ -3905,7 +3889,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_help)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_help)
                     elif 'выполн' in command or 'дел' in command:
                         resp.update({
                             'response': {
@@ -3919,7 +3903,7 @@ def _main():  # event, context
                                 ]
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_do)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.task5_do)
                     elif state in (
                             MainGroup.Sport.Zaradka.Five.task5_do, MainGroup.Sport.Zaradka.Five.task5_help,
                             MainGroup.Sport.Zaradka.Five.task5) and (
@@ -3944,7 +3928,7 @@ def _main():  # event, context
 
                             }
                         })
-                        fsm.set_state(user_id, MainGroup.Sport.Zaradka.Five.final)
+                        context.set_state(user_id, MainGroup.Sport.Zaradka.Five.final)
                     else:
                         resp.update({
                             'response': {
@@ -3997,7 +3981,7 @@ def _main():  # event, context
                             }
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.state_home)
+                    context.set_state(user_id, MainGroup.Sport.state_home)
                 elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                     resp.update({
                         'response': {
@@ -4026,7 +4010,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task1)
+                    context.set_state(user_id, MainGroup.Sport.Power.task1)
                 else:
                     resp.update({
                         'response': {
@@ -4065,7 +4049,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task1_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task1_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4079,7 +4063,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task1_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task1_do)
                 elif state in (
                         MainGroup.Sport.Power.task1_do, MainGroup.Sport.Power.task1_help,
                         MainGroup.Sport.Power.task1) and (
@@ -4111,7 +4095,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task2)
+                    context.set_state(user_id, MainGroup.Sport.Power.task2)
                 else:
                     resp.update({
                         'response': {
@@ -4155,7 +4139,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task2_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task2_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4169,7 +4153,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task2_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task2_do)
                 elif state in (
                         MainGroup.Sport.Power.task2_do, MainGroup.Sport.Power.task2_help,
                         MainGroup.Sport.Power.task2) and (
@@ -4201,7 +4185,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task3)
+                    context.set_state(user_id, MainGroup.Sport.Power.task3)
                 else:
                     resp.update({
                         'response': {
@@ -4245,7 +4229,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task3_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task3_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4259,7 +4243,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task3_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task3_do)
                 elif state in (
                         MainGroup.Sport.Power.task3_do, MainGroup.Sport.Power.task3_help,
                         MainGroup.Sport.Power.task3) and (
@@ -4291,7 +4275,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task4)
+                    context.set_state(user_id, MainGroup.Sport.Power.task4)
                 else:
                     resp.update({
                         'response': {
@@ -4335,7 +4319,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task4_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task4_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4349,7 +4333,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task4_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task4_do)
                 elif state in (
                         MainGroup.Sport.Power.task4_do, MainGroup.Sport.Power.task4_help,
                         MainGroup.Sport.Power.task4) and (
@@ -4381,7 +4365,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task5)
+                    context.set_state(user_id, MainGroup.Sport.Power.task5)
                 else:
                     resp.update({
                         'response': {
@@ -4424,7 +4408,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task5_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task5_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4438,7 +4422,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task5_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task5_do)
                 elif state in (
                         MainGroup.Sport.Power.task5_do, MainGroup.Sport.Power.task5_help,
                         MainGroup.Sport.Power.task5) and (
@@ -4470,7 +4454,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task6)
+                    context.set_state(user_id, MainGroup.Sport.Power.task6)
                 else:
                     resp.update({
                         'response': {
@@ -4514,7 +4498,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task6_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task6_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4528,7 +4512,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task6_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task6_do)
                 elif state in (
                         MainGroup.Sport.Power.task6_do, MainGroup.Sport.Power.task6_help,
                         MainGroup.Sport.Power.task6) and (
@@ -4560,7 +4544,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task7)
+                    context.set_state(user_id, MainGroup.Sport.Power.task7)
                 else:
                     resp.update({
                         'response': {
@@ -4603,7 +4587,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task7_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task7_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4617,7 +4601,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task7_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task7_do)
                 elif state in (
                         MainGroup.Sport.Power.task7_do, MainGroup.Sport.Power.task7_help,
                         MainGroup.Sport.Power.task7) and (
@@ -4649,7 +4633,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task8)
+                    context.set_state(user_id, MainGroup.Sport.Power.task8)
                 else:
                     resp.update({
                         'response': {
@@ -4692,7 +4676,7 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task8_help)
+                    context.set_state(user_id, MainGroup.Sport.Power.task8_help)
                 elif 'выполн' in command or 'дел' in command:
                     resp.update({
                         'response': {
@@ -4706,7 +4690,7 @@ def _main():  # event, context
                             ]
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Power.task8_do)
+                    context.set_state(user_id, MainGroup.Sport.Power.task8_do)
                 elif (state in (
                         MainGroup.Sport.Power.task8_do, MainGroup.Sport.Power.task8_help,
                         MainGroup.Sport.Power.task8) and (
@@ -4734,13 +4718,12 @@ def _main():  # event, context
 
                         }
                     })
-                    fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
-                    fsm.update_data(user_id, callback=finish_power_training)
+                    context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.qw)
+                    context.update_data(user_id, callback=finish_power_training)
                 else:
                     resp.update({
                         'response': {
-                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                            ,
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
                             'buttons': [
                                 {
                                     'title': 'Выполнить🔥',
@@ -4782,21 +4765,20 @@ def _main():  # event, context
                     }
                 })
 
-                fsm.set_state(user_id, MainGroup.Sport.Power.end)
+                context.set_state(user_id, MainGroup.Sport.Power.end)
 
         elif state in MainGroup.Sport.Wrap.WarmUp:
-            step: TrainingStep = warm_up_algorithm[fsm.get_data(user_id).get('step', 0)]
+            step: TrainingStep = warm_up_algorithm[context.get_data(user_id).get('step', 0)]
 
             if state == MainGroup.Sport.Wrap.WarmUp.qw:
                 if 'нет' in command or 'не ' in command:
-                    resp = cancel_warmup(user_id, resp)
+                    resp = cancel_warmup(context, resp)
                 elif 'да' in command or 'конечн' in command:
-                    resp = start_warmup(user_id, resp)
+                    resp = start_warmup(context, resp)
                 else:
                     resp.update({
                         'response': {
-                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить разминку?'
-                            ,
+                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить разминку?',
                             'buttons': [
                                 {
                                     'title': 'Да',
@@ -4812,9 +4794,9 @@ def _main():  # event, context
                     })
 
             elif state == MainGroup.Sport.Wrap.WarmUp.start and is_positive(command):
-                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.task)
+                context.set_state(user_id, MainGroup.Sport.Wrap.WarmUp.task)
                 step: int = 0
-                fsm.update_data(user_id, step=step)
+                context.update_data(user_id, step=step)
 
                 step: TrainingStep = warm_up_algorithm[step]
 
@@ -4828,43 +4810,42 @@ def _main():  # event, context
 
             elif state == MainGroup.Sport.Wrap.WarmUp.end:
                 if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
-                    resp = start_warmup(user_id, resp)
+                    resp = start_warmup(context, resp)
                 else:
                     print('cancel')
-                    cancel_warmup(user_id, resp)
+                    cancel_warmup(context, resp)
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmUp.task:
-                    step = fsm.get_data(user_id).get('step', 0) + 1
-                    fsm.update_data(user_id, step=step)
+                    step = context.get_data(user_id).get('step', 0) + 1
+                    context.update_data(user_id, step=step)
                     print(f'{step=}')
 
                     try:
                         step: TrainingStep = warm_up_algorithm[step]
                     except IndexError:
-                        end_warmup(user_id, resp)
+                        end_warmup(context, resp)
                     else:
                         resp.update(step.generate_choice_resp())
 
                 elif state == MainGroup.Sport.Wrap.WarmUp.start:
-                    cancel_warmup(user_id, resp)
+                    cancel_warmup(context, resp)
 
             else:
-                end_warmup(user_id, resp)
+                end_warmup(context, resp)
 
         elif state in MainGroup.Sport.Wrap.WarmDown:
-            step: TrainingStep = warm_down_algorithm[fsm.get_data(user_id).get('step', 0)]
+            step: TrainingStep = warm_down_algorithm[context.get_data(user_id).get('step', 0)]
 
             if state == MainGroup.Sport.Wrap.WarmDown.qw:
                 if 'нет' in command or 'не ' in command:
-                    resp = cancel_warmdown(user_id, resp)
+                    resp = cancel_warmdown(context, resp)
                 elif 'да' in command or 'конечн' in command:
-                    resp = start_warmdown(user_id, resp)
+                    resp = start_warmdown(context, resp)
                 else:
                     resp.update({
                         'response': {
-                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить разминку?'
-                            ,
+                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить разминку?',
                             'buttons': [
                                 {
                                     'title': 'Да',
@@ -4880,9 +4861,9 @@ def _main():  # event, context
                     })
 
             elif state == MainGroup.Sport.Wrap.WarmDown.start and is_positive(command):
-                fsm.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.task)
+                context.set_state(user_id, MainGroup.Sport.Wrap.WarmDown.task)
                 step: int = 0
-                fsm.update_data(user_id, step=step)
+                context.update_data(user_id, step=step)
 
                 step: TrainingStep = warm_down_algorithm[step]
 
@@ -4896,29 +4877,29 @@ def _main():  # event, context
 
             elif state == MainGroup.Sport.Wrap.WarmDown.end:
                 if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
-                    resp = start_warmdown(user_id, resp)
+                    resp = start_warmdown(context, resp)
                 else:
                     print('cancel')
-                    cancel_warmdown(user_id, resp)
+                    cancel_warmdown(context, resp)
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmDown.task:
-                    step = fsm.get_data(user_id).get('step', 0) + 1
-                    fsm.update_data(user_id, step=step)
+                    step = context.get_data(user_id).get('step', 0) + 1
+                    context.update_data(user_id, step=step)
                     print(f'{step=}')
 
                     try:
                         step: TrainingStep = warm_down_algorithm[step]
                     except IndexError:
-                        end_warmdown(user_id, resp)
+                        end_warmdown(context, resp)
                     else:
                         resp.update(step.generate_choice_resp())
 
                 elif state == MainGroup.Sport.Wrap.WarmDown.start:
-                    cancel_warmdown(user_id, resp)
+                    cancel_warmdown(context, resp)
 
             else:
-                end_warmdown(user_id, resp)
+                end_warmdown(context, resp)
 
     else:
         resp.update({
@@ -4926,7 +4907,7 @@ def _main():  # event, context
                 'text': f'Произошла ошибка. Скажите "поехали" чтобы вернуться в главное меню.'
             }
         })
-        fsm.set_state(user_id, MainGroup.state_1)
+        context.set_state(user_id, MainGroup.state_1)
 
     if not (response := resp.get('response', {'text': 'Затычечный текст на случай если сообщение не захендлилось'})):
         resp['response'] = response
@@ -4938,10 +4919,14 @@ def _main():  # event, context
             break
     else:
         buttons.append({'title': 'Помощь', 'hide': False})
-    fsm.update_data(user_id, last_buttons=buttons)
+    context.update_data(user_id, last_buttons=buttons)
 
     return dict_to_json(resp, ensure_ascii=False, indent=2)
+
 
 def main():
     app.run('localhost', port=5050, debug=True)
 
+
+if __name__ == '__main__':
+    main()
