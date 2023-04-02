@@ -66,13 +66,13 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             el = el.replace(',', '.')
             if el.replace('.', '').isdecimal() and el.count('.') <= 1:
                 if sex == 'female':
-                    verdict = 49 + 1.7 * (0.394 * float(el) - 60)
+                    verdict = round(49 + 1.7 * (0.394 * float(el) - 60), 1)
                 elif sex == 'male':
-                    verdict = 52 + 1.9 * (0.394 * float(el) - 60)
+                    verdict = round(52 + 1.9 * (0.394 * float(el) - 60), 1)
 
                 answer_options = [
-                    f'Ваш идеальный вес {verdict}см. Что хотите сделать дальше: рассчитать рекомендуемое вес ещё раз или вернуться к основному списку?',
-                    f'Ваше рекомендуемый вес {verdict}см. '
+                    f'Ваш идеальный вес {verdict}кг. Что хотите сделать дальше: рассчитать рекомендуемое вес ещё раз или вернуться к основному списку?',
+                    f'Ваш рекомендуемый вес {verdict}кг. '
                     f'Вы можете сделать расчёт ещё раз или вернуться к основному списку. Что выберите?']
                 resp.update({
                     'response': {
