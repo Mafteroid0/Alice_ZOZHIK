@@ -6,11 +6,12 @@ from fsm import FSMContext
 from states import MainGroup
 
 
-def water_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Response) -> dict | Response:
+def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Response) -> dict | Response:
     state = context.state
     command = req.request.command
 
-    if state == MainGroup.Water.state_1:
+    if state == MainGroup.Weight.state_1:
+        if
 
         # st = command.replace(',', '.')
         # li = st.split(' ')

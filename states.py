@@ -26,10 +26,10 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         end = State()
 
     class Weight(StatesGroup):
-        _help_message = 'Вы можете "Вернуться к основному списку", то есть в меню, или "Рассчитать ещё раз" и ' \
-                        'воспользоваться этой функцией повторно.'
+        _help_message = 'Вы можете ввести свой пол, чтобы продолжить вычисление, или "Вернуться к основному списку", то есть в меню.'
 
         state_1 = State()
+        sex_choose = State()
         end = State()
 
     class Sport(StatesGroup):
