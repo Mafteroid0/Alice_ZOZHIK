@@ -1,6 +1,9 @@
 import itertools
 
+from logging_ import logged
 
+
+@logged
 def any_from(*args, in_: str):
     if not isinstance(args[0], str):
         args = itertools.chain(args[0], args[1:])

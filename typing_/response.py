@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import copy
+import random
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .types_ import KeyToAttr
+from logging_ import logger
 from .request import Session
+
+
+class _DefaultClass:
+    pass
+
+
+_DEFAULT = _DefaultClass
 
 ButtonDict = dict[str, str | bool]
 
@@ -57,6 +65,9 @@ class RespDataClass:
                 value = [i.to_dict() if hasattr(i, 'to_dict') else i for i in value]
 
             res[key] = value
+
+        logger.info(f'{self} transformated to {res}')
+
         return res
 
         # res = {}
@@ -67,6 +78,8 @@ class RespDataClass:
         # return res
 
     def _modifier(self, key: str, value: typing.Any, modifier: DictPairModifier | None = None):
+        if key == 'text' and isinstance(value, typing.Sequence) and not isinstance(value, str):
+            value = random.choice(value)
         if modifier is not None:
             key, value = modifier(key, value, None)
         return key, value
@@ -91,7 +104,10 @@ class RespDataClass:
         try:
             return self.__getattribute__(item)
         except AttributeError:
-            raise KeyError()
+            try:
+                return self.to_dict()[item]
+            except KeyError:
+                raise KeyError(f'{self} has not attribute {item}')
 
     def __setitem__(self, key, value):
         try:
@@ -102,11 +118,14 @@ class RespDataClass:
     def items(self):
         yield from ((key, value) for key, value in self.to_dict().items())
 
-    def get(self, item, default):
+    def get(self, item, default: typing.Any | _DefaultClass = _DEFAULT):
         try:
             return self.__getitem__(item)
-        except KeyError:
-            return default
+        except KeyError as e:
+            if default is not _DEFAULT:
+                return default
+            else:
+                raise e
 
 
 @dataclass
@@ -117,7 +136,7 @@ class Button(RespDataClass):
 
 @dataclass
 class ItemButton(RespDataClass):
-    text: str
+    text: str | typing.Sequence[str]
 
 
 @dataclass
@@ -154,7 +173,7 @@ class AbstractCard(RespDataClass):
 
 @dataclass
 class CardItemsListHeader(RespDataClass):
-    text: str
+    text: str | typing.Sequence[str]
 
 
 @dataclass
@@ -165,8 +184,11 @@ class ItemsListCard(AbstractCard, RespDataClass):
 
     def _modifier(self, key: str, value: str | ItemButton | ItemButtonDict | None,
                   modifier: DictPairModifier | None = None):
-        if key == 'header' and value == self.header and isinstance(value, str):
-            value = {'text': value}
+        if key == 'header' and value == self.header:
+            if isinstance(value, str):
+                value = {'text': value}
+            elif isinstance(value, typing.Sequence):
+                value = {'text': random.choice(value)}
         return super()._modifier(key, value, modifier)
 
 
@@ -183,7 +205,7 @@ class Card(ItemsListCard, BigImageCard):
     # Да, немного хардкод. Да, риск на несоответствие версий объектов.
     # Но как сделать лучше и чтобы при этом пайчарм видел тайпхинты я не придумал (посмотри на мой ник, лол)
     type: CardType
-    header: str | CardItemsListHeader | CardItemsListHeaderDict | None = None
+    header: str | typing.Sequence[str] | CardItemsListHeader | CardItemsListHeaderDict | None = None
     items: list[Item | ItemDict] | None = None
     image_id: str | None = None
     title: str | None = None
@@ -192,7 +214,7 @@ class Card(ItemsListCard, BigImageCard):
 
 @dataclass
 class ResponseField(RespDataClass):
-    text: str
+    text: str | typing.Sequence[str]
     tts: str | None = None
     card: Card | ItemsListCard | BigImageCard | CardDict | None = None
     buttons: list[Button | ButtonDict] = field(default_factory=lambda: copy.deepcopy([Button('Помощь', hide=False)]))
@@ -205,24 +227,24 @@ class Response(RespDataClass):
     response: ResponseField | ResponseFieldDict | None = None
 
 
-r = Response(
-    version='1.0',
-    session='',
-    response=ResponseField(
-        text='Начинаем первое упражнение! Поочерёдное сгибание ног с последующим подниманием коленей к груди',
-        card=Card(
-            type=CardType.ItemsList,
-            header='Комментарий: Если на этот этап мы перешли с разминки, то об этом будет написано Приступаем к выполнению силовой тренировки.',
-            items=[
-                Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
-                Item(title='Выберем другую тренировку', button='Выберем другую тренировку',
-                     image_id='1030494/cc3631c8499cdc8daf8b')
-            ]
-        ),
-    )
-)
-
-print(r.response.card.to_dict())
+# r = Response(
+#     version='1.0',
+#     session='',
+#     response=ResponseField(
+#         text='Начинаем первое упражнение! Поочерёдное сгибание ног с последующим подниманием коленей к груди',
+#         card=Card(
+#             type=CardType.ItemsList,
+#             header='Комментарий: Если на этот этап мы перешли с разминки, то об этом будет написано Приступаем к выполнению силовой тренировки.',
+#             items=[
+#                 Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
+#                 Item(title='Выберем другую тренировку', button='Выберем другую тренировку',
+#                      image_id='1030494/cc3631c8499cdc8daf8b')
+#             ]
+#         ),
+#     )
+# )
+#
+# print(r.response.card.to_dict())
 
 __all__ = tuple(
     map(

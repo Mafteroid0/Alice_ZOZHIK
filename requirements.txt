@@ -3,3 +3,4 @@ requests ~= 2.28.2
 pymorphy3
 pymorphy3-dicts-ru
 pandas ~= 1.5.3
+loguru

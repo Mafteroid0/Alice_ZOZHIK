@@ -3,6 +3,8 @@ from __future__ import annotations
 import dataclasses
 import inspect
 
+from logging_ import logger
+
 
 @dataclasses.dataclass
 class State:
@@ -60,6 +62,9 @@ class FSMContext:
 
         self._check_and_create_user(user_id)
         self._data[user_id]['state'] = state
+
+        logger.info(f'{user_id}`s state = {state}')
+
         return self._data[user_id]['state']
 
     def set_data(self, data: dict | None = None, user_id: str | None = None, **kwargs) -> dict:
@@ -68,6 +73,9 @@ class FSMContext:
         data = data or {}
         self._check_and_create_user(user_id)
         self._data[user_id]['data'] = {**data, **kwargs}
+
+        logger.info(f'{user_id}`s data = {data}')
+
         return self._data[user_id]['data']
 
     def update_data(self, udata: dict | None = None, user_id: str | None = None, **kwargs) -> dict:
@@ -106,7 +114,7 @@ class FSMContext:
     @property
     def data(self):
         if self.user_id is None:
-            return self._data
+            raise ValueError('data as property available only in user contexts')
         return self.get_data()
 
     def get_data(self, user_id: str | None = None) -> dict:

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import collections
-import dataclasses
-import random
 import typing
 from collections import UserDict
 import json
-from typing import Dict, List
+
+from logging_ import logger
 
 
 class KeyToAttr(UserDict):
@@ -18,15 +16,6 @@ class KeyToAttr(UserDict):
                 return super().get(item)
             except KeyError:
                 raise e
-
-    # def __setattr__(self, key, value): # Maybe in future
-    #     try:
-    #         super().__setattr__(key, value)
-    #     except AttributeError as e:
-    #         try:
-    #             self[key] = value
-    #         except KeyError:
-    #             raise e
 
 
 class FriendlyDict(KeyToAttr):
@@ -50,6 +39,7 @@ class FriendlyDict(KeyToAttr):
         return d
 
     def __init__(self, *args, aggressive: bool = False, **kwargs):
+        logger.info(f'trying to parse dict with args {args} and kwargs ' + str({'aggressive': aggressive, **kwargs}))
         if len(args) > 0:
             first_arg = args[0]
             if isinstance(first_arg, str):

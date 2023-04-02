@@ -5,6 +5,8 @@ import typing
 import pymorphy3
 from pandas import to_timedelta
 
+from logging_ import logged
+
 DEBUG = False
 
 morph = pymorphy3.MorphAnalyzer(lang='ru')
@@ -27,11 +29,13 @@ def today() -> datetime.datetime:
 
 
 @functools.cache
+@logged
 def normalize(word: str) -> str:
     return morph.parse(word)[0].normal_form
 
 
 @functools.cache
+@logged
 def is_real_time(text: str) -> bool:
     text = text.replace(',', '.')
     text = text.replace(';', ':')
@@ -61,6 +65,7 @@ class MyTime(datetime.datetime):
         return super().__sub__(other)
 
 
+@logged
 def parse_time(text: str) -> datetime.datetime:
     try:
         text = text.lower()
@@ -173,6 +178,7 @@ def parse_time(text: str) -> datetime.datetime:
 
 
 @functools.cache
+@logged
 def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6) -> typing.Iterator[datetime.datetime]:
     first_go_sleep_time = wake_up_time - datetime.timedelta(minutes=(limit + 1) * 90 + 15)
     print(f'{wake_up_time=}')

@@ -1,14 +1,16 @@
 from __future__ import annotations
 import dataclasses
+import random
+import typing
 
 
 @dataclasses.dataclass
 class TrainingStep:
-    text: str
-    image: str
-    title: str
-    description: str
-    detailed_description: str
+    text: str | typing.Sequence[str]
+    image: str | typing.Sequence[str]
+    title: str | typing.Sequence[str]
+    description: str | typing.Sequence[str]
+    detailed_description: str | typing.Sequence[str]
 
     left: TrainingStep | None = None
     right: TrainingStep | None = None
@@ -17,12 +19,13 @@ class TrainingStep:
         str, dict[str, str] | str | list[dict[str, str | bool] | dict[str, str | bool] | dict[str, str | bool]]]]:
         return {
             'response': {
-                'text': self.text,
+                'text': self.text if isinstance(self.text, str) else random.choice(self.text),
                 'card': {
                     'type': 'BigImage',
-                    "image_id": self.image,
-                    "title": self.title,
-                    "description": self.description
+                    "image_id": self.image if isinstance(self.image, str) else random.choice(self.image),
+                    "title": self.title if isinstance(self.title, str) else random.choice(self.title),
+                    "description": self.description if isinstance(self.description, str) else random.choice(
+                        self.description)
                 },
                 'buttons': [
                     {
