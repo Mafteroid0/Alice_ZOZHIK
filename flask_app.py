@@ -504,7 +504,7 @@ def _main():
 
                     }
                 })
-                context.set_state(MainGroup.state_1)
+                context.set_state(MainGroup.Weight.state_1)
 
             else:
                 resp = show_main_menu(
