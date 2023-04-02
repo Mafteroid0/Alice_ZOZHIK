@@ -12,7 +12,7 @@ from dialogs import warm_up_algorithm, warm_down_algorithm, motivations, tracks_
 
 from tools import any_from
 
-from handlers import dream, water
+from handlers import dream, water, weight
 import handlers.sport.cardio
 
 from states import MainGroup
@@ -518,6 +518,8 @@ def _main():
             dream.dream_handler(context, req, resp)
         elif state in MainGroup.Water:
             water.water_handler(context, req, resp)
+        elif state in MainGroup.Weight:
+            weight.weight_handler(context, req, resp)
 
         elif state in MainGroup.Sport.Cardio:
             handlers.sport.cardio.cardio_handler(context, req, resp)
