@@ -25,6 +25,13 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
         state_1 = State()
         end = State()
 
+    class Weight(StatesGroup):
+        _help_message = 'Вы можете "Вернуться к основному списку", то есть в меню, или "Рассчитать ещё раз" и ' \
+                        'воспользоваться этой функцией повторно.'
+
+        state_1 = State()
+        end = State()
+
     class Sport(StatesGroup):
         qw = State()
 
