@@ -1,3 +1,4 @@
+import itertools
 import json
 import random
 import typing
@@ -130,8 +131,10 @@ def cancel_warmup(context: FSMContext, resp: dict | Response, data: dict | None 
     return data['callback'](context, resp)
 
 
-def any_from(l: typing.Sequence[str], *args, in_: str):
-    return any((i in in_ for i in [*l, *args]))
+def any_from(*args, in_: str):
+    if not isinstance(args[0], str):
+        args = itertools.chain(args[0], args[1:])
+    return any((i in in_ for i in args))
 
 
 def start_session(context: FSMContext, resp: dict | Response, add_help_button: bool = True) -> dict | Response:
@@ -257,6 +260,46 @@ def finish_power_training(context: FSMContext, resp: dict | Response) -> dict | 
     return resp
 
 
+def show_main_menu(context: FSMContext, resp: dict | Response, text: str | None = None,
+                   card_text: str | None = None) -> dict | Response:
+    resp.response = ResponseField(
+        text='Это сообщение никто не увидит :(',
+        tts=text or f'Вы уже в нескольких шагах от здорового образа жизни! Чем сегодня займёмся? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
+        card=Card(
+            type=CardType.ItemsList,
+            header=card_text or 'Чем сегодня займёмся? Выбирайте: #Кнопка "идеальный вес" временно недоступна# ',
+            items=[
+                Item(
+                    title='спортивные тренировки',
+                    button='спортивные тренировки',
+                    description='описание...',
+                    image_id='965417/164c019491e4f4839bfa'
+                ),
+                Item(
+                    title='водный баланс',
+                    button='водный баланс',
+                    description='описание...',
+                    image_id='1540737/dc7c3c075dd3ecc22fc7'
+                ),
+                Item(
+                    title='фазы сна',
+                    button='фазы сна',
+                    description='описание...',
+                    image_id='213044/e81c096eeedd03ef9a2e'
+                ),
+                Item(
+                    title='идеальный вес',
+                    button='идеальный вес',
+                    description='описание..',
+                    image_id='1540737/223b47fade7f44cbedfb'
+                )
+            ]
+        )
+    )
+    MainGroup.Sport.state_home.set(context)
+    return resp
+
+
 @app.route('/alice', methods=['POST'])
 def _main():
     req = AliceUserRequest(request.data.decode())
@@ -270,19 +313,15 @@ def _main():
 
     resp = Response(version=req.version, session=req.session)
 
-    # print(context.get_state())
-
-    # print(f'{command=}')
-
+    print(f'{command=}')
     print(f'{state=}')
-    # print(f'data={context.get_data(user_id)}')
+
     if req.session.new:
         resp = start_session(context, resp)
         return dict_to_json(resp, ensure_ascii=False, indent=2)
 
-    # print(command)
     if any_from(('помо', 'help'), in_=command):
-        # print(ResponseField(text=state.help_message if state is not None else MainGroup.help_message,
+
         #                     buttons=context.get_data(user_id).get('buttons', None)))
         # resp = start_session(user_id, resp, add_help_button=False)
         resp.update(dict(response=dict(text=state.help_message if state is not None else MainGroup.help_message,
@@ -325,7 +364,7 @@ def _main():
         context.set_state(MainGroup.state_1)
         return dict_to_json(resp, ensure_ascii=False, indent=2)
 
-    elif (state in (MainGroup.state_1, None)) and is_positive(command):
+    elif state in (MainGroup.state_1, None):
         # answer_options = ['Вау, Вы уже в нескольких шагах от здорового образа жизни очень рада за Вас 😍. '
         #                   'Для начала выберите, чем хотите заняться или что Вам нужно узнать:'
         #                   ' "Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".',
@@ -333,102 +372,48 @@ def _main():
         #                   'Вы уже совсем-совсем близко к здоровой жизни 😍, горжусь Вами. '
         #                   'Время выбирать, чем хотите заняться или что Вам нужно узнать:\n'
         #                   '"Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".']
-        if any_from('спорт', 'трен', in_=command):
-            resp.response = ResponseField(
-                text='Это сообщение никто не увидит :)',
-                tts='Даа, это спортивная ветка (затычка текста для спортивной ветки)',
-                card=Card(
-                    type=CardType.ItemsList,
-                    header='Какую тренировку выберете?',
-                    items=[
-                        Item(
-                            title='кардиотренировка',
-                            button='кардиотренировка',
-                            description='описание...',
-                            image_id='1533899/13a130643a2fcdac537a'
-                        ),
-                        Item(
-                            title='силовая тренировка',
-                            button='силовая тренировка',
-                            description='описание...',
-                            image_id='1533899/f030bee0ec7edea516e3'
-                        ),
-                        Item(
-                            title='утренняя зарядка',
-                            button='утренняя зарядка',
-                            description='описание...',
-                            image_id='1540737/cc26a14712e6995a6624'
-                        )
-                    ]
-                )
+        show_main_menu(context, resp)
+        context.reset_data()
+    elif state == MainGroup.Sport.state_home and any_from('спорт', 'трен', in_=command) and not \
+            any_from('зарядк', 'силов', 'кардио', in_=command):
+        print('sport')
+        resp.response = ResponseField(
+            text='Это сообщение никто не увидит :)',
+            tts='Даа, это спортивная ветка (затычка текста для спортивной ветки)',
+            card=Card(
+                type=CardType.ItemsList,
+                header='Какую тренировку выберете?',
+                items=[
+                    Item(
+                        title='кардиотренировка',
+                        button='кардиотренировка',
+                        description='описание...',
+                        image_id='1533899/13a130643a2fcdac537a'
+                    ),
+                    Item(
+                        title='силовая тренировка',
+                        button='силовая тренировка',
+                        description='описание...',
+                        image_id='1533899/f030bee0ec7edea516e3'
+                    ),
+                    Item(
+                        title='утренняя зарядка',
+                        button='утренняя зарядка',
+                        description='описание...',
+                        image_id='1540737/cc26a14712e6995a6624'
+                    ),
+                    Item(
+                        title='вернутсья в основное меню',
+                        button='Назад',
+                        description='описание...',
+                        image_id='1030494/cc3631c8499cdc8daf8b'
+                    )
+                ]
             )
-        else:
-            resp.response = ResponseField(
-                text='Это сообщение никто не увидит :(',
-                tts=f'Вы уже в нескольких шагах от здорового образа жизни! Чем сегодня займёмся? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
-                card=Card(
-                    type=CardType.ItemsList,
-                    header='Чем сегодня займёмся? Выбирайте: #Кнопка "идеальный вес" временно недоступна# ',
-                    items=[
-                        Item(
-                            title='спортивные тренировки',
-                            button='спортивные тренировки',
-                            description='описание...',
-                            image_id='1540737/223b47fade7f44cbedfb'
-                        ),
-                        Item(
-                            title='водный баланс',
-                            button='водный баланс',
-                            description='описание...',
-                            image_id='1540737/dc7c3c075dd3ecc22fc7'
-                        ),
-                        Item(
-                            title='фазы сна',
-                            button='фазы сна',
-                            description='описание...',
-                            image_id='213044/e81c096eeedd03ef9a2e'
-                        ),
-                        Item(
-                            title='идеальный вес',
-                            button='идеальный вес',
-                            description='описание..',
-                            image_id='1540737/223b47fade7f44cbedfb'
-                        )
-                    ]
-                )
-            )
-        context.reset_state(with_data=True)
-        context.set_state(MainGroup.Sport.state_home)
-
+        )
     elif state in MainGroup:
         if 'вернуться' in command or 'назад' in command or 'основ' in command or 'домой' in command or 'начало' in command:
-            print(1)
-            resp.update(
-                dict(
-                    response=dict(
-                        text='Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
-                        card=dict(type='ItemsList', header={
-                            'text': 'Чем займёмся на этот раз? #Кнопка "идеальный вес" временно недоступна#'
-                        }, items=[
-                            dict(title='кардиотренировка', button=dict(text='кардиотренировка'),
-                                 description='описание...',
-                                 image_id='1533899/13a130643a2fcdac537a'),
-                            dict(title='силовая тренировка', button={"text": 'силовая тренировка'},
-                                 description='описание...',
-                                 image_id='1533899/f030bee0ec7edea516e3'),
-                            dict(title='утренняя зарядка', button={"text": 'утренняя зарядка'},
-                                 description='описание...',
-                                 image_id='1540737/cc26a14712e6995a6624'),
-                            dict(title='водный баланс', button={"text": 'водный баланс'}, description='описание...',
-                                 image_id='1540737/dc7c3c075dd3ecc22fc7'),
-                            dict(title='фазы сна', button={"text": 'фазы сна'}, description='описание...',
-                                 image_id='213044/e81c096eeedd03ef9a2e')
-                        ]
-                                  )
-                    )
-                )
-            )
-            context.set_state(MainGroup.Sport.state_home)
+            show_main_menu(context, resp)
         elif state == MainGroup.Sport.state_home:
             if 'вод' in command or 'баланс' in command:
                 answer_options = [
@@ -454,7 +439,6 @@ def _main():
                     }
                 })
                 context.set_state(MainGroup.Dream.state_1)
-                print('SON?')
 
             elif 'сил' in command:
                 answer_options = [
@@ -543,32 +527,13 @@ def _main():
                 context.set_state(MainGroup.state_1)
 
             else:
-                resp.update({
-                    'response': {
-                        'text': 'Извините, не поняла вас😣\nДавайте попробуем заново выбрать занятие!\n'
-                                '"Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
-                        'card': {
-                            'type': 'ItemsList',
-                            'header': {
-                                'text': 'Давайте попробуем заново выбрать занятие! #Кнопка "идеальный вес" временно недоступна#'
-                            },
-                            'items': [
-                                {"title": 'кардиотренировка', 'button': {"text": 'кардиотренировка'},
-                                 "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
-                                {"title": 'силовая тренировка', "button": {"text": 'силовая тренировка'},
-                                 "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
-                                {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
-                                 "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
-                                {"title": 'водный баланс', "button": {"text": 'водный баланс'},
-                                 "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
-                                {"title": 'фазы сна', "button": {"text": 'фазы сна'}, "description": 'описание...',
-                                 "image_id": '213044/e81c096eeedd03ef9a2e'}
-
-                            ]
-                        }
-                    }
-                })
-                context.set_state(MainGroup.Sport.state_home)
+                resp = show_main_menu(
+                    context,
+                    resp,
+                    text='Извините, не поняла вас😣\nДавайте попробуем заново выбрать занятие!\n'
+                         '"Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
+                    card_text='Давайте попробуем заново выбрать занятие! #Кнопка "идеальный вес" временно недоступна#'
+                )
         elif state in MainGroup.Dream:
             dream.dream_handler(context, req, resp)
         elif state in MainGroup.Water:
@@ -645,7 +610,6 @@ def _main():
             elif state in MainGroup.Sport.Zaradka.Ten:
                 if state in (MainGroup.Sport.Zaradka.Ten.start, MainGroup.Sport.Zaradka.Ten.final):
                     if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
-                        print(4)
                         resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
@@ -1597,7 +1561,6 @@ def _main():
             elif state in MainGroup.Sport.Zaradka.Five:
                 if state in (MainGroup.Sport.Zaradka.Five.start, MainGroup.Sport.Zaradka.Five.final):
                     if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
-                        print(5)
                         resp.update({
                             'response': {
                                 'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес", или "Фазы сна".',
@@ -2113,7 +2076,6 @@ def _main():
         elif state in MainGroup.Sport.Power:
             if state in (MainGroup.Sport.Power.start, MainGroup.Sport.Power.final):
                 if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
-                    print(6)
                     resp.update({
                         'response': {
                             'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", или "Идеальный вес", "Фазы сна".',
@@ -2970,14 +2932,12 @@ def _main():
                 if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
                     resp = start_warmup(context, resp)
                 else:
-                    print('cancel')
                     cancel_warmup(context, resp)
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmUp.task:
                     step = context.get_data().get('step', 0) + 1
                     context.update_data(step=step)
-                    print(f'{step=}')
 
                     try:
                         step: TrainingStep = warm_up_algorithm[step]
@@ -3037,14 +2997,12 @@ def _main():
                 if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
                     resp = start_warmdown(context, resp)
                 else:
-                    print('cancel')
                     cancel_warmdown(context, resp)
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmDown.task:
                     step = context.get_data().get('step', 0) + 1
                     context.update_data(step=step)
-                    print(f'{step=}')
 
                     try:
                         step: TrainingStep = warm_down_algorithm[step]
@@ -3067,8 +3025,9 @@ def _main():
         })
         context.set_state(MainGroup.state_1)
 
-    if not (response := resp.get('response', {'text': 'Затычечный текст на случай если сообщение не захендлилось'})):
-        resp['response'] = response
+    if resp.get('response', None) is None:
+        resp['response'] = {'text': 'Затычечный текст на случай если сообщение не захендлилось'}
+    response = resp['response']
     if not (buttons := response.get('buttons', [])):
         response['buttons'] = buttons
 
