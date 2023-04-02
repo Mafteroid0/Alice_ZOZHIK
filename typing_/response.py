@@ -84,7 +84,7 @@ class RespDataClass:
             key, value = modifier(key, value, None)
         return key, value
 
-    def update(self, udict: dict | RespDataClass, recursive: bool = False):  # TODO: Сделать функцию update
+    def update(self, udict: dict | RespDataClass, recursive: bool = False):
         for key, value in udict.items():
 
             if hasattr(value, 'update'):
