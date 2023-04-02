@@ -1,5 +1,17 @@
 from typing_ import TrainingDialog, TrainingStep
 
+tracks_fourteen = [
+    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/bd88f1cd-426b-430f-adc4-e66d4f19549d.opus">',
+    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/047165c7-4a08-4426-ade7-ce961e87aad1.opus">',
+    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/e7178478-0cca-4b0e-bba9-cd6cd2109d73.opus">']
+tracks_sixteen = [
+    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/4e7a987a-48cc-4ca3-8add-fa34a96852b2.opus">',
+    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/cce10ad9-c6be-46ec-a0e0-1897db4841e3.opus">',
+    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/471315ec-dbf4-4821-ac6d-9171af52f3f9.opus">']
+
+motivations = ['Удачи! #в данный момент проигрывается трек#', 'Так держать! #в данный момент проигрывается трек#',
+               'Вы справитесь! #в данный момент проигрывается трек#']
+
 warm_up_algorithm = TrainingDialog()
 
 warm_up_algorithm.append(TrainingStep(
@@ -51,7 +63,6 @@ warm_up_algorithm.append(TrainingStep(
     image='1030494/0e4fba524a27516fad72',
     title='Упражение 7'
 ))
-
 
 warm_down_algorithm = TrainingDialog()
 

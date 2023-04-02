@@ -7,7 +7,7 @@ from time_parsing import parse_time, iter_go_sleep_time
 from states import MainGroup
 
 
-def dream_heandler(context: FSMContext, req: AliceUserRequest, resp: dict | Response):
+def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Response) -> dict | Response:
     match context.state:
         case MainGroup.Dream.state_1:
             try:
