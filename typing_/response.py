@@ -129,6 +129,7 @@ class Item(RespDataClass):
     title: str
     image_id: str
     button: str | ItemButton | ItemButtonDict | None = None
+    description: str | None = None
 
     def _modifier(self, key: str, value: str | ItemButton | ItemButtonDict | None,
                   modifier: DictPairModifier | None = None):
