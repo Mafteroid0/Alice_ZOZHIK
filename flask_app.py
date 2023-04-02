@@ -494,9 +494,9 @@ def _main():
                                 'text': 'Выберите свой пол'
                             },
                             'items': [
-                                {"title": 'Мужской', "button": {"text": '5-минутная'},
+                                {"title": 'Мужской', "button": {"text": 'Мужской'},
                                  "image_id": '937455/de709f88951a3ae338fa'},
-                                {"title": 'Женский', "button": {"text": '10-минутная'},
+                                {"title": 'Женский', "button": {"text": 'Женский'},
                                  "image_id": '937455/92fe9a7a01d9e788cfec'}
 
                             ]
