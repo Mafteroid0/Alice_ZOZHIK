@@ -40,13 +40,13 @@ class RespDataClass:
             modifier: DictPairModifier | None = None,
             recursive: bool = True
     ) -> dict:
-        # print()
-        # print(self)
+
+
         modifier = modifier or self._modifier
         res = {}
         for annot_key in self.__annotations__.keys():
             key, value = annot_key, getattr(self, annot_key)
-            # print(key, value)
+
             if value is None:
                 continue
 
@@ -57,7 +57,7 @@ class RespDataClass:
                     value = value.to_dict()
             elif isinstance(value, typing.Sequence) and not isinstance(value, str):
                 value = [i.to_dict() if hasattr(i, 'to_dict') else i for i in value]
-                # print('\t', value)
+
 
             res[key] = value
         return res
@@ -73,20 +73,18 @@ class RespDataClass:
         return (modifier or (lambda _key, _value, _: (_key, _value)))(key, value, None)
 
     def update(self, udict: dict | RespDataClass, recursive: bool = False):  # TODO: Сделать функцию update
-        print()
-        print(self)
         for key, value in udict.items():
-            print(key, value)
+
             if hasattr(value, 'update'):
-                print(1)
+
                 if recursive:
-                    print(2, value)
+
                     try:
                         value = getattr(self, key, value).update(value, recursive)
                     except TypeError:
                         value = getattr(self, key, value).update(value)
-                    print(2.5, value)
-            print(3)
+
+
             setattr(self, key, value)
 
         return self
@@ -227,7 +225,6 @@ class Response(RespDataClass):
 # )
 #
 # r.update({'response': {'text': '23', 'card': {'description': 'descr'}}}, recursive=True)
-# print(r)
 
 __all__ = tuple(
     map(
