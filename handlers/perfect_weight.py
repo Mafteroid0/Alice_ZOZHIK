@@ -2,6 +2,7 @@ import random
 
 from typing_ import Response, AliceUserRequest
 from fsm import FSMContext
+from tools import any_from
 
 from states import MainGroup
 
@@ -11,7 +12,18 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
     command = req.request.command
 
     if state == MainGroup.Weight.state_1:
-        if
+        if any_from('муж', 'мал', 'джен', in_=command):
+            sex = 'male'
+
+        elif any_from('жен', 'дев', 'лед', in_=command):
+            sex = 'female'
+        answer_options = ['Также для вычислений мне необходимо знать Ваш рост. Подскажите мне его, пожалуйста.', 'Чтобы подсказать вам идеальный вес, мне нужен ваш рост. Подскажите мне его, пожалуйста.',
+                          'Подскажите Ваш рост и я с радостью рассчитаю Ваш рекомендованный вес.', 'Также для вычислений мне необходимо знать Ваш рост. Подскажите мне его, пожалуйста.']
+        resp.update({
+                    'response': {
+                        'text': f'{random.choice(answer_options)}'
+                    }
+                })
 
         # st = command.replace(',', '.')
         # li = st.split(' ')

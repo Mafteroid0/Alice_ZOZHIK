@@ -487,7 +487,21 @@ def _main():
                                   'Вес очень сильно влияет на продолжительность нашей жизни. Именно поэтому так важно знать его рекомендуемую норму. Не беспокойтесь, я рассчитаю Вашу индивидуальную рекомендацию. Подскажите пожалуйста Ваш пол.']
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(answer_options)}'
+                        'text': f'{random.choice(answer_options)}',
+                        'card': {
+                            'type': 'ItemsList',
+                            'header': {
+                                'text': 'Выберите свой пол'
+                            },
+                            'items': [
+                                {"title": 'Мужской', "button": {"text": '5-минутная'},
+                                 "image_id": '937455/de709f88951a3ae338fa'},
+                                {"title": 'Женский', "button": {"text": '10-минутная'},
+                                 "image_id": '937455/92fe9a7a01d9e788cfec'}
+
+                            ]
+                        },
+
                     }
                 })
                 context.set_state(MainGroup.state_1)
