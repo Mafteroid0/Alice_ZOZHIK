@@ -376,7 +376,6 @@ def _main():
         context.reset_data()
     elif state == MainGroup.Sport.state_home and any_from('спорт', 'трен', in_=command) and not \
             any_from('зарядк', 'силов', 'кардио', in_=command):
-        print('sport')
         resp.response = ResponseField(
             text='Это сообщение никто не увидит :)',
             tts='Даа, это спортивная ветка (затычка текста для спортивной ветки)',
