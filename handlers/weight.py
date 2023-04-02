@@ -121,5 +121,5 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
 
             }
         })
-        context.set_state(MainGroup.Water.state_1)
+        context.set_state(MainGroup.Weight.state_1)
     return resp
