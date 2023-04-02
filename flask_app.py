@@ -1,15 +1,16 @@
 import itertools
 import json
 import random
-import typing
 
 from flask import Flask, request
 
 from typing_ import AliceUserRequest, TrainingStep
 from typing_.response import RespDataClass, Response, \
-    ResponseField, Card, CardType, Card, CardItemsListHeader, Item
+    ResponseField, Card, CardType, Card, CardItemsListHeader, Item, Button
 from fsm import FSMContext
 from dialogs import warm_up_algorithm, warm_down_algorithm, motivations, tracks_sixteen, tracks_fourteen
+
+from tools import any_from
 
 from handlers import dream, water
 import handlers.sport.cardio
@@ -131,12 +132,6 @@ def cancel_warmup(context: FSMContext, resp: dict | Response, data: dict | None 
     return data['callback'](context, resp)
 
 
-def any_from(*args, in_: str):
-    if not isinstance(args[0], str):
-        args = itertools.chain(args[0], args[1:])
-    return any((i in in_ for i in args))
-
-
 def start_session(context: FSMContext, resp: dict | Response, add_help_button: bool = True) -> dict | Response:
     # Действия при новой сессии
     answer_options = ['Привет🖐!  Всегда хотели окунуться в мир здорового образа жизни? '
@@ -150,77 +145,50 @@ def start_session(context: FSMContext, resp: dict | Response, add_help_button: b
                       'за Вашим здоровьем с удовольствием.'
                       ' Если нужно ознакомиться с функционалом навыка, то скажите "Что ты умеешь?". '
                       'Если уже хотите приступить, то скажите "Поехали".']
-    resp.update({
-        'response': {
-            'text': f'{random.choice(answer_options)}.\n#Комментарии для проверяющих будут обозначены знаком хештега для удобства#',
-            'buttons': [
-                {
-                    'title': 'Что ты умеешь?',
-                    'hide': True
-                },
-                {
-                    "title": "Поехали!",
-                    "hide": True
-                }
-            ]
-        }
-    })
+    resp.response = ResponseField(
+        text=f'{random.choice(answer_options)}.',
+        buttons=[
+            Button(title='Что ты умеешь?'),
+            Button(title="Поехали!")
+        ]
+    )
     if add_help_button:
-        resp['response']['buttons'].append({
-            'title': 'Помощь',
-            'hide': False
-        })
+        resp.response.buttons.append(Button(title='Помощь'))
     context.reset_state(with_data=True)
     return resp
 
 
 def start_warmdown(context: FSMContext, resp: dict | Response) -> dict | Response:
-    resp.update({
-        'response': {
-            'text': 'Во время тренировки Вы можете изучить упражнение подробнее, '
-                    'начать выполнять его или пропустить текущее упражнение и перейти к следующему.\n'
-                    'Вы готовы начать или выберем другую тренировку?',
-            'card': {
-                'type': 'ItemsList',
-                'header': {
-                    'text': 'Приступаем к выполнению заминки'
-                },
-                'items': [
-                    {"title": 'Я готов', "button": {"text": 'Я готов'},
-                     "image_id": '997614/72ab6692a3db3f4e3056'},
-                    {"title": 'Пропустить',
-                     "button": {"text": 'Пропустить'},
-                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
-                ]
-            }
-        }
-    })
+    resp.response = ResponseField(
+        text='Во время тренировки Вы можете изучить упражнение подробнее, '
+             'начать выполнять его или пропустить текущее упражнение и перейти к следующему.\n'
+             'Вы готовы начать или выберем другую тренировку?',
+        card=Card(
+            type=CardType.ItemsList,
+            header='Приступаем к выполнению заминки',
+            items=[
+                Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
+                Item(title='Пропустить', button='Пропустить', image_id='1030494/cc3631c8499cdc8daf8b')
+            ]
+        )
+    )
     context.set_state(MainGroup.Sport.Wrap.WarmDown.start)
     return resp
 
 
 def end_warmdown(context: FSMContext,
                  resp: dict | Response) -> dict | Response:  # Возврат к упражнению которое было до начала разминки
-    resp.update({
-        'response': {
-            'text': 'Вы хорошо потрудились, поздравляю вас с  очередной победой! Что выберите дальше: '
-                    'скажите "повторить заминку" или "завершить заминку"?',
-            'card': {
-                'type': 'ItemsList',
-                'header': {
-                    'text': 'Повторим зазминку или перейдём к основному списку?'
-                },
-                'items': [
-                    {"title": 'Повторить разминку', "button": {"text": 'Повторить разминку'},
-                     "image_id": '997614/15f977696a281092bcc0'},
-                    {"title": 'Вернуться к основному списку',
-                     "button": {"text": 'Назад'},
-                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
-                ]
-            }
-
-        }
-    })
+    resp.response = ResponseField(
+        text='Вы хорошо потрудились, поздравляю вас с  очередной победой! Что выберите дальше: '
+             'скажите "повторить заминку" или "завершить заминку"?',
+        card=Card(
+            type=CardType.ItemsList,
+            header='Повторим зазминку или перейдём к основному списку?', items=[
+                Item(title='Повторить разминку', button='Повторить разминку', image_id='997614/15f977696a281092bcc0'),
+                Item(title='Вернуться к основному списку', button='Назад', image_id='1030494/cc3631c8499cdc8daf8b')
+            ]
+        )
+    )
 
     context.update_data(step=0)
     context.set_state(MainGroup.Sport.Wrap.WarmDown.end)
@@ -236,26 +204,23 @@ def cancel_warmdown(context: FSMContext, resp: dict | Response, data: dict | Non
 
 
 def finish_power_training(context: FSMContext, resp: dict | Response) -> dict | Response:
-    resp.update({
-        'response': {
-            'text': 'Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
-            'card': {
-                'type': 'ItemsList',
-                'header': {
-                    'text': 'Повторим тренировку или вернёмся в меню?'
-                },
-                'items': [
-                    {"title": 'Повторить тренировку', "button": {"text": 'Повторить тренировку'},
-                     "image_id": '997614/15f977696a281092bcc0'},
-                    {"title": 'Вернуться в меню',
-                     "button": {"text": 'Вернуться в меню'},
-                     "image_id": '1030494/cc3631c8499cdc8daf8b'}
-
-                ]
-            }
-
-        }
-    })
+    resp.update(
+        dict(
+            response=dict(
+                text='Вы хорошо потрудились, горжусь Вами. Повторим тренировку или вернёмся в меню? Выбор за Вами.',
+                card=dict(
+                    type='ItemsList',
+                    header={'text': 'Повторим тренировку или вернёмся в меню?'},
+                    items=[
+                        dict(title='Повторить тренировку', button={"text": 'Повторить тренировку'},
+                             image_id='997614/15f977696a281092bcc0'),
+                        dict(title='Вернуться в меню', button=dict(text='Вернуться в меню'),
+                             image_id='1030494/cc3631c8499cdc8daf8b')
+                    ]
+                )
+            )
+        )
+    )
     context.set_state(MainGroup.Sport.Power.final)
     return resp
 

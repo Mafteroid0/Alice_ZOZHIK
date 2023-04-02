@@ -2,7 +2,7 @@ import random
 
 from typing_ import Response, AliceUserRequest
 from fsm import FSMContext
-from time_parsing import parse_time, iter_go_sleep_time
+from tools.time_parsing import parse_time, iter_go_sleep_time
 
 from states import MainGroup
 

@@ -40,8 +40,6 @@ class RespDataClass:
             modifier: DictPairModifier | None = None,
             recursive: bool = True
     ) -> dict:
-
-
         modifier = modifier or self._modifier
         res = {}
         for annot_key in self.__annotations__.keys():
@@ -58,7 +56,6 @@ class RespDataClass:
             elif isinstance(value, typing.Sequence) and not isinstance(value, str):
                 value = [i.to_dict() if hasattr(i, 'to_dict') else i for i in value]
 
-
             res[key] = value
         return res
 
@@ -70,7 +67,9 @@ class RespDataClass:
         # return res
 
     def _modifier(self, key: str, value: typing.Any, modifier: DictPairModifier | None = None):
-        return (modifier or (lambda _key, _value, _: (_key, _value)))(key, value, None)
+        if modifier is not None:
+            key, value = modifier(key, value, None)
+        return key, value
 
     def update(self, udict: dict | RespDataClass, recursive: bool = False):  # TODO: Сделать функцию update
         for key, value in udict.items():
@@ -83,7 +82,6 @@ class RespDataClass:
                         value = getattr(self, key, value).update(value, recursive)
                     except TypeError:
                         value = getattr(self, key, value).update(value)
-
 
             setattr(self, key, value)
 
@@ -133,7 +131,7 @@ class Item(RespDataClass):
                   modifier: DictPairModifier | None = None):
         if key == 'button' and value == self.button and isinstance(value, str):
             value = {'text': value}
-        return (modifier or super()._modifier)(key, value, modifier)
+        return super()._modifier(key, value, modifier)
 
 
 class CardType(Enum):
@@ -169,7 +167,7 @@ class ItemsListCard(AbstractCard, RespDataClass):
                   modifier: DictPairModifier | None = None):
         if key == 'header' and value == self.header and isinstance(value, str):
             value = {'text': value}
-        return (modifier or super()._modifier)(key, value, modifier)
+        return super()._modifier(key, value, modifier)
 
 
 @dataclass
@@ -207,24 +205,24 @@ class Response(RespDataClass):
     response: ResponseField | ResponseFieldDict | None = None
 
 
-# r = Response(
-#     version='1.0',
-#     session='',
-#     response=ResponseField(
-#         text='Начинаем первое упражнение! Поочерёдное сгибание ног с последующим подниманием коленей к груди',
-#         card=Card(
-#             type=CardType.ItemsList,
-#             header='Комментарий: Если на этот этап мы перешли с разминки, то об этом будет написано Приступаем к выполнению силовой тренировки.',
-#             items=[
-#                 Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
-#                 Item(title='Выберем другую тренировку', button='Выберем другую тренировку',
-#                      image_id='1030494/cc3631c8499cdc8daf8b')
-#             ]
-#         ),
-#     )
-# )
-#
-# r.update({'response': {'text': '23', 'card': {'description': 'descr'}}}, recursive=True)
+r = Response(
+    version='1.0',
+    session='',
+    response=ResponseField(
+        text='Начинаем первое упражнение! Поочерёдное сгибание ног с последующим подниманием коленей к груди',
+        card=Card(
+            type=CardType.ItemsList,
+            header='Комментарий: Если на этот этап мы перешли с разминки, то об этом будет написано Приступаем к выполнению силовой тренировки.',
+            items=[
+                Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
+                Item(title='Выберем другую тренировку', button='Выберем другую тренировку',
+                     image_id='1030494/cc3631c8499cdc8daf8b')
+            ]
+        ),
+    )
+)
+
+print(r.response.card.to_dict())
 
 __all__ = tuple(
     map(
