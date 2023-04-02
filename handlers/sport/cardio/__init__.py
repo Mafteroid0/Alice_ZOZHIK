@@ -171,7 +171,6 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             #     fsm.set_state
         elif state in (MainGroup.Sport.Cardio.Solo.start, MainGroup.Sport.Cardio.Solo.final):
             if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
-                print(2)
                 resp.update({
                     'response': {
                         'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
@@ -1053,7 +1052,6 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             context.update_data(callback=_start_rope_cardio)
         elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
             if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
-                print(3)
                 resp.update({
                     'response': {
                         'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
