@@ -288,8 +288,8 @@ def show_main_menu(context: FSMContext, resp: dict | Response, text: str | typin
 
 @application.route('/alice', methods=['POST'])
 @logged
-def _main():
-    req = AliceUserRequest(request.data.decode())
+def _main(event, ya_context):
+    req = AliceUserRequest(event)
 
     command = req.request.command
     user_id = req.session.user.user_id
