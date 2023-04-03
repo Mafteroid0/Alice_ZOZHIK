@@ -3,7 +3,7 @@ import functools
 import typing
 
 import pymorphy3
-from pandas import to_timedelta
+# from pandas import to_timedelta
 
 from logging_ import logged, logger
 
@@ -81,7 +81,7 @@ def parse_time(text: str) -> datetime.datetime:
         if text.count(':') in (1, 2):  # Оптимизировать вызовы count
             if text.count(':') == 1:
                 text = f'{text}:00'
-            return time + to_timedelta(text)
+            return time + datetime.datetime.strptime(text, 'HH:MM:SS')
         elif text.count(':') > 2:
             raise ValueError()
 
