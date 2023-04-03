@@ -53,12 +53,13 @@ def encode(dict_: dict):
 
 def dict_to_json(dict_: dict | Response, do_encode: bool = True, *args, **kwargs):
     dict_ = trans_to_dict(dict_)
+    return dict_
     # if do_encode:
     #     dict_ = encode(dict_)
-    jsn = json.dumps(dict_, *args, **kwargs).encode()
-    if do_encode:
-        jsn = jsn.decode('utf8')
-    return jsn
+    # jsn = json.dumps(dict_).encode()
+    # if do_encode:
+    #     jsn = jsn.decode('utf8')
+    # return jsn
 
 
 # Шаблон для условий:  if state == MyStates.state_1
