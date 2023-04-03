@@ -4,7 +4,7 @@ import typing
 from collections import UserDict
 import json
 
-from logging_ import logger
+from logging_ import logger, DO_LOGGING
 
 
 class KeyToAttr(UserDict):
@@ -39,7 +39,8 @@ class FriendlyDict(KeyToAttr):
         return d
 
     def __init__(self, *args, aggressive: bool = False, **kwargs):
-        logger.info(f'trying to parse dict with args {args} and kwargs ' + str({'aggressive': aggressive, **kwargs}))
+        if DO_LOGGING:
+            logger.info(f'trying to parse dict with args {args} and kwargs ' + str({'aggressive': aggressive, **kwargs}))
         if len(args) > 0:
             first_arg = args[0]
             if isinstance(first_arg, str):

@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import inspect
 
-from logging_ import logger
+from logging_ import logger, DO_LOGGING
 
 
 @dataclasses.dataclass
@@ -63,7 +63,8 @@ class FSMContext:
         self._check_and_create_user(user_id)
         self._data[user_id]['state'] = state
 
-        logger.info(f'{user_id}`s state = {state}')
+        if DO_LOGGING:
+            logger.info(f'{user_id}`s state = {state}')
 
         return self._data[user_id]['state']
 
@@ -74,7 +75,8 @@ class FSMContext:
         self._check_and_create_user(user_id)
         self._data[user_id]['data'] = {**data, **kwargs}
 
-        logger.info(f'{user_id}`s data = {data}')
+        if DO_LOGGING:
+            logger.info(f'{user_id}`s data = {data}')
 
         return self._data[user_id]['data']
 

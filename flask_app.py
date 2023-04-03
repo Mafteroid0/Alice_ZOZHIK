@@ -2,7 +2,6 @@ import json
 import random
 import typing
 
-import logging_
 from flask import Flask, request
 
 from typing_ import AliceUserRequest, TrainingStep
@@ -18,7 +17,7 @@ import handlers.sport.cardio
 
 from states import MainGroup
 
-from logging_ import logged, logger
+from logging_ import logged, logger, DO_LOGGING
 
 application = Flask(__name__)
 
@@ -301,9 +300,10 @@ def _main():
 
     resp = Response(version=req.version, session=req.session)
 
-    logger.debug(f'{command=}')
-    logger.debug(f'{state=}')
-    logger.debug(f'{req=}')
+    if DO_LOGGING:
+        logger.debug(f'{command=}')
+        logger.debug(f'{state=}')
+        logger.debug(f'{req=}')
 
     if req.session.new:
         resp = start_session(context, resp)

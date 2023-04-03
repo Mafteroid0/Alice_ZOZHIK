@@ -6,7 +6,7 @@ import typing
 from dataclasses import dataclass, field
 from enum import Enum
 
-from logging_ import logger
+from logging_ import logger, DO_LOGGING
 from .request import Session
 
 
@@ -66,7 +66,8 @@ class RespDataClass:
 
             res[key] = value
 
-        logger.info(f'{self} transformated to {res}')
+        if DO_LOGGING:
+            logger.info(f'{self} transformated to {res}')
 
         return res
 

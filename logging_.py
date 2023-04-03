@@ -2,11 +2,17 @@ import typing
 
 from loguru import logger
 
-logger.add('zozhik.log', level='DEBUG', rotation='10 mb', compression='tar.xz', enqueue=True)
+DO_LOGGING = False
+
+if DO_LOGGING:
+    logger.add('zozhik.log', level='DEBUG', rotation='10 mb', compression='tar.xz', enqueue=True)
 
 
 def logged(f: typing.Callable):
     def wrapper(*args, **kwargs):
+        if not DO_LOGGING:
+            return f(*args, **kwargs)
+
         try:
             res = f(*args, **kwargs)
         except BaseException as e:
