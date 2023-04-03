@@ -33,13 +33,15 @@ NOW_SYNONIMS = [
 ]
 
 
-def trans_to_dict(dict_: dict | RespDataClass) -> dict:
+def trans_to_dict(dict_: dict | RespDataClass, encode: bool = True) -> dict:
     if hasattr(dict_, 'to_dict'):
         dict_ = dict_.to_dict()
     else:
         for key, value in dict_.items():
             if hasattr(value, 'to_dict'):
                 value = value.to_dict()
+            elif encode and isinstance(value, str):
+                value = value.encode()
             dict_[key] = value
     return dict_
 
