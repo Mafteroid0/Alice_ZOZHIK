@@ -79,7 +79,7 @@ class RespDataClass:
         # return res
 
     def _modifier(self, key: str, value: typing.Any, modifier: DictPairModifier | None = None):
-        if key == 'text' and isinstance(value, typing.Sequence) and not isinstance(value, str):
+        if key in ('text', 'tts') and isinstance(value, typing.Sequence) and not isinstance(value, str):
             value = random.choice(value)
         if modifier is not None:
             key, value = modifier(key, value, None)
