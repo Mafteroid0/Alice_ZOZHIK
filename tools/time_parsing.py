@@ -5,7 +5,7 @@ import typing
 import pymorphy3
 from pandas import to_timedelta
 
-from logging_ import logged
+from logging_ import logged, logger
 
 DEBUG = False
 
@@ -137,19 +137,18 @@ def parse_time(text: str) -> datetime.datetime:
                     if txt_buf is not None:
                         word = txt_buf
 
-                    match word:
-                        case 'полдень':
-                            time = today() + datetime.timedelta(hours=12)
-                            txt_buf = None
-                            num_buf = None
-                            continue
-                        case 'полночь':
-                            time = today()
-                            txt_buf = None
-                            num_buf = None
-                            continue
+                    if word == 'полдень':
+                        time = today() + datetime.timedelta(hours=12)
+                        txt_buf = None
+                        num_buf = None
+                        continue
+                    elif word == 'полночь':
+                        time = today()
+                        txt_buf = None
+                        num_buf = None
+                        continue
 
-                    if num_buf is None:
+                    elif num_buf is None:
                         txt_buf = word
                         continue
 
@@ -169,7 +168,10 @@ def parse_time(text: str) -> datetime.datetime:
                 time -= datetime.timedelta(hours=12)
 
             if time == today() and text != 'полночь':
-                raise ValueError(f'Невозможно распарсить текст: {text}')
+                if text == 'полдень':
+                    time += datetime.timedelta(hours=12)
+                else:
+                    raise ValueError(f'Невозможно распарсить текст: {text}')
 
     except BaseException as e:
         raise RuntimeError(f'Some error occurred while parsing time from text: {e}')

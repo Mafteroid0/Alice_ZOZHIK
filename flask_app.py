@@ -1,6 +1,7 @@
 import json
 import random
 
+import logging_
 from flask import Flask, request
 
 from typing_ import AliceUserRequest, TrainingStep
@@ -16,7 +17,7 @@ import handlers.sport.cardio
 
 from states import MainGroup
 
-from logging_ import logged
+from logging_ import logged, logger
 
 app = Flask(__name__)
 
@@ -159,7 +160,7 @@ def start_session(context: FSMContext, resp: dict | Response, add_help_button: b
                       ' Если нужно ознакомиться с функционалом навыка, то скажите "Что ты умеешь?". '
                       'Если уже хотите приступить, то скажите "Поехали".']
     resp.response = ResponseField(
-        text=f'{random.choice(answer_options)}.',
+        text=f'{random.choice(answer_options)}',
         buttons=[
             Button(title='Что ты умеешь?'),
             Button(title="Поехали!")
@@ -247,29 +248,23 @@ def show_main_menu(context: FSMContext, resp: dict | Response, text: str | None 
                     f'или "Фазы сна".',
         card=Card(
             type=CardType.ItemsList,
-            header=card_text or ['Чем хотите заняться? Выбирайте:'
-                                 '"Зарядка"\n'
-                                 '"Кардио"\n'
-                                 '"Силовая"\n'
-                                 '"Фазы сна"\n'
-                                 '"Водный баланс"\n'
-                                 '"Идеальный вес"\n',
-
-                                 'Приступаем к работе. Выбирайте чем займёмся:\n'
-                                 '"Зарядка"\n'
-                                 '"Кардио"\n'
-                                 '"Силовая"\n'
-                                 '"Фазы сна"\n'
-                                 '"Водный баланс"\n'
+            header=card_text or ['Чем хотите заняться? Выбирайте: \n'
+                                 '"Спортивные тренировки", '
+                                 '"Фазы сна", '
+                                 '"Водный баланс" или '
                                  '"Идеальный вес"',
 
-                                 'Чем займёмся на этот раз? Выбирайте:\n'
-                                 '"Зарядка"\n'
-                                 '"Кардио"\n'
-                                 '"Силовая"\n'
-                                 '"Фазы сна"\n'
-                                 '"Водный баланс"\n'
-                                 '"Идеальный вес"\n'
+                                 'Приступаем к работе. Выбирайте чем займёмся: \n'
+                                 '"Спортивные тренировки", '
+                                 '"Фазы сна", '
+                                 '"Водный баланс" или '
+                                 '"Идеальный вес"',
+
+                                 'Чем займёмся на этот раз? Выбирайте: \n'
+                                 '"Спортивные тренировки", '
+                                 '"Фазы сна", '
+                                 '"Водный баланс" или '
+                                 '"Идеальный вес"'
                                  ],
             items=[
                 Item(
@@ -317,8 +312,9 @@ def _main():
 
     resp = Response(version=req.version, session=req.session)
 
-    print(f'{command=}')
-    print(f'{state=}')
+    logger.debug(f'{command=}')
+    logger.debug(f'{state=}')
+    logger.debug(f'{req=}')
 
     if req.session.new:
         resp = start_session(context, resp)
