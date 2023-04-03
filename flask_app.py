@@ -53,9 +53,11 @@ def encode(dict_: dict):
 
 def dict_to_json(dict_: dict | Response, do_encode: bool = True, *args, **kwargs):
     dict_ = trans_to_dict(dict_)
+    # if do_encode:
+    #     dict_ = encode(dict_)
+    jsn = json.dumps(dict_, *args, **kwargs).encode()
     if do_encode:
-        dict_ = encode(dict_)
-    return json.dumps(dict_, *args, **kwargs)
+        jsn = jsn.encode('utf8')
 
 
 # Шаблон для условий:  if state == MyStates.state_1
