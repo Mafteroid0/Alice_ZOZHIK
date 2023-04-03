@@ -2,7 +2,7 @@ import json
 import random
 import typing
 
-from flask import Flask, request
+# from flask import Flask, request
 
 from typing_ import AliceUserRequest, TrainingStep
 from typing_.response import RespDataClass, Response, \
@@ -19,7 +19,7 @@ from states import MainGroup
 
 from logging_ import logged, logger, DO_LOGGING
 
-application = Flask(__name__)
+# application = Flask(__name__)
 
 fsm = FSMContext()
 
@@ -286,9 +286,9 @@ def show_main_menu(context: FSMContext, resp: dict | Response, text: str | typin
     return resp
 
 
-@application.route('/alice', methods=['POST'])
+# @application.route('/alice', methods=['POST'])
 @logged
-def _main(event, ya_context):
+def main(event, ya_context):
     req = AliceUserRequest(event)
 
     command = req.request.command
@@ -3102,9 +3102,9 @@ def _main(event, ya_context):
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 
 
-def main():
-    application.run('localhost', port=5050, debug=True)
+# def main():
+#     application.run('localhost', port=5050, debug=True)
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
