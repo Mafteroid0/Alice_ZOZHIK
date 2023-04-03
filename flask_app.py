@@ -1,5 +1,6 @@
 import json
 import random
+import typing
 
 import logging_
 from flask import Flask, request
@@ -239,7 +240,7 @@ def finish_power_training(context: FSMContext, resp: dict | Response) -> dict | 
     return resp
 
 
-def show_main_menu(context: FSMContext, resp: dict | Response, text: str | None = None,
+def show_main_menu(context: FSMContext, resp: dict | Response, text: str | typing.Sequence[str] | None = None,
                    card_text: str | None = None) -> dict | Response:
     resp.response = ResponseField(
         text='Это сообщение никто не увидит :(',
