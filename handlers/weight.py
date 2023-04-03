@@ -1,6 +1,6 @@
 import random
 
-from typing_ import Response, AliceUserRequest
+from typing_ import Response, AliceUserRequest, ResponseField
 from fsm import FSMContext
 from tools import any_from
 
@@ -16,27 +16,22 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
         if any_from('муж', 'мал', 'джен', in_=command):
             sex = 'male'
             answer_options = ['Также для вычислений мне необходимо знать Ваш рост. Подскажите мне его, пожалуйста.',
-                              'Чтобы подсказать вам идеальный вес, мне нужен ваш рост. Подскажите мне его, пожалуйста.',
                               'Подскажите Ваш рост и я с радостью рассчитаю Ваш рекомендованный вес.',
-                              'Также для вычислений мне необходимо знать Ваш рост. Подскажите мне его, пожалуйста.']
-            resp.update({
-                'response': {
-                    'text': f'{random.choice(answer_options)} \nРост указывайте в сантиметрах!'
-                }
-            })
+
+                              'Чтобы посчитать ваш идеальный вес, мне нужен ваш рост. Подскажите мне его, пожалуйста.']
+            resp.response = ResponseField(
+                text=f'{random.choice(answer_options)} \nРост указывайте в сантиметрах!'
+            )
             context.set_state(MainGroup.Weight.sex_choose)
 
         elif any_from('жен', 'дев', 'лед', in_=command):
             sex = 'female'
-            answer_options = ['Также для вычислений мне необходимо знать Ваш рост. Подскажите мне его, пожалуйста.',
-                              'Чтобы подсказать вам идеальный вес, мне нужен ваш рост. Подскажите мне его, пожалуйста.',
-                              'Подскажите Ваш рост и я с радостью рассчитаю Ваш рекомендованный вес.',
+            answer_options = ['Подскажите Ваш рост и я с радостью рассчитаю Ваш рекомендованный вес.',
+
                               'Также для вычислений мне необходимо знать Ваш рост. Подскажите мне его, пожалуйста.']
-            resp.update({
-                'response': {
-                    'text': f'{random.choice(answer_options)} \nРост указывайте в сантиметрах!'
-                }
-            })
+            resp.response = ResponseField(
+                text=f'{random.choice(answer_options)} \nРост указывайте в сантиметрах!'
+            )
             context.set_state(MainGroup.Weight.sex_choose)
         else:
             resp.update({
@@ -67,13 +62,14 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             if el.replace('.', '').isdecimal() and el.count('.') <= 1:
                 if sex == 'female':
                     verdict = round(49 + 1.7 * (0.394 * float(el) - 60), 1)
-                elif sex == 'male':
+                else:  # sex == 'male'
                     verdict = round(52 + 1.9 * (0.394 * float(el) - 60), 1)
 
                 answer_options = [
-                    f'Ваш идеальный вес {verdict}кг. Что хотите сделать дальше: рассчитать рекомендуемое вес ещё раз или вернуться к основному списку?',
-                    f'Ваш рекомендуемый вес {verdict}кг. '
-                    f'Вы можете сделать расчёт ещё раз или вернуться к основному списку. Что выберите?']
+                    f'Ваш идеальный вес - {verdict} килограм. Что хотите сделать дальше: рассчитать рекомендуемое вес '
+                    f'ещё раз или вернуться к основному списку?',
+                    f'Ваш рекомендуемый вес - {verdict} килограм.'
+                    f'Вы можете сделать расчёт ещё раз или вернуться к основному списку. Что выберете?']
                 resp.update({
                     'response': {
                         'text': f'{random.choice(answer_options)}',

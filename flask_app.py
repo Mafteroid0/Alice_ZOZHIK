@@ -20,7 +20,7 @@ from states import MainGroup
 
 from logging_ import logged, logger
 
-app = Flask(__name__)
+application = Flask(__name__)
 
 fsm = FSMContext()
 
@@ -299,7 +299,7 @@ def show_main_menu(context: FSMContext, resp: dict | Response, text: str | typin
     return resp
 
 
-@app.route('/alice', methods=['POST'])
+@application.route('/alice', methods=['POST'])
 @logged
 def _main():
     req = AliceUserRequest(request.data.decode())
@@ -3112,7 +3112,7 @@ def _main():
 
 
 def main():
-    app.run('localhost', port=5050, debug=True)
+    application.run('localhost', port=5050, debug=True)
 
 
 if __name__ == '__main__':
