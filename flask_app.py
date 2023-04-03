@@ -33,21 +33,29 @@ NOW_SYNONIMS = [
 ]
 
 
-def trans_to_dict(dict_: dict | RespDataClass, encode: bool = True) -> dict:
+def trans_to_dict(dict_: dict | RespDataClass) -> dict:
     if hasattr(dict_, 'to_dict'):
         dict_ = dict_.to_dict()
     else:
         for key, value in dict_.items():
             if hasattr(value, 'to_dict'):
                 value = value.to_dict()
-            elif encode and isinstance(value, str):
-                value = value.encode()
             dict_[key] = value
     return dict_
 
 
-def dict_to_json(dict_: dict | Response, *args, **kwargs):
-    return json.dumps(trans_to_dict(dict_), *args, **kwargs)
+def encode(dict_: dict):
+    for key, value in dict_.items():
+        if isinstance(value, str):
+            dict_[key] = value.encode()
+    return dict_
+
+
+def dict_to_json(dict_: dict | Response, do_encode: bool = True, *args, **kwargs):
+    dict_ = trans_to_dict(dict_)
+    if do_encode:
+        dict_ = encode(dict_)
+    return json.dumps(dict_, *args, **kwargs)
 
 
 # Шаблон для условий:  if state == MyStates.state_1
