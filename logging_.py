@@ -2,9 +2,10 @@ import typing
 
 from loguru import logger
 
-DO_LOGGING = False
+DO_LOGGING = True
+WRITE_LOGS = False
 
-if DO_LOGGING:
+if DO_LOGGING and WRITE_LOGS:
     logger.add('zozhik.log', level='DEBUG', rotation='10 mb', compression='tar.xz', enqueue=True)
 
 
