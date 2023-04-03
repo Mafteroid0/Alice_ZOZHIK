@@ -11,21 +11,21 @@ DEBUG = False
 
 morph = pymorphy3.MorphAnalyzer(lang='ru')
 TIME_UNITS = {
-    'утро': 'h',
-    'вечер': 'h',
-    'ночь': 'h',
-    'день': 'h',
-    'пол': 'h',
-    'час': 'h',
-    'четверть': 'h',
-    'минута': 'm',
+    'утро': 'hours',
+    'вечер': 'hours',
+    'ночь': 'hours',
+    'день': 'hours',
+    'пол': 'hours',
+    'час': 'hours',
+    'четверть': 'hours',
+    'минута': 'minutes',
 }
 
 
-def today() -> datetime.datetime:
+def today(hours: int = 0, minutes: int = 0, seconds: int = 0, microseconds: int = 0) -> datetime.datetime:
     time = datetime.datetime.today()
-    return time - datetime.timedelta(hours=time.hour, minutes=time.minute, seconds=time.second,
-                                     microseconds=time.microsecond)
+    return time - datetime.timedelta(hours=time.hour - hours, minutes=time.minute - minutes, seconds=time.second - seconds,
+                                     microseconds=time.microsecond - microseconds)
 
 
 @functools.cache
@@ -81,7 +81,8 @@ def parse_time(text: str) -> datetime.datetime:
         if text.count(':') in (1, 2):  # Оптимизировать вызовы count
             if text.count(':') == 1:
                 text = f'{text}:00'
-            return time + datetime.datetime.strptime(text, 'HH:MM:SS')
+            time = datetime.datetime.strptime(text, '%X')
+            return today(time.hour, time.minute, time.second, time.microsecond)
         elif text.count(':') > 2:
             raise ValueError()
 
@@ -128,7 +129,7 @@ def parse_time(text: str) -> datetime.datetime:
                         num_buf = word
                         continue
 
-                    time += to_timedelta(f'{word}{TIME_UNITS[txt_buf]}')
+                    time += datetime.timedelta(**{f'{TIME_UNITS[txt_buf]}': float(word) if '.' in word else int(word)})
                     txt_buf = None
                     num_buf = None
                     continue
@@ -152,7 +153,8 @@ def parse_time(text: str) -> datetime.datetime:
                         txt_buf = word
                         continue
 
-                    time += to_timedelta(f'{num_buf}{TIME_UNITS[word]}')
+                    time += datetime.timedelta(
+                        **{f'{TIME_UNITS[word]}': float(num_buf) if '.' in num_buf else int(num_buf)})
                     txt_buf = None
                     num_buf = None
                     continue
@@ -214,4 +216,5 @@ time_parsing_testcases = {
 }
 
 for inp, excepting in time_parsing_testcases.items():
-    assert (out := parse_time(inp)) == excepting, f'parse_time test failed: with input {inp} excepted output {excepting}, but got {out}'
+    assert (out := parse_time(
+        inp)) == excepting, f'parse_time test failed: with input {inp} excepted output {excepting}, but got {out}'
