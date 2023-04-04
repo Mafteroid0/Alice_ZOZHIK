@@ -59,7 +59,7 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
         li = st.split(' ')
         for el in li:
             el = el.replace(',', '.')
-            if el.replace('.', '').isdecimal() and el.count('.') <= 1 and float(el) >= 60:
+            if el.replace('.', '').isdecimal() and el.count('.') <= 1 and float(el) >= 100:
                 if sex == 'female':
                     verdict = round(49 + 1.7 * (0.394 * float(el) - 60), 1)
                 else:  # sex == 'male'
@@ -93,7 +93,7 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             else:
                 resp.update({
                     'response': {
-                        'text': f'Не совсем поняла вас, повторите снова. Учтите, что данный расчёт работает при росте более 60 сантиметров'
+                        'text': f'Не совсем поняла вас, повторите снова. Учтите, что данный расчёт работает при росте более 100 сантиметров и возрасте старше пяти лет.'
                     }
                 })
     elif state == MainGroup.Weight.end and \
