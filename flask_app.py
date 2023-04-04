@@ -36,7 +36,8 @@ def dict_to_json(dict_: dict | Response, do_encode: bool = True, *args, **kwargs
 
 @application.route('/alice', methods=['POST'])
 def handler():
-    return dict_to_json(main_handler(AliceUserRequest(request.data.decode()), fsm), ensure_ascii=False, indent=2)
+    req = AliceUserRequest(request.data.decode())
+    return dict_to_json(main_handler(req, fsm), ensure_ascii=False, indent=2)
 
 
 def main():

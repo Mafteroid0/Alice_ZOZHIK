@@ -1,5 +1,4 @@
 import random
-import typing
 
 from typing_ import AliceUserRequest, TrainingStep
 from typing_.response import Response, \
@@ -11,6 +10,7 @@ from tools import any_from
 
 from handlers import dream, water, weight
 import handlers.sport.cardio
+from handlers.main_menu import show_main_menu
 
 from states import MainGroup
 
@@ -26,6 +26,7 @@ def start_power_training(context: FSMContext, resp: dict | Response) -> dict | R
         'response': {
             'text': 'Давайте приступим к силовой тренировке. Для нее Вам нужен только боевой настрой. Одно упражнение '
                     'длится 40 секунд.'
+                    'Перед  его выполнением Вы можете изучить упражнение подробнее, начать делать его или пропустить '
                     'Перед  его выполнением Вы можете изучить упражнение подробнее, начать делать его или пропустить '
                     'выполнение и перейти к следующему.'
                     'Вы готовы к силовой тренировке или подберём Вам что-нибудь другое?'
@@ -203,56 +204,6 @@ def finish_power_training(context: FSMContext, resp: dict | Response) -> dict | 
     return resp
 
 
-def show_main_menu(context: FSMContext, resp: dict | Response, text: str | typing.Sequence[str] | None = None,
-                   card_text: str | None = None) -> dict | Response:
-    answer_options = ['Приступаем к работе. Выбирайте чем займёмся:', 'Чем хотите заняться? Выбирайте:',
-                      'Чем займёмся на этот раз? Выбирайте:',
-                      'Вы уже в нескольких шагах от здорового образа жизни! Чем сегодня займёмся? Выбирайте:']
-    resp.response = ResponseField(
-        text='Это сообщение никто не увидит :(',
-        tts=text or f'{random.choice(answer_options)} '
-                    f'"Спортивные тренировки", "Водный баланс", "Идеальный вес", '
-                    f'или "Фазы сна".',
-        card=Card(
-            type=CardType.ItemsList,
-            header=card_text or ['Чем хотите заняться? Выбирайте:',
-
-                                 'Приступаем к работе. Выбирайте чем займёмся:',
-
-                                 'Чем займёмся на этот раз? Выбирайте:'
-                                 ],
-            items=[
-                Item(
-                    title='спортивные тренировки',
-                    button='спортивные тренировки',
-                    description='разнообразные комплексные тренировки',
-                    image_id='965417/164c019491e4f4839bfa'
-                ),
-                Item(
-                    title='водный баланс',
-                    button='водный баланс',
-                    description='расчёт дневной нормы воды',
-                    image_id='1540737/dc7c3c075dd3ecc22fc7'
-                ),
-                Item(
-                    title='фазы сна',
-                    button='фазы сна',
-                    description='Расчет идеального времени сна',
-                    image_id='213044/e81c096eeedd03ef9a2e'
-                ),
-                Item(
-                    title='идеальный вес',
-                    button='идеальный вес',
-                    description='расчёт индивидуальной нормы веса',
-                    image_id='1540737/223b47fade7f44cbedfb'
-                )
-            ]
-        )
-    )
-    MainGroup.main_menu.set(context)
-    return resp
-
-
 @logged
 def main_handler(req: AliceUserRequest, fsm: FSMContext):
     # req = AliceUserRequest(event)
@@ -334,7 +285,7 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
         #                   '"Зарядка", "Кардио", "Силовая", "Фазы сна" или "Водный баланс".']
         show_main_menu(context, resp)
         context.reset_data()
-    elif state == MainGroup.Sport.state_home and any_from('спорт', 'трен', in_=command) and not \
+    elif state == MainGroup.main_menu and any_from('спорт', 'трен', in_=command) and not \
             any_from('зарядк', 'силов', 'кардио', in_=command):
         resp.response = ResponseField(
             text='Это сообщение никто не увидит :)',
@@ -370,10 +321,11 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                 ]
             )
         )
+        MainGroup.Sport.state_home.set(context)
     elif state in MainGroup:
         if any_from('верн', 'назад', 'основ', 'домой', 'начало', 'верш', 'конч', in_=command):
             show_main_menu(context, resp)
-        elif state == MainGroup.Sport.state_home:
+        elif state == MainGroup.main_menu:
             if 'вод' in command or 'баланс' in command:
 
                 resp.response = ResponseField(
@@ -408,8 +360,8 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                           'течение всего дня.']
                 )
                 MainGroup.Dream.state_1.set(context)
-
-            elif 'сил' in command:
+        elif state == MainGroup.Sport.state_home:
+            if 'сил' in command:
                 # answer_options = [ 'Замечательно! Кардиотренировки несут огромную пользу, а также поднимают
                 # настроение. Выберите тип ' 'кардио:  классическая или со скакалкой.',
                 #

@@ -1,5 +1,6 @@
 import random
 
+from handlers.main_menu import show_main_menu
 from typing_ import Response, AliceUserRequest, ResponseField, Card, CardType, Item, Button
 from fsm import FSMContext
 
@@ -167,32 +168,7 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             #     fsm.set_state
         elif state in (MainGroup.Sport.Cardio.Solo.start, MainGroup.Sport.Cardio.Solo.final):
             if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
-                resp.update({
-                    'response': {
-                        'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
-                        'card': {
-                            'type': 'ItemsList',
-                            'header': {
-                                'text': 'Чем займёмся на этот раз?'
-                            },
-                            'items': [
-                                {"title": 'кардиотренировка', 'button': {"text": 'кардиотренировка'},
-                                 "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
-                                {"title": 'силовая тренировка', "button": {"text": 'силовая тренировка'},
-                                 "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
-                                {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
-                                 "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
-                                {"title": 'водный баланс', "button": {"text": 'водный баланс'},
-                                 "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
-                                {"title": 'фазы сна', "button": {"text": 'фазы сна'},
-                                 "description": 'описание...',
-                                 "image_id": '213044/e81c096eeedd03ef9a2e'}
-
-                            ]
-                        }
-                    }
-                })
-                context.set_state(MainGroup.Sport.state_home)
+                show_main_menu(context, resp)
             elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                 resp.response = ResponseField(
                     text=[
@@ -934,32 +910,7 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             context.update_data(callback=_start_rope_cardio)
         elif state in (MainGroup.Sport.Cardio.Rope.start, MainGroup.Sport.Cardio.Rope.final):
             if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
-                resp.update({
-                    'response': {
-                        'text': 'Чем займёмся на этот раз? Выбирайте: "Кардиотренировка", "Силовая тренировка", "Утренняя зарядка", "Водный баланс", "Идеальный вес",или "Фазы сна".',
-                        'card': {
-                            'type': 'ItemsList',
-                            'header': {
-                                'text': 'Чем займёмся на этот раз? #Кнопка "идеальный вес" временно недоступна#'
-                            },
-                            'items': [
-                                {"title": 'кардиотренировка', 'button': {"text": 'кардиотренировка'},
-                                 "description": 'описание...', "image_id": '1533899/13a130643a2fcdac537a'},
-                                {"title": 'силовая тренировка', "button": {"text": 'силовая тренировка'},
-                                 "description": 'описание...', "image_id": '1533899/f030bee0ec7edea516e3'},
-                                {"title": 'утренняя зарядка', "button": {"text": 'утренняя зарядка'},
-                                 "description": 'описание...', "image_id": '1540737/cc26a14712e6995a6624'},
-                                {"title": 'водный баланс', "button": {"text": 'водный баланс'},
-                                 "description": 'описание...', "image_id": '1540737/dc7c3c075dd3ecc22fc7'},
-                                {"title": 'фазы сна', "button": {"text": 'фазы сна'},
-                                 "description": 'описание...',
-                                 "image_id": '213044/e81c096eeedd03ef9a2e'}
-
-                            ]
-                        }
-                    }
-                })
-                context.set_state(MainGroup.Sport.state_home)
+                show_main_menu(context, resp)
             elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                 resp.update({
                     'response': {
