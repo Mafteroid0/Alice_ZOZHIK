@@ -18,7 +18,7 @@ from logging_ import logged, logger, DO_LOGGING
 
 
 def is_positive(command: str) -> bool:
-    return any_from('готов', 'погн', 'поехали', 'давай', 'да', 'выполн', 'запус', in_=command)
+    return any_from('нач', 'готов', 'погн', 'поехали', 'давай', 'да', 'выполн', 'запус', in_=command)
 
 
 def start_power_training(context: FSMContext, resp: dict | Response) -> dict | Response:
