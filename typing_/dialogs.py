@@ -1,138 +1,157 @@
-from typing_ import TrainingDialog, TrainingStep
+from __future__ import annotations
+import dataclasses
+import random
+import typing
 
-tracks_fourteen = [
-    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/bd88f1cd-426b-430f-adc4-e66d4f19549d.opus">',
-    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/047165c7-4a08-4426-ade7-ce961e87aad1.opus">',
-    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/e7178478-0cca-4b0e-bba9-cd6cd2109d73.opus">']
-tracks_sixteen = [
-    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/4e7a987a-48cc-4ca3-8add-fa34a96852b2.opus">',
-    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/cce10ad9-c6be-46ec-a0e0-1897db4841e3.opus">',
-    '<speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/471315ec-dbf4-4821-ac6d-9171af52f3f9.opus">']
 
-motivations = ['Удачи!', 'Так держать!',
-               'Вы справитесь!']
+@dataclasses.dataclass
+class TrainingStep:
+    text: str | typing.Sequence[str]
+    image: str | typing.Sequence[str]
+    title: str | typing.Sequence[str]
+    description: str | typing.Sequence[str]
+    detailed_description: str | typing.Sequence[str]
 
-warm_up_algorithm = TrainingDialog()
+    left: TrainingStep | None = None
+    right: TrainingStep | None = None
 
-warm_up_algorithm.append(TrainingStep(
-    text='Поехали! Плавно наклоняйте голову в правую, левую сторону',
-    description='Наклоны головы',
-    detailed_description='Принимаем исходное положение: руки на поясе, ноги на ширине плеч, грудная клетка '
-                         'расправлена, живот втянут. Рекомендую делать упражнение как можно медленнее. Мышцы '
-                         'плечевого пояса и шеи в расслабленном положении.',
-    image='1533899/996b68e76d023e7413f2',
-    title='Упражнение 1'
-))
-warm_up_algorithm.append(TrainingStep(
-    text='А теперь упражнение, похожее на предыдущее. Выполняем повороты головы.',
-    description='Повороты головы',
-    detailed_description='Выполняйте плавные повороты головы вправо и влево. Прочувствуйте, как тянутся мышцы шеи.',
-    image='997614/f5546def4685b3e76d2e',
-    title='Упражнение 2'
-))
-warm_up_algorithm.append(TrainingStep(
-    text='Чудесно! Начинаем вытяжение рук за спиной. ',
-    description='Вытяжение рук за спиной',
-    detailed_description='Для выполнения это упражнения расслабьтесь, встаньте ровно. Отведите обе руки за спину, '
-                         'сцепите ладони в замок. Сожмите лопатки, расправьте плечи с грудью. Натяните хорошо руки, '
-                         'поднимите слегка повыше и плавно выгнитесь еще сильнее.',
-    image='997614/7c65fad6909d255d781f',
-    title='Упражнение 3'
-))
-warm_up_algorithm.append(TrainingStep(
-    text='Восхитительно! Приступаем к наклонам корпуса.',
-    description='Наклоны корпуса',
-    detailed_description='Делать наклоны следует в строго вертикальной плоскости до комфортного положения. Необходимо '
-                         'выполнять упражнение плавно, чтобы эффективнее воздействовать на мыщцы.',
-    image='937455/53aa82c28badde31192f',
-    title='Упражнение 4'
-))
-warm_up_algorithm.append(TrainingStep(
-    text='Это было круто! Растягиваем квадрицепс лежа на полу.',
-    description='Растяжка квадрицепса',
-    detailed_description='Ложитесь на пол на правый бок, положите голову на руку. Левую ногу согните в колене и '
-                         'постарайтесь коснуться пяткой ягодиц. Пружинистыми движениями растягивайте квадрицепс. '
-                         'Через 30 секунд повторите упражнение с другой ногой.',
-    image='1540737/7ec70a1c2c680e928b21',
-    title='Упражнение 5'
-))
-warm_up_algorithm.append(TrainingStep(
-    text='Здорово! Следующее упражнение - наклон в прИсяде к прямой ноге.',
-    description='Наклон в присяде к прямой ноге',
-    detailed_description='Наклонитесь к прямой ноге, возьмитесь руками за стопу и натяните носочек на себя. '
-                         'Старайтесь не округлять спину',
-    image='1030494/d46fbaa8ef22210fe9bb',
-    title='Упражение 6'
-))
-warm_up_algorithm.append(TrainingStep(
-    text='Поднажмите, я в Вас верю, растягиваем бицепс бедра.',
-    description='Растяжка бицепса бедра',
-    detailed_description='Поднимите колено перед собой максимально высоко, удерживая вес на другой ноге. Обхватите '
-                         'руками колено, удерживая вес на сзади стоящей ноге, осторожно поднимите колено и удержите '
-                         'его в верхней позиции. Держите тело в вертикальном положении, не сгибаясь.',
-    image='1030494/0e4fba524a27516fad72',
-    title='Упражение 7'
-))
+    def generate_choice_resp(self) -> dict[str, dict[
+        str, dict[str, str] | str | list[dict[str, str | bool] | dict[str, str | bool] | dict[str, str | bool]]]]:
+        return {
+            'response': {
+                'text': self.text if isinstance(self.text, str) else random.choice(self.text),
+                'card': {
+                    'type': 'BigImage',
+                    "image_id": self.image if isinstance(self.image, str) else random.choice(self.image),
+                    "title": self.title if isinstance(self.title, str) else random.choice(self.title),
+                    "description": self.description if isinstance(self.description, str) else random.choice(
+                        self.description)
+                },
+                'buttons': [
+                    {
+                        'title': 'Выполнить🔥',
+                        'hide': True
+                    },
+                    {
+                        'title': 'подробнее📄',
+                        'hide': True
+                    },
+                    {
+                        'title': 'Пропустить⏭',
+                        'hide': True
+                    }
+                ]
 
-warm_down_algorithm = TrainingDialog()
+            }
+        }
 
-warm_down_algorithm.append(TrainingStep(
-    text='Запаситесь хорошим настроением и приготовьтесь получить заряд бодрости. Правила всё те же. Начинаем с '
-         'прыжков на месте.',
-    description='Прыжки на месте',
-    detailed_description='Поставьте ноги на ширине плеч и согните их в коленях. Втяните живот, немного прогните '
-                         'поясницу, но осанку держите прямо. Руки согнуты в локтях. Подпрыгивайте, отталкиваясь от '
-                         'пола передней частью стопы и пальцами ног.',
-    image='997614/72ab6692a3db3f4e3056',
-    title='Упражнение 1'
-))
-warm_down_algorithm.append(TrainingStep(
-    text='Продолжаем разминаться, разводим руки на уровне груди. ',
-    description='Разводим руки на уровне груди',
-    detailed_description='Плавно разведите руки в стороны. Опустите груз до уровня плеч или немного ниже. При '
-                         'разведении рук делайте вдох. Грудные мышцы находятся в напряжении.',
-    image='997614/72ab6692a3db3f4e3056',
-    title='Упражнение 2'
-))
-warm_down_algorithm.append(TrainingStep(
-    text='Вы замечательно справляетесь. Выполняем повороты таза лёжа на спине. ',
-    description='Повороты таза лёжа на спине',
-    detailed_description='Лягте на спину, согните ноги в коленных суставах и плотно прижмите ступни к полу. Начните '
-                         'тянутся коленками к полу сначала в правую, а затем в левую сторону.',
-    image='997614/72ab6692a3db3f4e3056',
-    title='Упражнение 3'
-))
-warm_down_algorithm.append(TrainingStep(
-    text='На очереди наклоны корпуса.',
-    description='Наклоны корпуса',
-    detailed_description='Делать наклоны следует в строго вертикальной плоскости до комфортного положения. Стараемся '
-                         'делать движения медленными и плавными.',
-    image='997614/72ab6692a3db3f4e3056',
-    title='Упражнение 4'
-))
-warm_down_algorithm.append(TrainingStep(
-    text='Выполняем необычные, но очень эффективные приседания-сумо.',
-    description='Приседания-сума',
-    detailed_description='Поставьте ноги на расстоянии, чуть большем ширины плеч. Не следует приседать слишком низко, '
-                         'чтобы не нагружать колени. Опускайтесь до параллели бедер с полом. Возвращаясь в исходное '
-                         'положение, не разгибайте колени полностью, чтобы не перегружать суставы. Важно следить, '
-                         'чтобы колени были обращены в сторону носков, но не выходили за них.',
-    image='997614/72ab6692a3db3f4e3056',
-    title='Упражнение 5'
-))
-warm_down_algorithm.append(TrainingStep(
-    text='Довольно необычное упражнение, но у Вас прекрасно получилось! Выполняем повороты таза лежа на спине.',
-    description='Повороты таза лёжа на спине',
-    detailed_description='Лягте на спину, согните ноги в коленных суставах и плотно прижмите ступни к полу. Начните '
-                         'тянутся коленками к полу сначала в правую, а затем в левую сторону.',
-    image='997614/72ab6692a3db3f4e3056',
-    title='Упражнение 6'
-))
-warm_down_algorithm.append(TrainingStep(
-    text='Осталось совсем чуть-чуть, на очереди наклоны корпуса. ',
-    description='Наклоны корпуса',
-    detailed_description='Делать наклоны следует в строго вертикальной плоскости до комфортного положения. Пытаемся '
-                         'не сгибать колени и неотрывать ноги от пола. Руки лежат на поясе.',
-    image='997614/72ab6692a3db3f4e3056',
-    title='Упражнение 7'
-))
+    def generate_detailed_description_resp(self) -> dict[
+        str, dict[str, str | list[dict[str, str | bool] | dict[str, str | bool]]]]:
+        return {
+            'response': {
+                'text': self.detailed_description,
+                'buttons': [
+                    {
+                        'title': 'Выполнить🔥',
+                        'hide': True
+                    },
+                    {
+                        'title': 'Пропустить⏭',
+                        'hide': True
+                    }
+                ]
+
+            }
+        }
+
+    @staticmethod
+    def generate_do_training_resp(motivation: str, track: str) -> dict:
+        return {
+            'response': {
+                'text': f'{motivation}',
+                'tts': f'{track}',
+                'buttons': [
+                    {
+                        'title': 'Следующее упражнение▶',
+                        'hide': True
+                    }
+                ]
+            }
+        }
+
+
+class TrainingDialog:
+    def __init__(self, left: TrainingStep | None = None, right: TrainingStep | None = None):
+        self.left = left
+
+        self.right = left
+        if right is None and left is not None:
+            while self.right.right is not None:
+                self.right = self.right.right
+
+    def append_left(self, node: TrainingStep):
+        node.right = self.left
+        try:
+            self.left.left = node
+        except AttributeError:
+            pass
+        self.left = node
+
+        if self.right is None:
+            item = self.left
+            for item in self:
+                pass
+            self.right = item
+
+    def append_right(self, node: TrainingStep):
+        node.left = self.right
+        try:
+            self.right.right = node
+        except AttributeError:
+            pass
+        self.right = node
+
+        if self.left is None:
+            item = self.right
+            for item in self:
+                pass
+            self.left = item
+
+    append = append_right
+
+    def __getitem__(self, item: int):
+        a = 0
+        node = self.left
+        for node in self:
+            if a >= item:
+                break
+            a += 1
+        else:
+            raise IndexError()
+        return node
+
+    def __repr__(self):
+        node = self.left
+        nodes = ['None']
+        while node is not None:
+            nodes.append(f'{node}')
+            node = node.right
+        if len(nodes) > 1:
+            nodes.append('None')
+        return ' <--> '.join(nodes)
+
+    def __iter__(self):
+        node = self.left
+        if node is None:
+            return StopIteration
+        while node.right is not None:
+            yield node
+            node = node.right
+        yield node
+
+    def __reversed__(self):
+        node = self.right
+        while node.left is not None:
+            yield node
+            node = node.left
+        yield node
