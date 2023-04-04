@@ -80,9 +80,9 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
                             },
                             'items': [
                                 {"title": 'Рассчитать ещё раз', 'button': {"text": 'Рассчитать ещё раз'},
-                                 "description": 'описание...', "image_id": '997614/15f977696a281092bcc0'},
+                                 "description": '', "image_id": '997614/15f977696a281092bcc0'},
                                 {"title": 'Вернуться к основному списку', "button": {"text": 'Назад'},
-                                 "description": 'описание...', "image_id": '1030494/cc3631c8499cdc8daf8b'}
+                                 "description": '', "image_id": '1030494/cc3631c8499cdc8daf8b'}
 
                             ]
                         }
