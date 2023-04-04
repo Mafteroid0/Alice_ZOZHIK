@@ -93,7 +93,7 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             else:
                 resp.update({
                     'response': {
-                        'text': f'Не совсем поняла вас, повторите снова. Учтите, что данный расчёт работает при росте более 60 сантиметров'
+                        'text': f'Не совсем поняла вас, повторите снова. Учтите, что данный расчёт работает при росте более 60 сантиметров и возрасте старше пяти лет.'
                     }
                 })
     elif state == MainGroup.Weight.end and \
