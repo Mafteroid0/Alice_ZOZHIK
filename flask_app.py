@@ -30,7 +30,7 @@ def encode(dict_: dict):
     return dict_
 
 
-def dict_to_json(dict_: dict | Response, do_encode: bool = True, *args, **kwargs):
+def dict_to_json(dict_: dict | Response, *args, **kwargs):
     dict_ = trans_to_dict(dict_)
     return dict_
 
