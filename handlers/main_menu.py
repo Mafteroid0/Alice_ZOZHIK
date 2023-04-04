@@ -3,6 +3,7 @@ import random
 
 from typing_ import ResponseField, Response, Item, Card, CardType
 from fsm import FSMContext
+from states import MainGroup
 
 
 def show_main_menu(context: FSMContext, resp: dict | Response, text: str | typing.Sequence[str] | None = None,
