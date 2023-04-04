@@ -300,22 +300,27 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
         show_main_menu(context, resp)
 
     elif state is None:
-        resp.update({
-            'response': {
-                'text': 'Извините, я не поняла вас. Что вы хотите сделать: "Начать" или поинтересоваться о том, что я умею?',
-                'buttons': [
-                    {
-                        'title': 'Начать',
-                        'hide': True
-                    },
-                    {
-                        'title': 'Что ты умеешь',
-                        'hide': True
-                    }
-                ]
 
-            }
-        })
+        if is_positive(command):
+            show_main_menu(context, resp)
+
+        else:
+            resp.update({
+                'response': {
+                    'text': 'Извините, я не поняла вас. Что вы хотите сделать: "Начать" или поинтересоваться о том, что я умею?',
+                    'buttons': [
+                        {
+                            'title': 'Начать',
+                            'hide': True
+                        },
+                        {
+                            'title': 'Что ты умеешь',
+                            'hide': True
+                        }
+                    ]
+
+                }
+            })
 
 
     elif state in MainGroup:
