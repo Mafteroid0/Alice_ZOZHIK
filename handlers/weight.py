@@ -59,16 +59,16 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
         li = st.split(' ')
         for el in li:
             el = el.replace(',', '.')
-            if el.replace('.', '').isdecimal() and el.count('.') <= 1:
+            if el.replace('.', '').isdecimal() and el.count('.') <= 1 and float(el) >= 60:
                 if sex == 'female':
                     verdict = round(49 + 1.7 * (0.394 * float(el) - 60), 1)
                 else:  # sex == 'male'
                     verdict = round(52 + 1.9 * (0.394 * float(el) - 60), 1)
 
                 answer_options = [
-                    f'Ваш идеальный вес - {verdict}кг. Что хотите сделать дальше: рассчитать рекомендуемое вес '
+                    f'Ваш идеальный вес {verdict}кг. Что хотите сделать дальше: рассчитать рекомендуемое вес '
                     f'ещё раз или вернуться к основному списку?',
-                    f'Ваш рекомендуемый вес - {verdict}кг.'
+                    f'Ваш рекомендуемый вес {verdict}кг.'
                     f'Вы можете сделать расчёт ещё раз или вернуться к основному списку. Что выберете?']
                 resp.update({
                     'response': {
@@ -93,7 +93,7 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             else:
                 resp.update({
                     'response': {
-                        'text': f'Не совсем поняла вас, повторите снова'
+                        'text': f'Не совсем поняла вас, повторите снова. Учтите, что данный расчёт работает при росте более 60 сантиметров'
                     }
                 })
     elif state == MainGroup.Weight.end and \
