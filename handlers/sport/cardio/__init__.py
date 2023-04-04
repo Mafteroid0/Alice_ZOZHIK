@@ -3,7 +3,7 @@ import random
 from typing_ import Response, AliceUserRequest, ResponseField, Card, CardType, Item, Button
 from fsm import FSMContext
 
-from dialogs import motivations, tracks_fourteen
+from dialogs import MOTIVATIONS, TRACKS_FOURTEEN
 
 from states import MainGroup
 
@@ -258,8 +258,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -334,8 +334,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -413,8 +413,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -492,8 +492,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -568,8 +568,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -642,8 +642,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -715,8 +715,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -790,8 +790,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -865,8 +865,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -1031,8 +1031,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -1118,8 +1118,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -1205,8 +1205,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -1292,8 +1292,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
@@ -1380,8 +1380,8 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
             elif 'выполн' in command or 'дел' in command:
                 resp.update({
                     'response': {
-                        'text': f'{random.choice(motivations)}',
-                        'tts': f'{random.choice(tracks_fourteen)}',
+                        'text': f'{random.choice(MOTIVATIONS)}',
+                        'tts': f'{random.choice(TRACKS_FOURTEEN)}',
                         'buttons': [
                             {
                                 'title': 'Следующее упражнение▶',
