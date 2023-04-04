@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 
 from typing_.response import RespDataClass, Response
 from typing_ import AliceUserRequest
@@ -35,8 +35,8 @@ def dict_to_json(dict_: dict | Response, do_encode: bool = True, *args, **kwargs
 
 
 @application.route('/alice', methods=['POST'])
-def handler(event, ya_context):
-    return dict_to_json(main_handler(AliceUserRequest(event), fsm), ensure_ascii=False, indent=2)
+def handler():
+    return dict_to_json(main_handler(AliceUserRequest(request.data.decode()), fsm), ensure_ascii=False, indent=2)
 
 
 def main():

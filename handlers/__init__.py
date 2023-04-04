@@ -249,7 +249,7 @@ def show_main_menu(context: FSMContext, resp: dict | Response, text: str | typin
             ]
         )
     )
-    MainGroup.Sport.state_home.set(context)
+    MainGroup.main_menu.set(context)
     return resp
 
 
