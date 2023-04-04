@@ -16,7 +16,7 @@ def water_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
         for el in li:
             el = el.replace(',', '.')
             if el.replace('.', '').isdecimal() and el.count('.') <= 1:
-                water_amount = float(el) * 30
+                water_amount = int(float(el) * 30)
                 answer_options = [
                     f'Ваше минимальное потребление воды {water_amount} миллилитров в день 💦',
 
