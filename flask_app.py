@@ -62,8 +62,6 @@ def dict_to_json(dict_: dict | Response, do_encode: bool = True, *args, **kwargs
     # return jsn
 
 
-# Шаблон для условий:  if state == MyStates.state_1
-# Диаграмма: https://miro.com/app/board/uXjVMdrXZW0=/
 
 
 def is_positive(command: str) -> bool:
@@ -420,7 +418,7 @@ def main(event, ya_context):
             )
         )
     elif state in MainGroup:
-        if any_from('вернуться', 'назад', 'основ', 'домой', 'начало', in_=command):
+        if any_from('верн', 'назад', 'основ', 'домой', 'начало', 'верш', 'конч', in_=command):
             show_main_menu(context, resp)
         elif state == MainGroup.Sport.state_home:
             if 'вод' in command or 'баланс' in command:
@@ -511,10 +509,10 @@ def main(event, ya_context):
             elif 'заряд' in command:
                 answer_options = [
                     'Прекрасно🔥\nДержать тело в форме необходимо всем, очень приятно, что Вы это понимаете. Однако '
-                    'зарядки тоже бывают разными. Какой тип зарядки выберите: 5-минутная или 10-минутная?',
+                    'зарядки тоже бывают разными. Какой тип зарядки выберите: пятиминутная или десятиминутная?',
                     'Отличный выбор🤩\nЗарядка нужна всем, но немногие это понимают, к счастью к Вам это не '
-                    'относится. Выберите тип зарядки: 5-минутная или 10-минутная.',
-                    'Давайте вместе приведём Ваше тело в тонус. Выберите тип зарядки:  5-минутная или 10-минутная.']
+                    'относится. Выберите тип зарядки: пятиминутная или десятиминутная.',
+                    'Давайте вместе приведём Ваше тело в тонус. Выберите тип зарядки:  пятиминутная или десятиминутная.']
                 resp.update({
                     'response': {
                         'text': f'{random.choice(answer_options)}',
@@ -660,7 +658,7 @@ def main(event, ya_context):
                     })
             elif state in MainGroup.Sport.Zaradka.Ten:
                 if state in (MainGroup.Sport.Zaradka.Ten.start, MainGroup.Sport.Zaradka.Ten.final):
-                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
+                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command or 'верш' in command or 'конч' in command:
                         show_main_menu(context, resp)
                     elif is_positive(command):
                         resp.update({
@@ -1600,7 +1598,7 @@ def main(event, ya_context):
 
             elif state in MainGroup.Sport.Zaradka.Five:
                 if state in (MainGroup.Sport.Zaradka.Five.start, MainGroup.Sport.Zaradka.Five.final):
-                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
+                    if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command or 'верш' in command or 'конч' in command:
                         show_main_menu(context, resp)
                     elif is_positive(command):
                         resp.update({
@@ -2091,7 +2089,7 @@ def main(event, ya_context):
 
         elif state in MainGroup.Sport.Power:
             if state in (MainGroup.Sport.Power.start, MainGroup.Sport.Power.final):
-                if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command:
+                if 'друг' in command or 'не' in command or 'меню' in command or 'верн' in command or 'верш' in command or 'конч' in command:
                     show_main_menu(context, resp)
                 elif 'да' in command or 'готов' in command or 'повтор' in command or 'нач' in command or 'запус' in command:
                     resp.update({
