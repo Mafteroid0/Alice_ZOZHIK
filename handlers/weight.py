@@ -36,23 +36,23 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
         else:
             resp.update({
                 'response': {
-                    'text': f'Мне нужно знать ваш пол для более точного анализа. Давайте попробуем ещё раз: мужской или женский?',
-                    'card': {
-                        'type': 'ItemsList',
-                        'header': {
-                            'text': 'Выберите свой пол'
+                    'text': 'Мне нужно знать ваш пол для более точного анализа. Давайте попробуем ещё раз: мужской или женский?',
+                    'buttons': [
+                        {
+                            'title': 'Мужской',
+                            'hide': True
                         },
-                        'items': [
-                            {"title": 'Мужской', "button": {"text": 'Мужской'},
-                             "image_id": '937455/de709f88951a3ae338fa'},
-                            {"title": 'Женский', "button": {"text": 'Женский'},
-                             "image_id": '937455/92fe9a7a01d9e788cfec'}
-
-                        ]
-                    },
+                        {
+                            'title': 'Женский',
+                            'hide': True
+                        }
+                    ]
 
                 }
             })
+
+
+
 
     elif state == MainGroup.Weight.sex_choose:
         st = command.replace(',', '.')

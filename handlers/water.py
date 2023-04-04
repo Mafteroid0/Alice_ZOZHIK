@@ -49,7 +49,7 @@ def water_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
             else:
                 resp.update({
                     'response': {
-                        'text': f'Не совсем поняла вас, повторите снова'
+                        'text': f'Не совсем поняла вас. Назовите ваш вес в килограммах.'
                     }
                 })
     elif state == MainGroup.Water.end and \
