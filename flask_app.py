@@ -4,8 +4,13 @@ from logging_ import logged
 from typing_.response import RespDataClass, Response
 from typing_ import AliceUserRequest
 from fsm import FSMContext
+import ssl
 
 from handlers import main_handler
+
+context = ssl.SSLContext()  # PROTOCOL_TLSv1_2
+context.use_privatekey_file('server.key')
+context.use_certificate_file('server.crt')
 
 application = Flask(__name__)
 
@@ -42,7 +47,7 @@ def handler():
 
 
 def main():
-    application.run('localhost', port=5050, debug=True)
+    application.run('localhost', port=5050, debug=True, ssl_context='adhoc')
 
 
 if __name__ == '__main__':
