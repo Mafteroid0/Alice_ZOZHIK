@@ -407,7 +407,7 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
                 resp.response = ResponseField(
                     text=['Приступаем к прыжкам в планке',
 
-                          'Не останавливайтесь! Теперь делаем прыжки в плаке.'],
+                          'Не останавливайтесь! Теперь делаем прыжки в планке.'],
                     card=Card(
                         type=CardType.BigImage,
                         image_id='213044/bf1b200f757b3aae40df',
