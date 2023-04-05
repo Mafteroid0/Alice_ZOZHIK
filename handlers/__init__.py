@@ -296,8 +296,6 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
         )
         MainGroup.Sport.state_home.set(context)
 
-    elif is_positive(command):
-        show_main_menu(context, resp)
 
     elif state is None:
 
@@ -2914,6 +2912,9 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
 
             else:
                 end_warmdown(context, resp)
+
+        elif is_positive(command):
+            show_main_menu(context, resp)
 
     else:
         resp.update({
