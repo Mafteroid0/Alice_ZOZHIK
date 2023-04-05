@@ -47,7 +47,7 @@ def handler():
 
 
 def main():
-    application.run('localhost', port=5050, debug=True, ssl_context='adhoc')
+    application.run('localhost', port=5050, debug=True, ssl_context=('certificate.crt', 'private.key'))
 
 
 if __name__ == '__main__':
