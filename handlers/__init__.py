@@ -2618,100 +2618,11 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                         }
                     })
                     context.set_state(MainGroup.Sport.Power.task7_do)
-                elif state in (
+                elif (state in (
                         MainGroup.Sport.Power.task7_do, MainGroup.Sport.Power.task7_help,
                         MainGroup.Sport.Power.task7) and (
-                        'проп' in command or 'след' in command or 'прод' in command or 'дал' in command):
-                    resp.update({
-                        'response': {
-                            'text': 'Отлично, Вы здорово справились со всеми заданиями. Отдохните и переведите дух. ',
-                            'card': {
-                                'type': 'BigImage',
-                                "image_id": '997614/d843aa7bd19d82dfddbc',
-                                "title": 'Отдых',
-                                "description": 'Отдохните и переведите дух. '
-                            }
-                            ,
-                            'buttons': [
-                                {
-                                    'title': 'Выполнить🔥',
-                                    'hide': True
-                                },
-                                {
-                                    'title': 'подробнее📄',
-                                    'hide': True
-                                },
-                                {
-                                    'title': 'Пропустить⏭',
-                                    'hide': True
-                                }
-                            ]
-
-                        }
-                    })
-                    context.set_state(MainGroup.Sport.Power.task8)
-                else:
-                    resp.update({
-                        'response': {
-                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
-                            ,
-                            'buttons': [
-                                {
-                                    'title': 'Выполнить🔥',
-                                    'hide': True
-                                },
-                                {
-                                    'title': 'подробнее📄',
-                                    'hide': True
-                                },
-                                {
-                                    'title': 'Пропустить⏭',
-                                    'hide': True
-                                }
-                            ]
-
-                        }
-                    })
-            elif state in (
-                    MainGroup.Sport.Power.task8, MainGroup.Sport.Power.task8_help, MainGroup.Sport.Power.task8_do) or (
-                    state == MainGroup.Sport.Power.final and 'повтор' in command):
-                if 'подробн' in command or 'объяс' in command:
-                    resp.update({
-                        'response': {
-                            'text': 'Просто отдохните. В этом нет ничего сложного😁',
-                            'buttons': [
-                                {
-                                    'title': 'Выполнить🔥',
-                                    'hide': True
-                                },
-                                {
-                                    'title': 'Пропустить⏭',
-                                    'hide': True
-                                }
-                            ]
-
-                        }
-                    })
-                    context.set_state(MainGroup.Sport.Power.task8_help)
-                elif 'выполн' in command or 'дел' in command:
-                    resp.update({
-                        'response': {
-                            'text': f'{random.choice(MOTIVATIONS)}',
-                            'tts': f'{random.choice(TRACKS_FOURTEEN)}',
-                            'buttons': [
-                                {
-                                    'title': 'Следующее упражнение▶',
-                                    'hide': True
-                                }
-                            ]
-                        }
-                    })
-                    context.set_state(MainGroup.Sport.Power.task8_do)
-                elif (state in (
-                        MainGroup.Sport.Power.task8_do, MainGroup.Sport.Power.task8_help,
-                        MainGroup.Sport.Power.task8) and (
-                              'проп' in command or 'след' in command or 'прод' in command or 'дал' in command)) or \
-                        state == MainGroup.Sport.Power.end:
+                                  'проп' in command or 'след' in command or 'прод' in command or 'дал' in command)) or \
+                         state == MainGroup.Sport.Power.end:
                     answer_options = [
                         'Заминка нужна, чтобы снизить до нормального уровня частоту сердечных сокращений. Хотите её выпонить?',
                         'Будет здорово выполнить заминку! Заминка снижает склонность к закрепощению мышц после нагрузки.  Хотели бы Вы приступить к её выполнению?']
@@ -2739,7 +2650,8 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                 else:
                     resp.update({
                         'response': {
-                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
+                            'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"'
+                            ,
                             'buttons': [
                                 {
                                     'title': 'Выполнить🔥',
@@ -2852,9 +2764,9 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
             step: TrainingStep = warm_down_algorithm[context.get_data().get('step', 0)]
 
             if state == MainGroup.Sport.Wrap.WarmDown.qw:
-                if 'нет' in command or 'не ' in command:
+                if 'нет' in command or 'не ' in command or 'без' in command:
                     resp = cancel_warmdown(context, resp)
-                elif 'да' in command or 'конечн' in command:
+                elif 'да' in command or 'конечн' in command or 'замин' in command:
                     resp = start_warmdown(context, resp)
                 else:
                     resp.update({
