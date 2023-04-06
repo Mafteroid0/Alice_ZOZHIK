@@ -3,7 +3,7 @@ import typing
 from loguru import logger
 
 DO_LOGGING = True
-WRITE_LOGS = False
+WRITE_LOGS = True
 
 if DO_LOGGING and WRITE_LOGS:
     logger.add('zozhik.log', level='DEBUG', rotation='10 mb', compression='tar.xz', enqueue=True)
