@@ -296,7 +296,6 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
         )
         MainGroup.Sport.state_home.set(context)
 
-
     elif state is None:
         if is_positive(command):
             show_main_menu(context, resp)
@@ -309,7 +308,6 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                     Button(title='Что ты умеешь')
                 ]
             )
-
 
     elif state in MainGroup:
         if any_from('верн', 'назад', 'основ', 'домой', 'начало', 'верш', 'конч', in_=command):
