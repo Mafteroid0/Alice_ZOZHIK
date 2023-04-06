@@ -14,8 +14,8 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
             time = parse_time(req.request.command)
         except RuntimeError:
             resp.response = ResponseField(
-                text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если это '
-                     'повторяется не в первый раз, пожалуйста, попробуйте узвучить время в другом виде.'
+                text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
+                     'ошибка повторится, попробуйте перефразировать.'
             )
         else:
             try:
@@ -48,8 +48,8 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
                 MainGroup.Dream.end.set(context)
             except Exception:
                 resp.response = ResponseField(
-                    text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если это '
-                         'повторяется не в первый раз, пожалуйста, попробуйте узвучить время в другом виде.'
+                    text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
+                         'ошибка повторится, попробуйте перефразировать.'
                 )
 
     elif context.state == MainGroup.Dream.end and any_from('ещё', 'еще', 'снов', 'рас', in_=req.request.command):
