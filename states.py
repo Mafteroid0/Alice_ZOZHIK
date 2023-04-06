@@ -79,9 +79,9 @@ class MainGroup(StatesGroup):  # Состояние по умолчанию эт
                     _help_message='{now} Вы можете начать выполнение, сказав "Готов" или "Вернуться в меню" и выбрать другое занятие'
                 )
 
-                task = State()
+                task = State(_help_message='{now}')
 
-                end = State()
+                end = State(_help_message='{now}{now}')
 
         state_home = State(
             _help_message='Выберите одну из тренировок: "Кардио", "Силовая", "Утренняя зарядка", или произнесите "Вернуться", чтобы попасть в главное меню.')

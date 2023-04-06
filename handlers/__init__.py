@@ -2722,8 +2722,26 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
             elif state == MainGroup.Sport.Wrap.WarmUp.end:
                 if 'повтор' in command or 'ещё' in command or 'еще' in command or 'снов' in command:
                     resp = start_warmup(context, resp)
-                else:
+
+                elif 'трен' in command or 'пере' in command or 'закон' in command:
                     cancel_warmup(context, resp)
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Извините, не поняла вас. Сейчас доступны следующие команды:\n"Повторить  разминку", "Перейти к тренировке".',
+                            'buttons': [
+                                {
+                                    'title': 'Повторить разминку',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Перейти к тренировке',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
 
             elif 'пропуст' in command or 'следующ' in command or 'дальш' in command or 'продолж' in command:
                 if state == MainGroup.Sport.Wrap.WarmUp.task:
@@ -2773,7 +2791,7 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                 else:
                     resp.update({
                         'response': {
-                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить разминку?',
+                            'text': 'Извините, кажется я прослушала😣\nВы хотите выполнить заминку?',
                             'buttons': [
                                 {
                                     'title': 'Да',
@@ -2788,14 +2806,32 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                         }
                     })
 
-            elif state == MainGroup.Sport.Wrap.WarmDown.start and is_positive(command):
-                context.set_state(MainGroup.Sport.Wrap.WarmDown.task)
-                step: int = 0
-                context.update_data(step=step)
+            elif state == MainGroup.Sport.Wrap.WarmDown.start:
+                if is_positive(command):
+                    context.set_state(MainGroup.Sport.Wrap.WarmDown.task)
+                    step: int = 0
+                    context.update_data(step=step)
 
-                step: TrainingStep = warm_down_algorithm[step]
+                    step: TrainingStep = warm_down_algorithm[step]
 
-                resp.update(step.generate_choice_resp())
+                    resp.update(step.generate_choice_resp())
+                else:
+                    resp.update({
+                        'response': {
+                            'text': 'Не совсем поняла вас. Прямо сейчас Вы можете начать выполнение, сказав "Готов" или "Вернуться в меню" и выбрать другое занятие',
+                            'buttons': [
+                                {
+                                    'title': 'Готов',
+                                    'hide': True
+                                },
+                                {
+                                    'title': 'Вернуться в меню',
+                                    'hide': True
+                                }
+                            ]
+
+                        }
+                    })
 
             elif 'подробн' in command or 'расскажи' in command:
                 resp.update(step.generate_detailed_description_resp())
@@ -2825,7 +2861,26 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                     cancel_warmdown(context, resp)
 
             else:
-                end_warmdown(context, resp)
+                resp.update({
+                    'response': {
+                        'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
+                        'buttons': [
+                            {
+                                'title': 'Выполнить🔥',
+                                'hide': True
+                            },
+                            {
+                                'title': 'подробнее📄',
+                                'hide': True
+                            },
+                            {
+                                'title': 'Пропустить⏭',
+                                'hide': True
+                            }
+                        ]
+
+                    }
+                })
 
         elif is_positive(command):
             show_main_menu(context, resp)
