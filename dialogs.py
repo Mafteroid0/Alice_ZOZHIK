@@ -11,7 +11,7 @@ TRACKS_SIXTEEN = (
     'Начинаем! <speaker audio="dialogs-upload/063cdddd-d9f0-40a7-9fa8-ff5ab745aa44/471315ec-dbf4-4821-ac6d-9171af52f3f9.opus">'
 )
 
-MOTIVATIONS = ('Удачи!', 'Так держать!', 'Вы справитесь!')
+MOTIVATIONS = ('Удачи!', 'Так держать!', 'Вы справитесь!', 'Верю в вас!', 'У вас отлично получается!')
 
 NOW_SYNONYMS = (
     'Сейчас',
