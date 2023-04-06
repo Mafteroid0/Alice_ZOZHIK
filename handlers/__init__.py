@@ -147,7 +147,7 @@ def start_warmdown(context: FSMContext, resp: dict | Response) -> dict | Respons
             header='Приступаем к выполнению заминки',
             items=[
                 Item(title='Я готов', button='Я готов', image_id='997614/72ab6692a3db3f4e3056'),
-                Item(title='Пропустить', button='Пропустить', image_id='1030494/cc3631c8499cdc8daf8b')
+                Item(title='Вернуться в меню', button='Вернуться в меню', image_id='1030494/cc3631c8499cdc8daf8b')
             ]
         )
     )
