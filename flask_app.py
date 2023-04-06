@@ -37,11 +37,14 @@ def dict_to_json(dict_: dict | Response, *args, **kwargs):
 @application.route('/alice', methods=['POST'])
 def handler():
     req = AliceUserRequest(request.data.decode())
-    if req.request.original_utterance == 'ping' and req.request.command == '' and \
-            req.request.type == 'SimpleUtterance':
-        resp = Response(None, None, ResponseField(text='Ya work'))
-    else:
+    try:
         resp = main_handler(req, fsm)
+    except BaseException:
+        resp = Response(
+            req.version,
+            req.session,
+            ResponseField(text='Сообщение на всякий случай. В нормальных условиях пользователи не должны его увидеть.')
+        )
 
     return dict_to_json(resp, ensure_ascii=False, indent=2)
 

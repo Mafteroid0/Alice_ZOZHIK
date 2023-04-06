@@ -224,7 +224,7 @@ class ResponseField(RespDataClass):
 @dataclass
 class Response(RespDataClass):
     version: str | None
-    session: Session | None # TODO: | SessionDict
+    session: Session | None  # TODO: | SessionDict
     response: ResponseField | ResponseFieldDict | None = None
 
 
