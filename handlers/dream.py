@@ -17,7 +17,7 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
             logger.exception(f'{e}')
             resp.response = ResponseField(
                 text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
-                     'ошибка повторится, попробуйте перефразировать.'
+                     'ошибка повторится, попробуйте перефразировать время пробуждения.'
             )
         else:
             try:
