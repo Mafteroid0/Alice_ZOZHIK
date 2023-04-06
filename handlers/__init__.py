@@ -2741,7 +2741,26 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                     cancel_warmup(context, resp)
 
             else:
-                end_warmup(context, resp)
+                resp.update({
+                    'response': {
+                        'text': 'Не совсем понимаю о чём вы. Сейчас доступны следующие команды:\n"Выполнить упражнение", "Пропустить упражнение", "Узнать подробности"',
+                        'buttons': [
+                            {
+                                'title': 'Выполнить🔥',
+                                'hide': True
+                            },
+                            {
+                                'title': 'подробнее📄',
+                                'hide': True
+                            },
+                            {
+                                'title': 'Пропустить⏭',
+                                'hide': True
+                            }
+                        ]
+
+                    }
+                })
 
         elif state in MainGroup.Sport.Wrap.WarmDown:
             step: TrainingStep = warm_down_algorithm[context.get_data().get('step', 0)]
