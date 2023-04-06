@@ -48,7 +48,8 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
                 MainGroup.Dream.end.set(context)
             except Exception:
                 resp.response = ResponseField(
-                    text='Ой-ой. Кажется, произошла ошибка. Так во сколько вы хотите проснться?'
+                    text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если это '
+                         'повторяется не в первый раз, пожалуйста, попробуйте узвучить время в другом виде.'
                 )
 
     elif context.state == MainGroup.Dream.end and any_from('ещё', 'еще', 'снов', 'рас', in_=req.request.command):
