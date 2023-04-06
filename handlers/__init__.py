@@ -298,27 +298,17 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
 
 
     elif state is None:
-
         if is_positive(command):
             show_main_menu(context, resp)
-
         else:
-            resp.update({
-                'response': {
-                    'text': 'Извините, я не поняла вас. Что вы хотите сделать: "Начать" или поинтересоваться о том, что я умею?',
-                    'buttons': [
-                        {
-                            'title': 'Начать',
-                            'hide': True
-                        },
-                        {
-                            'title': 'Что ты умеешь',
-                            'hide': True
-                        }
-                    ]
-
-                }
-            })
+            resp.response = ResponseField(
+                text='Извините, я не поняла вас. Что вы хотите сделать: "Начать" или поинтересоваться о том, '
+                     'что я умею?',
+                buttons=[
+                    Button(title='Начать'),
+                    Button(title='Что ты умеешь')
+                ]
+            )
 
 
     elif state in MainGroup:
@@ -380,7 +370,6 @@ def main_handler(req: AliceUserRequest, fsm: FSMContext):
                                  "image_id": '937455/de709f88951a3ae338fa'},
                                 {"title": 'Женский', "button": {"text": 'Женский'},
                                  "image_id": '937455/92fe9a7a01d9e788cfec'}
-
                             ]
                         },
 
