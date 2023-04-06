@@ -4,6 +4,7 @@ from tools import any_from
 from typing_ import Response, AliceUserRequest, ResponseField
 from fsm import FSMContext
 from tools.time_parsing import parse_time, iter_go_sleep_time
+from logging_ import logger
 
 from states import MainGroup
 
@@ -12,7 +13,8 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
     if context.state == MainGroup.Dream.state_1:
         try:
             time = parse_time(req.request.command)
-        except RuntimeError:
+        except RuntimeError as e:
+            logger.exception(f'{e}')
             resp.response = ResponseField(
                 text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
                      'ошибка повторится, попробуйте перефразировать.'
@@ -46,7 +48,8 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
                     }
                 })
                 MainGroup.Dream.end.set(context)
-            except Exception:
+            except Exception as e:
+                logger.exception(f'{e}')
                 resp.response = ResponseField(
                     text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
                          'ошибка повторится, попробуйте перефразировать.'
