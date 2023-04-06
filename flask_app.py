@@ -43,7 +43,7 @@ def handler():
         resp = Response(
             req.version,
             req.session,
-            ResponseField(text='Сообщение на всякий случай. В нормальных условиях пользователи не должны его увидеть.')
+            ResponseField(text='Ой-ой, не поняла вас. Пожалуйста, повторите ещё раз')
         )
 
     return dict_to_json(resp, ensure_ascii=False, indent=2)
