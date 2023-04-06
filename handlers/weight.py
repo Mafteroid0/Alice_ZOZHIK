@@ -68,7 +68,7 @@ def weight_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
                 answer_options = [
                     f'Ваш идеальный вес {verdict}кг. Что хотите сделать дальше: рассчитать рекомендуемый вес '
                     f'ещё раз или вернуться к основному списку?',
-                    f'Ваш рекомендуемый вес {verdict}кг.'
+                    f'Ваш рекомендуемый вес {verdict}кг. '
                     f'Вы можете сделать расчёт ещё раз или вернуться к основному списку. Что выберете?']
                 resp.update({
                     'response': {
