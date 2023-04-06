@@ -17,7 +17,7 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
             logger.exception(f'{e}')
             resp.response = ResponseField(
                 text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
-                     'ошибка повторится, попробуйте перефразировать.'
+                     'ошибка повторится, попробуйте перефразировать время пробуждения.'
             )
         else:
             try:
@@ -52,7 +52,7 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
                 logger.exception(f'{e}')
                 resp.response = ResponseField(
                     text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
-                         'ошибка повторится, попробуйте перефразировать.'
+                         'ошибка повторится, попробуйте перефразировать время пробуждения.'
                 )
 
     elif context.state == MainGroup.Dream.end and any_from('ещё', 'еще', 'снов', 'рас', in_=req.request.command):
