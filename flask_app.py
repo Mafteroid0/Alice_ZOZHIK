@@ -1,8 +1,6 @@
 from flask import Flask, request
 
-from logging_ import logged
-from typing_.response import RespDataClass, Response
-from typing_ import AliceUserRequest
+from typing_ import AliceUserRequest, RespDataClass, Response, ResponseField
 from fsm import FSMContext
 
 from handlers import main_handler
@@ -38,7 +36,13 @@ def dict_to_json(dict_: dict | Response, *args, **kwargs):
 @application.route('/alice', methods=['POST'])
 def handler():
     req = AliceUserRequest(request.data.decode())
-    return dict_to_json(main_handler(req, fsm), ensure_ascii=False, indent=2)
+    if req.request.original_utterance == 'ping' and req.request.command == '' and \
+            req.request.type == 'SimpleUtterance':
+        resp = Response(None, None, ResponseField(text='Ya work'))
+    else:
+        resp = main_handler(req, fsm)
+
+    return dict_to_json(resp, ensure_ascii=False, indent=2)
 
 
 def main():

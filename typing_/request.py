@@ -17,6 +17,7 @@ class Meta(FriendlyDict):
 class RequestField(FriendlyDict):
     type: str
     command: str
+    original_utterance: str
 
 
 class User(FriendlyDict):
