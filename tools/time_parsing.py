@@ -24,7 +24,8 @@ TIME_UNITS = {
 
 def today(hours: int = 0, minutes: int = 0, seconds: int = 0, microseconds: int = 0) -> datetime.datetime:
     time = datetime.datetime.today()
-    return time - datetime.timedelta(hours=time.hour - hours, minutes=time.minute - minutes, seconds=time.second - seconds,
+    return time - datetime.timedelta(hours=time.hour - hours, minutes=time.minute - minutes,
+                                     seconds=time.second - seconds,
                                      microseconds=time.microsecond - microseconds)
 
 
@@ -92,6 +93,8 @@ def parse_time(text: str) -> datetime.datetime:
             return time + datetime.timedelta(hours=13)
         elif text == 'час ночи':
             return time + datetime.timedelta(hours=1)
+        elif text == '12 ночи':
+            return time
 
         temp = [[]]
         index = 0
@@ -181,7 +184,7 @@ def parse_time(text: str) -> datetime.datetime:
     return time
 
 
-@functools.cache
+# @functools.cache
 @logged
 def iter_go_sleep_time(wake_up_time: datetime.datetime, limit: int = 6) -> typing.Iterator[datetime.datetime]:
     first_go_sleep_time = wake_up_time - datetime.timedelta(minutes=(limit + 1) * 90 + 15)
@@ -207,6 +210,7 @@ time_parsing_testcases = {
     '3': today_ + datetime.timedelta(hours=3),
     '12:32': today_ + datetime.timedelta(hours=12, minutes=32),
     '12-32': today_ + datetime.timedelta(hours=12, minutes=32),
+    '12:00': today_ + datetime.timedelta(hours=12),
     '3 часа 10 минут': today_ + datetime.timedelta(hours=3, minutes=10),
     '3 часа и 10 минут': today_ + datetime.timedelta(hours=3, minutes=10),
     '3 часа дня и 10 минут': today_ + datetime.timedelta(hours=15, minutes=10),
