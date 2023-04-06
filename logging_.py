@@ -18,7 +18,9 @@ def logged(f: typing.Callable):
             res = f(*args, **kwargs)
         except BaseException as e:
             logger.exception(f'tried to call {f} with args {args} and kwargs {kwargs}, but raised {e}')
+            raise e
         else:
             logger.debug(f'{f} called with args {args} and kwargs {kwargs} and returned {res}')
             return res
+
     return wrapper
