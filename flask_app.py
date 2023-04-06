@@ -1,6 +1,7 @@
 from flask import Flask, request
 
-from typing_ import AliceUserRequest, RespDataClass, Response, ResponseField
+from typing_.response import RespDataClass, Response, ResponseField
+from typing_ import AliceUserRequest
 from fsm import FSMContext
 
 from handlers import main_handler
