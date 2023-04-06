@@ -1371,7 +1371,7 @@ def cardio_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Resp
 
                 context.set_state(MainGroup.Sport.Wrap.WarmDown.qw)
                 context.update_data(callback=finish_rope_cardio)
-                context.set_state(MainGroup.Sport.Cardio.Rope.end)
+                # context.set_state(MainGroup.Sport.Cardio.Rope.end)
             else:
                 resp.update({
                     'response': {
