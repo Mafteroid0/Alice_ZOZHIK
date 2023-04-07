@@ -211,6 +211,7 @@ time_parsing_testcases = {
     '12:32': today_ + datetime.timedelta(hours=12, minutes=32),
     '12-32': today_ + datetime.timedelta(hours=12, minutes=32),
     '12:00': today_ + datetime.timedelta(hours=12),
+    '7:00': today_ + datetime.timedelta(hours=7),
     '3 часа 10 минут': today_ + datetime.timedelta(hours=3, minutes=10),
     '3 часа и 10 минут': today_ + datetime.timedelta(hours=3, minutes=10),
     '3 часа дня и 10 минут': today_ + datetime.timedelta(hours=15, minutes=10),
