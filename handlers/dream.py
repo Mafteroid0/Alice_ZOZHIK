@@ -9,6 +9,27 @@ from logging_ import logger
 from states import MainGroup
 
 
+def process_time_parsing_error(context: FSMContext, req: AliceUserRequest, resp: dict | Response) -> dict | Response:
+    texts = (
+        'Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться?',
+
+        'Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? '
+        'Попробуйте перефразировать время пробуждения.',
+
+        'Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? '
+        'Попробуйте произнести время пробуждения в формате 12:34.'
+    )
+
+    errors_count = context.data.get('errors_count', 0)
+
+    resp.response = ResponseField(
+        text=texts[errors_count]
+    )
+    context.update_data(errors_count=errors_count + 1)
+
+    return resp
+
+
 def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Response) -> dict | Response:
     if context.state == MainGroup.Dream.state_1:
         try:
@@ -18,7 +39,7 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
             resp.response = ResponseField(
                 text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Попробуйте перефразировать время пробуждения. Лучше всего будет сказать его по шаблону 12:34',
                 tts='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Попробуйте перефразировать время пробуждения. Лучше всего будет сказать его по шаблону двенадцать тридцать четыре'
-            )
+            )  # TODO: Интегрировать это в process_time_parsing_error
         else:
             try:
                 go_sleep_times = list(iter_go_sleep_time(time))
@@ -50,10 +71,9 @@ def dream_handler(context: FSMContext, req: AliceUserRequest, resp: dict | Respo
                 MainGroup.Dream.end.set(context)
             except Exception as e:
                 logger.exception(f'{e}')
-                resp.response = ResponseField(
-                    text='Извините, не поняла вас. Пожалуйста, повторите: во сколько вы планируете проснуться? Если '
-                         'ошибка повторится, попробуйте перефразировать время пробуждения.'
-                )
+                process_time_parsing_error(context, req, resp)
+            else:
+                context.update_data(errors_count=0)
 
     elif context.state == MainGroup.Dream.end and any_from('ещё', 'еще', 'снов', 'рас', in_=req.request.command):
         resp.response = ResponseField(
